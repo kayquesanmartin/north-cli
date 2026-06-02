@@ -35,6 +35,8 @@ DEFAULT_SETTINGS = {
     "owner_name": "Kayque",            # saudacao do bom-dia
     "title": "north",                  # nome do produto (vira o brand do painel)
     "wip_limit": 3,                    # limite de tasks "Em Andamento" antes do alerta
+    "dirty_risk_files": 8,             # arquivos sujos a partir dos quais vira "risco de perda"
+    "stale_branch_days": 3,            # dias sem commit a partir dos quais a branch e' "parada"
 }
 
 

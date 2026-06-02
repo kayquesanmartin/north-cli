@@ -11,9 +11,11 @@ com sprints, tasks, bloqueios, debito, metadados e rollup de progresso.
 
 import re
 import subprocess
+from datetime import datetime
 from pathlib import Path
 
 from . import parsers as P
+from . import health as H
 
 
 def read(path: Path) -> str:
@@ -149,7 +151,14 @@ def git_info(project_dir: Path):
             if "\t" in line:
                 h, s = line.split("\t", 1)
                 commits.append((h.strip(), s.strip()))
-    return {"branch": branch, "dirty": dirty, "today_commits": commits}
+    # idade do ultimo commit (dias) -> base do alerta "branch parada".
+    # None quando nao ha commits/historico (projeto sem git ou recem-criado).
+    idle_days = None
+    ct = _git(["log", "-1", "--format=%ct"], project_dir)
+    if ct.isdigit():
+        idle_days = int((datetime.now().timestamp() - int(ct)) // 86400)
+    return {"branch": branch, "dirty": dirty, "today_commits": commits,
+            "idle_days": idle_days}
 
 
 # ----------------------------------------------------------------------------
@@ -394,6 +403,7 @@ def discover_projects(config):
         proj["order"] = order
         proj["name"] = config.alias_for(pid, pid)
         proj["color"] = config.color_for(pid, order)
+        proj["alerts"] = H.compute_alerts(proj, config.settings)
         projects.append(proj)
 
     projects.sort(key=lambda p: (p["order"], p["name"].lower()))

@@ -24,6 +24,9 @@ def build_data(projects, settings, inbox_items=None):
     totals_debt = sum(len(p["open_debt"]) for p in projects)
     today_commits = sum(len(p["git"]["today_commits"]) for p in projects)
     overall_pct = round(totals_done / totals_total * 100) if totals_total else 0
+    all_alerts = [a for p in projects for a in p.get("alerts", [])]
+    alerts_risk = sum(1 for a in all_alerts if a["severity"] == "risk")
+    alerts_warn = sum(1 for a in all_alerts if a["severity"] == "warn")
 
     def author_json(a):
         return {"name": a["name"], "when": a["when"]} if a else None
@@ -36,6 +39,8 @@ def build_data(projects, settings, inbox_items=None):
             "branch": p["branch"] or "—",
             "currentSprint": p["current_sprint"] or "—",
             "dirty": p["git"]["dirty"],
+            "idleDays": p["git"].get("idle_days"),
+            "alerts": p.get("alerts", []),
             "todayCommits": [{"h": h, "s": s} for h, s in p["git"]["today_commits"]],
             "author": author_json(p.get("author")),
             "contributors": [c["name"] for c in p.get("contributors", [])],
@@ -107,6 +112,8 @@ def build_data(projects, settings, inbox_items=None):
             "blockers": totals_blk,
             "debt": totals_debt,
             "commits": today_commits,
+            "alertsRisk": alerts_risk,
+            "alertsWarn": alerts_warn,
         },
         "columns": [
             {"key": c, "emoji": P.COLUMN_META[c]["emoji"], "color": P.COLUMN_META[c]["color"]}
@@ -286,6 +293,37 @@ _SHELL = r"""<!DOCTYPE html>
     font-size:11px;color:var(--dim)}
   .branch{font-family:var(--mono);color:var(--muted);max-width:160px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pcard.has-risk{border-color:rgba(239,68,68,.55)}
+  .pcard.has-warn{border-color:rgba(245,158,11,.5)}
+  .pcard-alerts{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+
+  /* ---- sinais vitais ---- */
+  .vchip{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700;
+    border:1px solid transparent;white-space:nowrap}
+  .sev-risk{background:rgba(239,68,68,.12);color:#fca5a5;border-color:rgba(239,68,68,.4)}
+  .sev-warn{background:rgba(245,158,11,.12);color:#fcd34d;border-color:rgba(245,158,11,.4)}
+  .vitals{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;margin:18px 0}
+  .vitals.ok{border-style:dashed}
+  .vitals-h{font-weight:700;font-size:13px;margin-bottom:12px;display:flex;
+    align-items:center;gap:10px}
+  .vitals-sub{font-size:11px;font-weight:600;color:var(--muted)}
+  .vitals-ok{font-size:12px;color:var(--muted)}
+  .vitals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+  .vproj{background:var(--card);border:1px solid var(--line2);border-radius:11px;
+    padding:12px 13px;cursor:pointer;transition:border-color .15s}
+  .vproj:hover{border-color:var(--accent)}
+  .vproj-h{font-weight:700;font-size:12.5px;display:flex;align-items:center;
+    gap:8px;margin-bottom:9px}
+  .vdot{width:9px;height:9px;border-radius:50%;flex:none}
+  .vrow{display:flex;align-items:baseline;gap:8px;padding:5px 0;font-size:11.5px;
+    border-top:1px solid var(--line2)}
+  .vrow .vico{flex:none;font-size:11px}
+  .vrow.sev-risk .vtitle{color:#fca5a5}
+  .vrow.sev-warn .vtitle{color:#fcd34d}
+  .vrow{background:none;border-left:0}
+  .vtitle{font-weight:700;flex:none}
+  .vdetail{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
   /* ---- detalhe projeto ---- */
   .pmeta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
@@ -446,6 +484,30 @@ _SHELL = r"""<!DOCTYPE html>
       '<div class="ib-box">'+rows+'</div>';
   }
 
+  /* ---------- sinais vitais (saude do portfolio) ---------- */
+  const SEV_META={risk:{cls:"sev-risk",ico:"⛔"},warn:{cls:"sev-warn",ico:"⚠"}};
+  function alertChips(p){
+    return (p.alerts||[]).map(a=>'<span class="vchip '+(SEV_META[a.severity]||SEV_META.warn).cls+'" title="'+
+      esc(a.detail)+'">'+(SEV_META[a.severity]||SEV_META.warn).ico+' '+esc(a.title)+'</span>').join("");
+  }
+  function vitalsBanner(){
+    const rows=DATA.projects.filter(p=>(p.alerts||[]).length).map(p=>{
+      const items=p.alerts.map(a=>'<div class="vrow '+(SEV_META[a.severity]||SEV_META.warn).cls+'">'+
+        '<span class="vico">'+(SEV_META[a.severity]||SEV_META.warn).ico+'</span>'+
+        '<span class="vtitle">'+esc(a.title)+'</span>'+
+        '<span class="vdetail">'+esc(a.detail)+'</span></div>').join("");
+      return '<div class="vproj" data-go="'+esc(p.id)+'"><div class="vproj-h"><span class="vdot" style="background:'+
+        p.color+'"></span>'+esc(p.name)+'</div>'+items+'</div>';
+    }).join("");
+    if(!rows) return '<div class="vitals ok"><div class="vitals-h">🩺 Sinais vitais</div>'+
+      '<div class="vitals-ok">Tudo sob controle — nenhum sinal de risco no portfólio.</div></div>';
+    const r=DATA.totals.alertsRisk, w=DATA.totals.alertsWarn;
+    const sub=[r?('<b style="color:var(--bad)">'+r+' de risco</b>'):'',
+               w?('<b style="color:var(--warn)">'+w+' de atenção</b>'):''].filter(Boolean).join(" · ");
+    return '<div class="vitals"><div class="vitals-h">🩺 Sinais vitais <span class="vitals-sub">'+sub+
+      '</span></div><div class="vitals-grid">'+rows+'</div></div>';
+  }
+
   /* ---------- banner de foco (direcao) ---------- */
   function focusBanner(){
     const f=DATA.focus;
@@ -475,6 +537,7 @@ _SHELL = r"""<!DOCTYPE html>
       [t.commits?'ok':'', t.commits,'Commits hoje'],
       [t.blockers?'bad':'ok', t.blockers,'Bloqueios abertos'],
       [t.debt?'warn':'', t.debt,'Débito técnico'],
+      [t.alertsRisk?'bad':(t.alertsWarn?'warn':'ok'), (t.alertsRisk+t.alertsWarn),'Sinais de risco'],
     ].map(k=>'<div class="kpi '+k[0]+'"><div class="v">'+k[1]+'</div><div class="l">'+k[2]+'</div></div>').join("");
 
     const cards=DATA.projects.map(p=>{
@@ -486,12 +549,16 @@ _SHELL = r"""<!DOCTYPE html>
       const foot=p.author?('↻ '+esc(p.author.name.split(" ")[0])+' · '+esc(p.author.when)):
         (p.todayCommits.length?('● '+p.todayCommits.length+' commit(s) hoje'):
         (p.dirty?('○ '+p.dirty+' sujos'):'sem mudança'));
-      return '<div class="pcard" data-pid="'+esc(p.id)+'" style="--pc:'+p.color+'">'+
+      const al=p.alerts||[];
+      const sev=al.some(a=>a.severity==="risk")?"risk":(al.length?"warn":"");
+      const chips=al.length?('<div class="pcard-alerts">'+alertChips(p)+'</div>'):'';
+      return '<div class="pcard'+(sev?' has-'+sev:'')+'" data-pid="'+esc(p.id)+'" style="--pc:'+p.color+'">'+
         '<div class="pcard-h">'+
           '<div class="donut" style="--p:'+r.pct+';--pc:'+p.color+'"><span style="color:'+p.color+'">'+r.pct+'%</span></div>'+
           '<div><div class="pcard-t">'+esc(p.name)+'</div>'+
           '<div class="pcard-s">'+r.done+'/'+r.total+' '+(r.level==="task"?"tasks":"sprints")+' · '+esc(p.currentSprint).slice(0,42)+'</div>'+
           '<div class="pcard-stats">'+stats.join("")+'</div></div></div>'+
+          chips+
         '<div class="pcard-foot"><span class="branch">⎇ '+esc(p.branch)+'</span><span title="última atualização">'+esc(foot)+'</span></div>'+
         '</div>';
     }).join("");
@@ -500,6 +567,7 @@ _SHELL = r"""<!DOCTYPE html>
       '<div class="gen">Visão consolidada de todos os projetos rastreados</div></div></div>'+
       focusBanner()+
       '<div class="kpis">'+kpis+'</div>'+
+      vitalsBanner()+
       '<div class="sec-h">Projetos <span class="ln"></span></div>'+
       '<div class="grid">'+cards+'</div>'+
       inboxSection()+footer();
@@ -518,6 +586,9 @@ _SHELL = r"""<!DOCTYPE html>
       (p.contributors&&p.contributors.length?'<span class="pill">👥 time: <b>'+esc(p.contributors.map(c=>c.split(" ")[0]).join(", "))+'</b></span>':'')+
       (p.todayCommits.length?'<span class="pill" style="border-color:var(--ok)">● <b>'+p.todayCommits.length+'</b> commit(s) hoje</span>':'')+
       (p.dirty?'<span class="pill" style="border-color:var(--warn)">○ <b>'+p.dirty+'</b> não commitado(s)</span>':'')+
+      ((p.alerts||[]).length?'<span class="pill" title="branch parada/idade">⏱ '+
+        (p.idleDays!=null?p.idleDays+'d sem commit':'—')+'</span>':'')+
+      alertChips(p)+
       '</div>';
 
     const kpis=[
