@@ -24,7 +24,7 @@ ROOT = HERE.parent                                                        # .../
 PLAN_DIR = ROOT / "backoffice" / "CALCULO-COBRANCA" / "plan-build"        # fonte dos .md
 OUT_FILE = HERE / "dashboard.html"
 
-# Paleta Invista (mesma dos PDFs do modulo)
+# Paleta de cores do tema
 NAVY = "#1f2937"
 ACCENT = "#f97316"
 BEIGE = "#fdf8ed"

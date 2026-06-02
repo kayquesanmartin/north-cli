@@ -37,7 +37,7 @@ SRC = Path(__file__).resolve().parent / "src"
 SKILLS_SRC = Path(__file__).resolve().parent / "skills"
 TEMPLATES_SRC = Path(__file__).resolve().parent / "templates"
 
-# Plugins do Claude Code que o north habilita junto (toolchain dev Invista).
+# Plugins do Claude Code que o north habilita junto (toolchain dev).
 # Formato: "<plugin>@<marketplace>". context7 e microsoft-docs trazem MCP que
 # conecta sozinho quando o plugin e habilitado.
 PLUGINS = [

@@ -16,9 +16,9 @@ automaticamente na proxima execucao, ja habilitado.
 import json
 from pathlib import Path
 
-# Paleta profissional (Invista navy/orange + apoios). Atribuida por ordem.
+# Paleta profissional (atribuida por ordem de projeto).
 PALETTE = [
-    "#f97316",  # orange (Invista accent)
+    "#f97316",  # orange (accent)
     "#0ea5e9",  # sky
     "#8b5cf6",  # violet
     "#14b8a6",  # teal
