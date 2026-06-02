@@ -237,11 +237,11 @@ def build_project(plan_build: Path, scan_roots):
         t2 = P.tasks_from_codeblocks(text, sprint_default=key) if not t1 else []
         for t in (t1 + t2):
             tasks.append(t)
-    # tabelas de task no proprio Progress.md (formato backoffice-frontend):
+    # tabelas de task no proprio Progress.md (formato C):
     # sprint_default vazio -> deriva o sprint pelo id da task (S3B-1 -> S3B)
     for t in P.tasks_from_tables(progress_text, sprint_default=""):
         tasks.append(t)
-    # code-blocks do proprio Progress (formato backoffice raiz)
+    # code-blocks do proprio Progress (formato B)
     if not tasks:
         for t in P.tasks_from_codeblocks(progress_text):
             tasks.append(t)

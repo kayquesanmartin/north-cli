@@ -2,13 +2,13 @@
 """
 parsers.py — normalizacao de formatos heterogeneos de tracking em .md.
 
-Tres formatos reais foram observados no Barramento:
-  A) CALCULO-COBRANCA : tabela "Status Geral" (Sprint|Status|Commits|Progresso)
-                        + Sprint-CC*.md com tabela de TASKs (TASK|Descricao|...|Status)
-  B) backoffice (raiz): tabela "Visao Geral" (Sprint|Status|Inicio|Conclusao)
+Tres formatos comuns sao suportados:
+  A) sprint+tasks por arquivo : tabela "Status Geral" (Sprint|Status|Commits|Progresso)
+                        + Sprint-*.md com tabela de TASKs (TASK|Descricao|...|Status)
+  B) tasks em code-block      : tabela "Visao Geral" (Sprint|Status|Inicio|Conclusao)
                         + STATUS em CODE-BLOCK: "TASK-01 | [####] | desc | OK"
-  C) backoffice-frontend: tabela "Status Geral" (Sprint|Status|Commits|Progresso com barra)
-                        + Sprint-*.md com tabela de TASKs (TASK|Descricao|Especialista|Status|Sessao)
+  C) tasks no proprio Progress: tabela "Status Geral" (Sprint|Status|Commits|Progresso com barra)
+                        + tabela de TASKs (TASK|Descricao|Especialista|Status|Sessao)
 
 Estrategia: extrair TUDO que der (tabelas + code-blocks), classificar status por
 emoji/texto, derivar progresso de fracao (N/M) > percentual (NN%) > barra (####) >
@@ -278,7 +278,7 @@ _CB_LINE_RX = re.compile(
 
 def tasks_from_codeblocks(text: str, sprint_default=""):
     """TASKs vindas de pseudo-tabelas em code-block:
-       'TASK-01 | [######] | desc | CONCLUIDA'  (formato backoffice raiz)."""
+       'TASK-01 | [######] | desc | CONCLUIDA'  (formato B: tasks em code-block)."""
     out = []
     for block in _CODEBLOCK_RX.findall(text):
         for line in block.splitlines():
