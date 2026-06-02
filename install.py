@@ -24,6 +24,8 @@ Opcional:
   python install.py --install-gh                            # tenta instalar o gh via winget
   python install.py --skip-plugins                          # nao mexe nos plugins
   python install.py --no-build                              # nao gera o painel agora
+  python install.py --statusline                            # FORCA a statusline do north (substitui a atual)
+  python install.py --no-statusline                         # nao configura a statusline
 """
 
 import json
@@ -163,6 +165,34 @@ def ensure_plugins(home: Path):
     return novos, ja
 
 
+def setup_statusline(home: Path, engine: Path, force=False):
+    """Configura a statusline do north em ~/.claude/settings.json (NAO-destrutivo).
+    So escreve se nao houver statusLine, a menos que force=True. Devolve um status:
+    'set' | 'exists' | 'forced' | 'invalid'."""
+    settings = home / "settings.json"
+    if settings.exists():
+        try:
+            data = json.loads(settings.read_text(encoding="utf-8"))
+        except Exception:
+            return "invalid", None
+    else:
+        data = {}
+
+    run_py = str(engine / "run.py").replace("\\", "/")
+    py = sys.executable.replace("\\", "/")
+    command = '"{}" "{}" statusline'.format(py, run_py)
+    new_sl = {"type": "command", "command": command, "padding": 1}
+
+    existing = data.get("statusLine")
+    if existing and not force:
+        return "exists", command
+
+    data["statusLine"] = new_sl
+    settings.parent.mkdir(parents=True, exist_ok=True)
+    settings.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    return ("forced" if existing else "set"), command
+
+
 def _which(cmd):
     from shutil import which
     return which(cmd)
@@ -294,6 +324,8 @@ def main():
     auto_all = "--all" in args
     install_gh = "--install-gh" in args
     skip_plugins = "--skip-plugins" in args
+    skip_statusline = "--no-statusline" in args
+    force_statusline = "--statusline" in args
     if "--no-build" in args:
         do_build = False
     if "--scan-root" in args:
@@ -321,6 +353,21 @@ def main():
         print("  plugins        -> {} habilitado(s) ({} novo(s), {} ja ativo(s))".format(
             len(novos) + len(ja), len(novos), len(ja)))
     ensure_gh(install_gh)
+
+    # ---- statusline (barra de status do Claude Code) — nao-destrutivo ----
+    sl_status, sl_cmd = (None, None)
+    if not skip_statusline:
+        sl_status, sl_cmd = setup_statusline(home, engine, force=force_statusline)
+        if sl_status == "set":
+            print("  statusline     -> configurada (proxima acao + alertas na barra)")
+        elif sl_status == "forced":
+            print("  statusline     -> SUBSTITUIDA pela do north (--statusline)")
+        elif sl_status == "exists":
+            print("  statusline     -> ja existe uma; preservada. Para usar a do north:")
+            print('                    \"statusLine\": {{\"type\":\"command\",\"command\":\"{}\"}}'.format(sl_cmd))
+            print("                    (ou rode com --statusline para substituir)")
+        elif sl_status == "invalid":
+            print("  statusline     -> settings.json invalido; pulei (corrija manualmente)")
 
     scan_root = detect_scan_root()
     cfg_path = seed_config(engine, scan_root, extra_root)
@@ -364,6 +411,8 @@ def main():
     print("")
     print("  Painel: {}".format(out))
     print("  Config (apelidos/cores/toggles): {}".format(cfg_path))
+    if sl_status in ("set", "forced"):
+        print("  Statusline ativa: reinicie o Claude Code para ver a barra.")
     print("  Plugins habilitados: reinicie o Claude Code (ou /hooks) para carregar.")
     print("=" * 64)
 

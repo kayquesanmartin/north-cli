@@ -25,6 +25,7 @@ Ferramentas de planejamento te dão uma **fotografia** — onde cada projeto est
 north te dá **sinais vitais e direção**:
 
 - 🧭 **`/foco`** responde a única pergunta que importa de manhã: *o que eu faço agora?* — a próxima ação de maior valor entre **todos** os projetos, respeitando seu limite de WIP.
+- 📍 **Statusline ambiente**: sua próxima ação + alertas direto na barra de status do Claude Code, **a cada prompt** — north presente sem você precisar pedir.
 - 🩺 **Sinais vitais** te avisam *antes* de travar: trabalho não commitado virando risco, branch parada, bloqueio no caminho crítico, WIP acima do limite.
 - 🔍 **Auto-descoberta**: aponte para uma pasta e ele acha todo projeto com tracking. Projeto novo aparece sozinho no painel.
 - 📥 **Captura sem fricção** (`/btw`): salva uma ideia no meio de qualquer tarefa sem perder o foco — e te lembra dela no fim do dia.
@@ -85,8 +86,30 @@ python ~/.claude/painel/run.py fim-do-dia     # resumos do dia por projeto
 python ~/.claude/painel/run.py build          # só regenera o painel
 python ~/.claude/painel/run.py btw "<ideia>"  # captura rápida
 python ~/.claude/painel/run.py inbox          # lista a inbox
+python ~/.claude/painel/run.py statusline     # 1 linha p/ a barra de status (lê do cwd no stdin)
 python ~/.claude/painel/run.py open           # abre o painel já gerado
 ```
+
+### Barra de status (statusline)
+
+north entrega uma linha ambiente pra [statusline do Claude Code](https://code.claude.com/docs/en/statusline):
+a próxima ação do projeto atual (detectado pelo `cwd`) + os sinais vitais.
+
+```
+🧭 north Backoffice Frontend · S4B-9  Botão Compartilhar — link read-only…  /backend  ●1
+```
+
+O `install.py` configura sozinho — **sem sobrescrever** uma statusline que você
+já tenha (nesse caso ele só imprime o trecho pra você compor/colar). Para forçar:
+`python install.py --statusline`. Ou cole no `~/.claude/settings.json`:
+
+```jsonc
+{ "statusLine": { "type": "command",
+  "command": "python \"~/.claude/painel/run.py\" statusline", "padding": 1 } }
+```
+
+É barata por design: lê só um cache (`output/state.json`, regenerado a cada
+build/ritual) — nunca roda descoberta ou git na barra.
 
 ---
 

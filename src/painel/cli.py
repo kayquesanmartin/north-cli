@@ -11,7 +11,9 @@ Uso (via run.py):  python run.py <comando>
 A "tool home" e o diretorio que contem config/, output/, resumos/, templates/.
 """
 
+import json
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime
@@ -23,6 +25,7 @@ from . import render as R
 from . import rituals
 from . import focus as F
 from . import inbox as IN
+from . import parsers as P
 
 
 def _config_path(home: Path) -> Path:
@@ -78,12 +81,59 @@ def _load_and_discover(home: Path):
     return cfg, projects, new_ids
 
 
+def _pick_json(pk):
+    """Compacta um 'pick' do focus.compute_focus para o state.json (statusline)."""
+    if not pk:
+        return None
+    t = pk["task"]
+    desc = P.clean_desc(t["desc"])[:80] or (t.get("status_raw", "") or "")[:80]
+    return {
+        "id": t["id"], "sprint": t["sprint"] or "", "desc": desc,
+        "projectId": pk["project_id"], "project": pk["project"],
+        "squad": pk["squad"].replace("squad-", ""), "actionable": pk["actionable"],
+    }
+
+
+def _compute_state(projects, settings):
+    """Estado compacto para a statusline: foco global + por projeto + alertas.
+    Sem I/O e sem git — opera sobre o modelo ja montado em memoria."""
+    wip_limit = settings.get("wip_limit", F.WIP_LIMIT)
+    g = F.compute_focus(projects, wip_limit)
+    projs, risk_total, warn_total = {}, 0, 0
+    for p in projects:
+        al = p.get("alerts", [])
+        pr = sum(1 for a in al if a["severity"] == "risk")
+        pw = sum(1 for a in al if a["severity"] == "warn")
+        risk_total += pr
+        warn_total += pw
+        pf = F.compute_focus([p], wip_limit)   # proxima acao DESTE projeto
+        projs[p["id"]] = {
+            "name": p["name"], "color": p["color"], "pct": p["rollup"]["pct"],
+            "alertsRisk": pr, "alertsWarn": pw, "next": _pick_json(pf["pick"]),
+        }
+    return {
+        "focus": _pick_json(g["pick"]),
+        "wip": [{"project": w["project"], "count": w["count"], "limit": w["limit"]}
+                for w in g["wip_alerts"]],
+        "totals": {"projects": len(projects),
+                   "alertsRisk": risk_total, "alertsWarn": warn_total},
+        "projects": projs,
+    }
+
+
 def cmd_build(home: Path, cfg, projects, quiet=False):
     out_dir = home / "output"
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file = out_dir / "dashboard.html"
     html = R.render(projects, cfg.settings, IN.open_items(home))
     out_file.write_text(html, encoding="utf-8")
+    # cache leve para a statusline (lido sem rodar discovery/git)
+    try:
+        (out_dir / "state.json").write_text(
+            json.dumps(_compute_state(projects, cfg.settings), ensure_ascii=False),
+            encoding="utf-8")
+    except Exception:
+        pass
     if not quiet:
         done = sum(p["rollup"]["done"] for p in projects)
         total = sum(p["rollup"]["total"] for p in projects)
@@ -194,6 +244,93 @@ def _inbox_reminder_block(home: Path, header: str):
     return "\n".join(L)
 
 
+# ---------------------------------------------------------------------------
+# statusline — UMA linha para a barra de status do Claude Code.
+# LEVE: le so o output/state.json (gerado no build). Nunca roda discovery/git.
+# ---------------------------------------------------------------------------
+_ANSI = {
+    "reset": "\033[0m", "dim": "\033[2m", "north": "\033[38;5;208m",
+    "risk": "\033[38;5;203m", "warn": "\033[38;5;221m",
+    "ok": "\033[38;5;114m", "squad": "\033[38;5;111m",
+}
+
+
+def _read_stdin_cwd():
+    """Le o JSON que o Claude Code envia no stdin e extrai o diretorio atual.
+    Nao bloqueia em terminal interativo (so le quando ha pipe)."""
+    try:
+        if sys.stdin.isatty():
+            return ""
+        raw = sys.stdin.read()
+        if not raw.strip():
+            return ""
+        j = json.loads(raw)
+        ws = j.get("workspace") or {}
+        return ws.get("current_dir") or j.get("cwd") or ""
+    except Exception:
+        return ""
+
+
+def _badge(risk, warn):
+    a = _ANSI
+    if risk:
+        return "{}●{}{}".format(a["risk"], risk, a["reset"])
+    if warn:
+        return "{}●{}{}".format(a["warn"], warn, a["reset"])
+    return "{}●{}".format(a["ok"], a["reset"])
+
+
+def _statusline_text(state, cwd):
+    a = _ANSI
+    projs = state.get("projects", {})
+    parts = set(re.split(r"[\\/]+", cwd)) if cwd else set()
+    pid = next((k for k in projs if k and k in parts), "")
+    if pid:
+        pd = projs[pid]
+        nxt, risk, warn = pd.get("next"), pd.get("alertsRisk", 0), pd.get("alertsWarn", 0)
+        scope = pd.get("name", pid)
+    else:
+        nxt = state.get("focus")
+        tot = state.get("totals", {})
+        risk, warn = tot.get("alertsRisk", 0), tot.get("alertsWarn", 0)
+        scope = ""
+
+    head = "{}\U0001f9ed north{}".format(a["north"], a["reset"])
+    badge = _badge(risk, warn)
+    if not nxt:
+        return "{} {}tudo fechado{}  {}".format(head, a["ok"], a["reset"], badge)
+
+    # largura disponivel (Claude Code seta COLUMNS); trunca a descricao
+    try:
+        cols = int(os.environ.get("COLUMNS", "0")) or 100
+    except ValueError:
+        cols = 100
+    desc = nxt.get("desc", "")
+    max_desc = max(18, min(56, cols - 46))
+    if len(desc) > max_desc:
+        desc = desc[:max_desc - 1].rstrip() + "…"
+
+    block = "⚠ " if not nxt.get("actionable") else ""
+    scope_txt = "{} · ".format(scope) if scope else ""
+    return "{} {}{}{}{}{}  {}{}{}  {}/{}{}  {}".format(
+        head, block, a["north"], scope_txt, nxt.get("id", ""), a["reset"],
+        a["dim"], desc, a["reset"],
+        a["squad"], nxt.get("squad", ""), a["reset"], badge)
+
+
+def cmd_statusline(home: Path):
+    cwd = _read_stdin_cwd()
+    state_file = home / "output" / "state.json"
+    try:
+        state = json.loads(state_file.read_text(encoding="utf-8"))
+    except Exception:
+        # sem cache ainda: linha minima, mas NUNCA vazia (vazio = barra em branco)
+        print("\033[38;5;208m\U0001f9ed north\033[0m \033[2mrode /painel para iniciar\033[0m")
+        return 0
+    print(_statusline_text(state, cwd))
+    return 0
+
+
 def cmd_open(home: Path):
     out_file = home / "output" / "dashboard.html"
     if not out_file.exists():
@@ -209,6 +346,10 @@ def main(argv, home: Path):
     if cmd == "open":
         cmd_open(home)
         return 0
+
+    # --- statusline: LEVE, sem discovery (le so o cache output/state.json) ---
+    if cmd in ("statusline", "status-line"):
+        return cmd_statusline(home)
 
     # --- comandos de inbox: LEVES, sem discovery (captura instantanea) ---
     if cmd in ("inbox-add", "btw", "capturar"):
@@ -247,6 +388,6 @@ def main(argv, home: Path):
         cmd_foco(home, cfg, projects)
     else:
         print("Comando desconhecido: {}".format(cmd))
-        print("Use: build | bom-dia | fim-do-dia | foco | btw <ideia> | inbox | open")
+        print("Use: build | bom-dia | fim-do-dia | foco | btw <ideia> | inbox | statusline | open")
         return 2
     return 0
