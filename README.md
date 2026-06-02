@@ -92,11 +92,13 @@ python ~/.claude/painel/run.py open           # abre o painel já gerado
 
 ### Barra de status (statusline)
 
-north entrega uma linha ambiente pra [statusline do Claude Code](https://code.claude.com/docs/en/statusline):
-a próxima ação do projeto atual (detectado pelo `cwd`) + os sinais vitais.
+north entrega uma linha ambiente pra [statusline do Claude Code](https://code.claude.com/docs/en/statusline)
+que reúne, num só lugar: **modelo · progresso e próxima ação do projeto atual
+(detectado pelo `cwd`) · squad sugerido · sinais vitais · diretório · medidor da
+janela de contexto** (com normalização de auto-compact).
 
 ```
-🧭 north Backoffice Frontend · S4B-9  Botão Compartilhar — link read-only…  /backend  ●1
+Opus 4.8 │ 🧭 Backoffice Frontend 79% S4B-9 Botão Compartilhar… /backend ⛔1 │ backoffice-frontend ████░░░░░░ 48%
 ```
 
 O `install.py` configura sozinho — **sem sobrescrever** uma statusline que você

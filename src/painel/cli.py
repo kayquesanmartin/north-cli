@@ -247,40 +247,75 @@ def _inbox_reminder_block(home: Path, header: str):
 # ---------------------------------------------------------------------------
 # statusline — UMA linha para a barra de status do Claude Code.
 # LEVE: le so o output/state.json (gerado no build). Nunca roda discovery/git.
+#
+# Mostra num so lugar: modelo · proxima acao do projeto atual (foco) · sinais
+# vitais · diretorio · medidor de janela de contexto.
 # ---------------------------------------------------------------------------
 _ANSI = {
     "reset": "\033[0m", "dim": "\033[2m", "north": "\033[38;5;208m",
     "risk": "\033[38;5;203m", "warn": "\033[38;5;221m",
-    "ok": "\033[38;5;114m", "squad": "\033[38;5;111m",
+    "ok": "\033[38;5;114m", "squad": "\033[38;5;111m", "sep": "\033[2m│\033[0m",
 }
 
 
-def _read_stdin_cwd():
-    """Le o JSON que o Claude Code envia no stdin e extrai o diretorio atual.
+def _read_hook():
+    """Le o JSON do Claude Code (stdin): cwd, modelo e janela de contexto.
     Nao bloqueia em terminal interativo (so le quando ha pipe)."""
+    out = {"cwd": "", "model": "", "remaining": None, "total": 1_000_000}
     try:
         if sys.stdin.isatty():
-            return ""
+            return out
         raw = sys.stdin.read()
         if not raw.strip():
-            return ""
+            return out
         j = json.loads(raw)
         ws = j.get("workspace") or {}
-        return ws.get("current_dir") or j.get("cwd") or ""
+        out["cwd"] = ws.get("current_dir") or j.get("cwd") or ""
+        out["model"] = ((j.get("model") or {}).get("display_name")) or ""
+        cw = j.get("context_window") or {}
+        out["remaining"] = cw.get("remaining_percentage")
+        out["total"] = cw.get("total_tokens") or 1_000_000
     except Exception:
+        pass
+    return out
+
+
+def _ctx_meter(remaining, total):
+    """Medidor de janela de contexto (paridade com o GSD): normaliza o buffer de
+    auto-compact, monta barra de 10 segmentos e colore por uso. '' se ausente."""
+    if remaining is None:
         return ""
+    try:
+        acw = int(os.environ.get("CLAUDE_CODE_AUTO_COMPACT_WINDOW", "0") or "0")
+    except ValueError:
+        acw = 0
+    buffer_pct = min(100, (acw / total) * 100) if (acw > 0 and total) else 16.5
+    usable = max(0.0, ((remaining - buffer_pct) / (100 - buffer_pct)) * 100) if buffer_pct < 100 else 0.0
+    used = max(0, min(100, round(100 - usable)))
+    bar = "█" * (used // 10) + "░" * (10 - used // 10)
+    if used < 50:
+        col = "\033[32m"
+    elif used < 65:
+        col = "\033[33m"
+    elif used < 80:
+        col = "\033[38;5;208m"
+    else:
+        return " \033[5;31m\U0001f480 {} {}%\033[0m".format(bar, used)
+    return " {}{} {}%\033[0m".format(col, bar, used)
 
 
 def _badge(risk, warn):
     a = _ANSI
     if risk:
-        return "{}●{}{}".format(a["risk"], risk, a["reset"])
+        return "{}⛔{}{}".format(a["risk"], risk, a["reset"])
     if warn:
         return "{}●{}{}".format(a["warn"], warn, a["reset"])
     return "{}●{}".format(a["ok"], a["reset"])
 
 
-def _statusline_text(state, cwd):
+def _focus_block(state, cwd):
+    """Bloco do foco: escopo = projeto do cwd (com % de progresso), ou portfolio.
+    Inclui a proxima acao, o squad sugerido e o badge de sinais vitais."""
     a = _ANSI
     projs = state.get("projects", {})
     parts = set(re.split(r"[\\/]+", cwd)) if cwd else set()
@@ -288,46 +323,70 @@ def _statusline_text(state, cwd):
     if pid:
         pd = projs[pid]
         nxt, risk, warn = pd.get("next"), pd.get("alertsRisk", 0), pd.get("alertsWarn", 0)
-        scope = pd.get("name", pid)
+        scope, pct = pd.get("name", pid), pd.get("pct")
     else:
         nxt = state.get("focus")
         tot = state.get("totals", {})
         risk, warn = tot.get("alertsRisk", 0), tot.get("alertsWarn", 0)
-        scope = ""
+        scope, pct = "", None
 
-    head = "{}\U0001f9ed north{}".format(a["north"], a["reset"])
+    head = "{}\U0001f9ed{}".format(a["north"], a["reset"])
     badge = _badge(risk, warn)
+    if scope and pct is not None:
+        scope_txt = "{}{} {}%{} ".format(a["dim"], scope, pct, a["reset"])
+    elif scope:
+        scope_txt = "{}{}{} ".format(a["dim"], scope, a["reset"])
+    else:
+        scope_txt = ""
     if not nxt:
-        return "{} {}tudo fechado{}  {}".format(head, a["ok"], a["reset"], badge)
+        return "{} {}{}tudo fechado{} {}".format(head, scope_txt, a["ok"], a["reset"], badge)
 
-    # largura disponivel (Claude Code seta COLUMNS); trunca a descricao
     try:
-        cols = int(os.environ.get("COLUMNS", "0")) or 100
+        cols = int(os.environ.get("COLUMNS", "0")) or 110
     except ValueError:
-        cols = 100
+        cols = 110
     desc = nxt.get("desc", "")
-    max_desc = max(18, min(56, cols - 46))
+    max_desc = max(16, min(50, cols - 60))
     if len(desc) > max_desc:
         desc = desc[:max_desc - 1].rstrip() + "…"
-
     block = "⚠ " if not nxt.get("actionable") else ""
-    scope_txt = "{} · ".format(scope) if scope else ""
-    return "{} {}{}{}{}{}  {}{}{}  {}/{}{}  {}".format(
-        head, block, a["north"], scope_txt, nxt.get("id", ""), a["reset"],
-        a["dim"], desc, a["reset"],
-        a["squad"], nxt.get("squad", ""), a["reset"], badge)
+    return "{} {}{}{}{}{} {}{}{} {}/{}{} {}".format(
+        head, scope_txt, block, a["north"], nxt.get("id", ""), a["reset"],
+        a["dim"], desc, a["reset"], a["squad"], nxt.get("squad", ""), a["reset"], badge)
+
+
+def _statusline_text(state, hook):
+    """Compoe a linha: modelo │ foco+vitais │ dir [medidor de contexto]."""
+    a = _ANSI
+    segs = []
+    if hook.get("model"):
+        segs.append("{}{}{}".format(a["dim"], hook["model"], a["reset"]))
+    segs.append(_focus_block(state, hook.get("cwd", "")))
+    cwd = hook.get("cwd", "")
+    dirname = re.split(r"[\\/]+", cwd.rstrip("/\\"))[-1] if cwd else ""
+    tail = "{}{}{}".format(a["dim"], dirname, a["reset"]) if dirname else ""
+    tail += _ctx_meter(hook.get("remaining"), hook.get("total", 1_000_000))
+    if tail.strip():
+        segs.append(tail)
+    return (" " + a["sep"] + " ").join(s for s in segs if s)
 
 
 def cmd_statusline(home: Path):
-    cwd = _read_stdin_cwd()
+    hook = _read_hook()
     state_file = home / "output" / "state.json"
     try:
         state = json.loads(state_file.read_text(encoding="utf-8"))
     except Exception:
-        # sem cache ainda: linha minima, mas NUNCA vazia (vazio = barra em branco)
-        print("\033[38;5;208m\U0001f9ed north\033[0m \033[2mrode /painel para iniciar\033[0m")
+        # sem cache: nao deixa a barra vazia; ainda mostra modelo + contexto
+        a = _ANSI
+        base = "{}\U0001f9ed north{} {}rode /painel{}".format(
+            a["north"], a["reset"], a["dim"], a["reset"])
+        if hook.get("model"):
+            base = "{}{}{} {} {}".format(
+                a["dim"], hook["model"], a["reset"], a["sep"], base)
+        print(base + _ctx_meter(hook.get("remaining"), hook.get("total", 1_000_000)))
         return 0
-    print(_statusline_text(state, cwd))
+    print(_statusline_text(state, hook))
     return 0
 
 
