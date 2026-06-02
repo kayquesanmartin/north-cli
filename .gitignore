@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Painel gerado (artefato, não fonte)
+dashboard.html
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,25 @@
+Atualizacao da entrega - [data] — [projeto]
+
+Resumo:
+[Resumo curto do avanco do dia.]
+
+O que foi entregue:
+- [Item 1]
+- [Item 2]
+- [Item 3]
+
+Revisao do diff (code-review):
+- [Achados / "limpo" / nada a revisar]
+
+Estado atual:
+- Status: [Em desenvolvimento / Em revisao / Em QA / Em homologacao / Aguardando aceite / Concluido]
+- Ambiente: [Dev / Homologacao / Producao]
+- Evidencias/links: [dashboard.html, PRs, prints, ambiente]
+
+Bloqueios/Riscos:
+- [Nenhum / descrever bloqueio ou risco]
+
+Proximos passos:
+- [Proxima acao]
+- [Responsavel, se fizer sentido]
+- [Previsao, se houver]
