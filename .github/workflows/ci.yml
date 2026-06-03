@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    name: compile (${{ matrix.os }} · py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.8", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Byte-compile the engine
+        run: python -m compileall -q install.py runtimes.py src
+
+  smoke:
+    name: install smoke (isolated HOME)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install all runtimes into a throwaway HOME and verify the engine
+        run: |
+          export HOME="$(mktemp -d)"
+          node bin/north.js install \
+            --runtimes claude,codex,gemini --scope global \
+            --scan-root "$PWD" --all --skip-plugins --no-statusline --no-build
+          test -f "$HOME/.north/run.py"
+          test -f "$HOME/.codex/prompts/north-foco.md"
+          test -f "$HOME/.gemini/commands/north/foco.toml"
+          python "$HOME/.north/run.py" status
+
+  package:
+    name: npm tarball is clean (no bytecode)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Pack and assert no .pyc / __pycache__
+        run: |
+          npm pack --dry-run 2>&1 | tee /tmp/pack.txt
+          if grep -qE "cpython-|__pycache__|\.pyc" /tmp/pack.txt; then
+            echo "::error::tarball contains Python bytecode"; exit 1
+          fi

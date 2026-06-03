@@ -1,0 +1,36 @@
+name: Release (npm)
+
+# Publishes north-cli to npm using OIDC "trusted publishing" — NO long-lived
+# NPM_TOKEN secret. One-time setup on npmjs.com:
+#   npm package "north-cli" -> Settings -> Trusted Publisher -> GitHub Actions
+#   repo: kayquesanmartin/north-cli · workflow: release.yml
+# Bump the version in package.json + CHANGELOG.md and tag vX.Y.Z before running.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (pack only, do not publish)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write   # required for npm provenance / trusted publishing
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - name: Use a provenance-capable npm
+        run: npm install -g npm@latest
+      - name: Show package contents
+        run: npm pack --dry-run
+      - name: Publish with provenance
+        if: ${{ inputs.dry_run == false }}
+        run: npm publish --provenance --access public
