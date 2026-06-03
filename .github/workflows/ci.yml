@@ -54,6 +54,10 @@ jobs:
           test -d "$HOME/.claude/skills/north-focus"
           test -d "$HOME/.claude/skills/north-status"
           test ! -d "$HOME/.claude/skills/focus"
+          # behavior skill (mentor mode) — no engine call in Codex prompt
+          test -d "$HOME/.claude/skills/north-learn"
+          test -f "$HOME/.codex/prompts/north-learn.md"
+          ! grep -q "run.py" "$HOME/.codex/prompts/north-learn.md"
           python "$HOME/.north/run.py" status
           # uninstall round-trip (remove tudo, preserva dados por padrão)
           mkdir -p "$HOME/.north/config" && echo '{}' > "$HOME/.north/config/projects.json"

@@ -6,6 +6,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **Mentor mode (`/north-learn`).** A learning-first mode where the AI *orients and you
+  implement* — to understand the code, do your own review, and work without the AI. Grounded
+  in official docs, level-aware (junior→pleno→senior), teaches the meta (reading code, self
+  review, debugging, testing, versioning). Works across Claude/Codex/Gemini via new
+  **behavior skills** (commands that live in the runtime, not the engine).
+
 ## [0.6.0] - 2026-06-03
 
 ### Added
