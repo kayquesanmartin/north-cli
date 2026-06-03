@@ -34,7 +34,7 @@ DEFAULT_SETTINGS = {
     "open_browser": True,
     "mirror_to_project_docs": True,   # alem do resumo central, escreve copia em <proj>/docs
     "theme": "dark",                   # dark | light
-    "owner_name": "Kayque",            # saudacao do bom-dia
+    "owner_name": "dev",               # saudacao do bom-dia (install detecta o nome do git)
     "title": "north",                  # nome do produto (vira o brand do painel)
     "wip_limit": 3,                    # limite de tasks "Em Andamento" antes do alerta
     "dirty_risk_files": 8,             # arquivos sujos a partir dos quais vira "risco de perda"

@@ -1,0 +1,22 @@
+name: 📖 Docs issue
+description: Something in the docs is wrong, unclear, or missing
+labels: ["documentation"]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: File or section (e.g. README.md "Quickstart", README.pt-BR.md).
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's wrong or missing?
+    validations:
+      required: true
+  - type: input
+    id: lang
+    attributes:
+      label: Language
+      placeholder: "English / Português"

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions & ideas
+    url: https://github.com/kayquesanmartin/north-cli/discussions
+    about: Ask questions or discuss ideas in Discussions.
+  - name: 🔒 Report a security issue (private)
+    url: https://github.com/kayquesanmartin/north-cli/security/advisories/new
+    about: Do NOT open a public issue for vulnerabilities — report privately here.

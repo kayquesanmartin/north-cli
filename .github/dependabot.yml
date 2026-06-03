@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Keep GitHub Actions pinned versions fresh (and SHA-pin them over time).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+  # npm (the launcher package). No runtime deps today, but covers future devDeps.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore"

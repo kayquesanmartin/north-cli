@@ -1,0 +1,55 @@
+# Changelog
+
+All notable changes to **north** are documented here.
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- English README as the primary language + `README.pt-BR.md` with a language switcher.
+- Community & governance files: `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`,
+  this changelog, GitHub issue/PR templates, `CODEOWNERS`, Dependabot.
+- CI (compile + install smoke) and an OIDC trusted-publishing release workflow.
+
+### Changed
+- Genericized the default `owner_name` (no personal name baked into the engine).
+
+## [0.2.0]
+
+### Added
+- **Multi-runtime installer.** `npx north-cli` is now an interactive installer
+  (banner, runtime selection, scope, projects folder) that targets **Claude Code,
+  Codex, and Gemini CLI** with one command, cross-platform.
+- `runtimes.py`: engine installed **once** to a neutral home (`~/.north`) plus
+  per-runtime adapters (Claude skills, Codex prompts, Gemini `!{}` TOML commands).
+
+### Changed
+- Engine relocated from `~/.claude/painel` to the runtime-neutral `~/.north`;
+  legacy config is migrated automatically and the north status line is repointed.
+
+## [0.1.2]
+
+### Added
+- `north config` (CRUD for scan_roots / settings / per-project source, no reinstall)
+  and `north status` (what's installed, scan_roots, tracked projects).
+- The installer now **asks** for the projects folder instead of assuming the CWD.
+
+## [0.1.1]
+
+### Fixed
+- npm tarball no longer ships `__pycache__/*.pyc` (a `prepack` step cleans bytecode).
+
+## [0.1.0]
+
+### Added
+- First npm release: cross-platform launcher (`npx north-cli`) around the Python engine.
+- Multi-project auto-discovery, focus (`/foco`), vital signs, dashboard, daily
+  rituals, quick capture (`/btw`) + inbox, GSD `.planning/` interop, and a rich
+  Claude Code status line.
+
+[Unreleased]: https://github.com/kayquesanmartin/north-cli/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/kayquesanmartin/north-cli/releases/tag/v0.2.0
+[0.1.2]: https://github.com/kayquesanmartin/north-cli/releases/tag/v0.1.2
+[0.1.1]: https://github.com/kayquesanmartin/north-cli/releases/tag/v0.1.1
+[0.1.0]: https://github.com/kayquesanmartin/north-cli/releases/tag/v0.1.0

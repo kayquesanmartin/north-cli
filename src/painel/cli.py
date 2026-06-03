@@ -146,7 +146,7 @@ def cmd_build(home: Path, cfg, projects, quiet=False):
 
 def cmd_bom_dia(home: Path, cfg, projects):
     out_file = cmd_build(home, cfg, projects, quiet=True)
-    txt = rituals.build_bom_dia(projects, cfg.settings.get("owner_name", "Kayque"))
+    txt = rituals.build_bom_dia(projects, cfg.settings.get("owner_name", "dev"))
     print(txt)
     reminder = _inbox_reminder_block(
         home, "LEMBRETE — ideias/notas capturadas que ainda pedem decisão:")
