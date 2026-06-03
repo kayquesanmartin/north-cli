@@ -49,6 +49,8 @@ CMDSPEC = [
      "desc": "north — o que está instalado, scan_roots e projetos rastreados."},
     {"name": "config", "sub": "config", "args": True, "aliases": [],
      "desc": "north — ajusta a configuração (scan_roots, settings, projetos) sem reinstalar."},
+    {"name": "learn", "sub": "", "args": True, "aliases": [], "behavior": True,
+     "desc": "north — modo mentor: a IA orienta e você implementa (entender o código, não só copiar)."},
 ]
 
 
@@ -174,6 +176,19 @@ outras ferramentas; apenas execute e apresente o resultado.{argnote}
 """
 
 
+def _skill_body(ns_name):
+    """Corpo do SKILL.md (sem frontmatter) — fonte das behavior skills no Codex/Gemini."""
+    f = SKILLS_SRC / ns_name / "SKILL.md"
+    if not f.exists():
+        return ""
+    txt = f.read_text(encoding="utf-8")
+    if txt.startswith("---"):
+        parts = txt.split("---", 2)
+        if len(parts) == 3:
+            txt = parts[2]
+    return txt.strip()
+
+
 def adapter_codex(home: Path, tool_home: Path, pyexe: str):
     prompts = home / "prompts"
     prompts.mkdir(parents=True, exist_ok=True)
@@ -184,6 +199,11 @@ def adapter_codex(home: Path, tool_home: Path, pyexe: str):
         argnote = ("\nO texto livre do usuário chega em $ARGUMENTS." if c["args"] else "")
         body = _CODEX_PROMPT.format(desc=c["desc"], cmd=base, sub=c["sub"],
                                     argline=argline, argnote=argnote)
+        if c.get("behavior"):
+            inner = _skill_body("north-" + c["name"])
+            if c["args"]:
+                inner = inner + chr(10)*2 + "---" + chr(10) + "Tópico/contexto do usuário: $ARGUMENTS"
+            body = "---" + chr(10) + "description: " + c["desc"] + chr(10) + "---" + chr(10)*2 + inner + chr(10)
         for nm in [c["name"]] + c.get("aliases", []):
             (prompts / "north-{}.md".format(nm)).write_text(body, encoding="utf-8")
             installed.append("north-" + nm)
@@ -210,6 +230,10 @@ def adapter_gemini(home: Path, tool_home: Path, pyexe: str):
             "Apresente essa saída ao usuário, formatada e em português. "
             "O north só lê os planos — não edite nada."
         ).format(name=c["name"], shell=shell)
+        if c.get("behavior"):
+            prompt = _skill_body("north-" + c["name"])
+            if c["args"]:
+                prompt = prompt + chr(10)*2 + "Tópico/contexto: {{args}}"
         toml = 'description = "{}"\nprompt = """\n{}\n"""\n'.format(
             _toml_escape(c["desc"]), prompt)
         for nm in [c["name"]] + c.get("aliases", []):
