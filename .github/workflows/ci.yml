@@ -58,6 +58,8 @@ jobs:
           test -d "$HOME/.claude/skills/north-learn"
           test -f "$HOME/.codex/prompts/north-learn.md"
           ! grep -q "run.py" "$HOME/.codex/prompts/north-learn.md"
+          # live-panel hook registered in settings.json
+          grep -q "north_hook.py" "$HOME/.claude/settings.json"
           python "$HOME/.north/run.py" status
           # uninstall round-trip (remove tudo, preserva dados por padrão)
           mkdir -p "$HOME/.north/config" && echo '{}' > "$HOME/.north/config/projects.json"
@@ -65,6 +67,7 @@ jobs:
           test ! -f "$HOME/.north/run.py"
           test ! -f "$HOME/.codex/prompts/north-focus.md"
           test ! -d "$HOME/.gemini/commands/north"
+          ! grep -q "north_hook.py" "$HOME/.claude/settings.json" 2>/dev/null || (echo "hook nao removido"; exit 1)
           test -f "$HOME/.north/config/projects.json"   # dados preservados
 
   package:

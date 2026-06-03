@@ -286,6 +286,42 @@ def _strip_north_statusline(settings_path):
     return False
 
 
+def _strip_north_hooks(settings_path):
+    """Remove os hooks do north (north_hook.py) de settings.json, preservando os demais."""
+    if not settings_path.exists():
+        return False
+    try:
+        data = json.loads(settings_path.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    hooks = data.get("hooks")
+    if not isinstance(hooks, dict):
+        return False
+    changed = False
+    for event in list(hooks.keys()):
+        new_entries = []
+        for entry in (hooks.get(event) or []):
+            inner = entry.get("hooks", []) if isinstance(entry, dict) else []
+            kept = [h for h in inner if "north_hook.py" not in (h.get("command", "") or "")]
+            if len(kept) != len(inner):
+                changed = True
+            if kept:
+                entry["hooks"] = kept
+                new_entries.append(entry)
+            elif not inner:
+                new_entries.append(entry)
+        if new_entries:
+            hooks[event] = new_entries
+        else:
+            del hooks[event]
+            changed = True
+    if not hooks:
+        data.pop("hooks", None)
+    if changed:
+        settings_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    return changed
+
+
 def runtime_installed(rt_key):
     """True se houver artefatos do north para aquele runtime."""
     _, home = RUNTIMES[rt_key]
@@ -313,6 +349,8 @@ def uninstall_runtime(rt_key):
                 removed.append("skills/" + n)
         if _strip_north_statusline(home / "settings.json"):
             removed.append("statusLine")
+        if _strip_north_hooks(home / "settings.json"):
+            removed.append("hooks")
     elif rt_key == "codex":
         p = home / "prompts"
         if p.exists():

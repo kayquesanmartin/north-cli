@@ -6,6 +6,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+- **Live-panel hook is now actually wired.** `north_hook.py` was copied to `~/.north` but
+  never registered in `settings.json`, so the auto-regenerate-on-activity feature was dead.
+  Install now registers it (non-destructive merge; third-party hooks preserved) and uninstall
+  removes it. It also now triggers on `git push` and `gh pr create`, not just `git commit`.
+  Disable with `--no-hooks`.
+
 ### Added
 - **Mentor tracks (F2): `/north-review` and `/north-test`.** Curated learning tracks
   (behavior skills): review teaches you to read your own diff before opening a PR; test
