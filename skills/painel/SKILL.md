@@ -17,9 +17,9 @@ bloqueios, débito técnico e tema claro/escuro.
 1. Por padrão, **regenera e abre** o painel:
 
    ```bash
-   # macOS / Linux (no Windows/PowerShell: python "$env:USERPROFILE\.claude\painel\run.py" ...)
-   python3 ~/.claude/painel/run.py build
-   python3 ~/.claude/painel/run.py open
+   # macOS / Linux (no Windows/PowerShell: python "$env:USERPROFILE\.north\run.py" ...)
+   python3 ~/.north/run.py build
+   python3 ~/.north/run.py open
    ```
 
    (Instalou via npm? `north build` / `north open`. Ou `north bom-dia` se também
@@ -29,7 +29,7 @@ bloqueios, débito técnico e tema claro/escuro.
    (sem regenerar):
 
    ```bash
-   python3 ~/.claude/painel/run.py open   # Windows: python "$env:USERPROFILE\.claude\painel\run.py" open
+   python3 ~/.north/run.py open   # Windows: python "$env:USERPROFILE\.north\run.py" open
    ```
 
 3. Mostre a saída do script (caminho do `dashboard.html`, nº de projetos,
@@ -37,7 +37,7 @@ bloqueios, débito técnico e tema claro/escuro.
 
 4. Se aparecerem novos projetos descobertos ("+ N novo(s) projeto(s)…"),
    comente brevemente e lembre que a config fica em
-   `~/.claude/painel/config/projects.json` (apelidos, cores, ordem,
+   `~/.north/config/projects.json` (apelidos, cores, ordem,
    ligar/desligar projetos, fonte primária).
 
 **Não edite os arquivos de plano** — o motor só lê. Este comando é de leitura/visualização.

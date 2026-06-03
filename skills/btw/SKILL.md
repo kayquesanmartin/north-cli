@@ -16,9 +16,9 @@ sendo feito. Nada de derailing: é só registrar para não perder.
 
    ```bash
    # macOS / Linux
-   python3 ~/.claude/painel/run.py btw "<texto da ideia>"
+   python3 ~/.north/run.py btw "<texto da ideia>"
    # Windows (PowerShell)
-   python "$env:USERPROFILE\.claude\painel\run.py" btw "<texto da ideia>"
+   python "$env:USERPROFILE\.north\run.py" btw "<texto da ideia>"
    ```
 
    (Instalou via npm? `north btw "<texto>"`. O projeto é inferido automaticamente

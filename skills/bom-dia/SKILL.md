@@ -17,9 +17,9 @@ consolida o progresso e mostra onde focar.
 
    ```bash
    # macOS / Linux
-   python3 ~/.claude/painel/run.py bom-dia
+   python3 ~/.north/run.py bom-dia
    # Windows (PowerShell)
-   python "$env:USERPROFILE\.claude\painel\run.py" bom-dia
+   python "$env:USERPROFILE\.north\run.py" bom-dia
    ```
 
    (Instalou via npm? `north bom-dia` funciona em qualquer SO.)

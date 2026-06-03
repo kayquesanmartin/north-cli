@@ -17,15 +17,15 @@ não commitados, bloqueios, próximos passos).
 
    ```bash
    # macOS / Linux
-   python3 ~/.claude/painel/run.py fim-do-dia
+   python3 ~/.north/run.py fim-do-dia
    # Windows (PowerShell)
-   python "$env:USERPROFILE\.claude\painel\run.py" fim-do-dia
+   python "$env:USERPROFILE\.north\run.py" fim-do-dia
    ```
 
    (Instalou via npm? `north fim-do-dia` funciona em qualquer SO.)
 
 2. Mostre a saída do script (linha "FIM DO DIA —" + a lista de resumos gerados,
-   um por projeto, em `~/.claude/painel/resumos/<projeto>/`).
+   um por projeto, em `~/.north/resumos/<projeto>/`).
 
 3. Leia os resumos recém-gerados (caminhos impressos pelo script) e mostre o
    conteúdo formatado ao usuário, agrupado por projeto.

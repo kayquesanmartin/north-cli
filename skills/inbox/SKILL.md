@@ -14,8 +14,8 @@ Revisa o que foi capturado com `/btw` e ajuda a dar destino a cada item.
 1. Liste os itens abertos:
 
    ```bash
-   # macOS / Linux (Windows: python "$env:USERPROFILE\.claude\painel\run.py" inbox)
-   python3 ~/.claude/painel/run.py inbox
+   # macOS / Linux (Windows: python "$env:USERPROFILE\.north\run.py" inbox)
+   python3 ~/.north/run.py inbox
    ```
 
    (Instalou via npm? `north inbox` em qualquer SO.)
@@ -27,11 +27,11 @@ Revisa o que foi capturado com `/btw` e ajuda a dar destino a cada item.
    - **Validar/fazer agora** → ofereça acionar o `tech-lead` ou o squad adequado
      para transformar a ideia em tarefa; ao concluir, marque feito:
      ```bash
-     python3 ~/.claude/painel/run.py inbox-done <id>     # ou: north inbox-done <id>
+     python3 ~/.north/run.py inbox-done <id>     # ou: north inbox-done <id>
      ```
    - **Descartar** (não faz mais sentido):
      ```bash
-     python3 ~/.claude/painel/run.py inbox-dismiss <id>  # ou: north inbox-dismiss <id>
+     python3 ~/.north/run.py inbox-dismiss <id>  # ou: north inbox-dismiss <id>
      ```
    - **Manter** → não faça nada; segue na inbox e será relembrado no próximo bom-dia.
 

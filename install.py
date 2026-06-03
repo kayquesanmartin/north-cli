@@ -35,6 +35,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import runtimes as RT
+
 SRC = Path(__file__).resolve().parent / "src"
 SKILLS_SRC = Path(__file__).resolve().parent / "skills"
 TEMPLATES_SRC = Path(__file__).resolve().parent / "templates"
@@ -192,12 +194,18 @@ def setup_statusline(home: Path, engine: Path, force=False):
     new_sl = {"type": "command", "command": command, "padding": 1}
 
     existing = data.get("statusLine")
-    if existing and not force:
+    existing_cmd = (existing or {}).get("command", "") if isinstance(existing, dict) else ""
+    # statusline que JA e do north (aponta pro nosso run.py statusline) -> atualiza
+    # livremente (migra do engine antigo p/ o novo). Outra (ex.: GSD) -> preserva.
+    is_ours = "run.py" in existing_cmd and "statusline" in existing_cmd
+    if existing and not force and not is_ours:
         return "exists", command
 
     data["statusLine"] = new_sl
     settings.parent.mkdir(parents=True, exist_ok=True)
     settings.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    if is_ours and not force:
+        return "updated", command
     return ("forced" if existing else "set"), command
 
 
@@ -326,64 +334,48 @@ def apply_selection(cfg_path, selected_ids, all_ids):
     cfg_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
+def _arg_value(args, flag, default=None):
+    if flag in args:
+        i = args.index(flag)
+        if i + 1 < len(args):
+            return args[i + 1]
+    return default
+
+
 def main():
     try:
-        sys.stdout.reconfigure(encoding="utf-8")   # console limpo em qualquer terminal Windows
+        sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
     args = sys.argv[1:]
-    extra_root = None
-    do_build = True
     auto_all = "--all" in args
     install_gh = "--install-gh" in args
     skip_plugins = "--skip-plugins" in args
     skip_statusline = "--no-statusline" in args
     force_statusline = "--statusline" in args
-    if "--no-build" in args:
-        do_build = False
-    if "--scan-root" in args:
-        i = args.index("--scan-root")
-        if i + 1 < len(args):
-            extra_root = args[i + 1]
+    do_build = "--no-build" not in args
+    extra_root = _arg_value(args, "--scan-root")
+    scope = (_arg_value(args, "--scope", "global") or "global").lower()
+    # runtimes alvo (csv). Default: claude (compat). Node passa a seleção do usuario.
+    runtimes_csv = _arg_value(args, "--runtimes", "claude")
+    targets = [r.strip() for r in runtimes_csv.split(",") if r.strip() in RT.RUNTIMES]
+    if not targets:
+        targets = ["claude"]
 
     print("=" * 64)
-    print("  Instalando o north")
+    print("  Instalando o north  ({} | runtimes: {})".format(
+        scope, ", ".join(RT.RUNTIMES[t][0] for t in targets)))
     print("=" * 64)
 
-    home = claude_home()
-    home.mkdir(parents=True, exist_ok=True)
-    print("  .claude        -> {}".format(home))
+    # ---- motor (uma vez, home neutro ~/.north) ----
+    tool_home = RT.engine_home(scope)
+    RT.install_engine(tool_home)
+    if RT.migrate_legacy_config(tool_home):
+        print("  config         -> migrada de ~/.claude/painel (preservada)")
+    print("  motor          -> {}".format(tool_home))
 
-    engine = copy_engine(home)
-    print("  motor          -> {}".format(engine))
-
-    skills = install_skills(home)
-    print("  skills         -> {} ({})".format(home / "skills", ", ".join(skills)))
-
-    # ---- plugins do toolchain + gh cli ----
-    if not skip_plugins:
-        novos, ja = ensure_plugins(home)
-        print("  plugins        -> {} habilitado(s) ({} novo(s), {} ja ativo(s))".format(
-            len(novos) + len(ja), len(novos), len(ja)))
-    ensure_gh(install_gh)
-
-    # ---- statusline (barra de status do Claude Code) — nao-destrutivo ----
-    sl_status, sl_cmd = (None, None)
-    if not skip_statusline:
-        sl_status, sl_cmd = setup_statusline(home, engine, force=force_statusline)
-        if sl_status == "set":
-            print("  statusline     -> configurada (proxima acao + alertas na barra)")
-        elif sl_status == "forced":
-            print("  statusline     -> SUBSTITUIDA pela do north (--statusline)")
-        elif sl_status == "exists":
-            print("  statusline     -> ja existe uma; preservada. Para usar a do north:")
-            print('                    \"statusLine\": {{\"type\":\"command\",\"command\":\"{}\"}}'.format(sl_cmd))
-            print("                    (ou rode com --statusline para substituir)")
-        elif sl_status == "invalid":
-            print("  statusline     -> settings.json invalido; pulei (corrija manualmente)")
-
-    scan_root = detect_scan_root()
-    # pergunta a pasta dos projetos (a menos que --all, --scan-root, ou sem TTY)
+    # ---- scan root (pasta dos projetos) ----
+    scan_root = Path(extra_root).expanduser() if extra_root else detect_scan_root()
     if sys.stdin.isatty() and not auto_all and not extra_root:
         print("")
         print("  Onde ficam seus projetos? (o north varre essa pasta atras de")
@@ -396,53 +388,64 @@ def main():
             scan_root = Path(ans).expanduser()
             if not scan_root.exists():
                 print("  (aviso: '{}' nao existe ainda — registrando mesmo assim)".format(scan_root))
-    cfg_path = seed_config(engine, scan_root, extra_root)
-    print("  config         -> {}".format(cfg_path))
+    cfg_path = seed_config(tool_home, scan_root)
     print("  scan root      -> {}".format(scan_root))
 
-    # ---- menu interativo: escolher quais projetos acompanhar ----
-    sys.path.insert(0, str(engine))
-    from painel.discovery import scan_candidates  # noqa
-    roots = [scan_root] + ([Path(extra_root)] if extra_root else [])
-    candidates = scan_candidates(roots)
-    if candidates:
-        selected = select_projects(candidates, auto_all)
-        apply_selection(cfg_path, selected, [c["id"] for c in candidates])
-        print("  acompanhando   -> {}".format(
-            ", ".join(sorted(selected)) if selected else "(nenhum selecionado)"))
-    else:
-        print("  acompanhando   -> nenhum projeto rastreavel encontrado sob a raiz")
+    pyexe = sys.executable
+
+    # ---- cascas por runtime ----
+    def rt_home(rt):
+        return (Path.cwd() / ("." + rt)) if scope == "local" else RT.RUNTIMES[rt][1]
+
+    sl_status = None
+    for rt in targets:
+        home = rt_home(rt)
+        home.mkdir(parents=True, exist_ok=True)
+        installed = RT.ADAPTERS[rt](home, tool_home, pyexe)
+        print("  [{:<11}] {} comando(s) -> {}".format(
+            RT.RUNTIMES[rt][0], len(installed), home))
+        # extras especificos do Claude Code: plugins + statusline
+        if rt == "claude":
+            if not skip_plugins:
+                novos, ja = ensure_plugins(home)
+                print("               plugins: {} habilitado(s)".format(len(novos) + len(ja)))
+            if not skip_statusline:
+                sl_status, sl_cmd = setup_statusline(home, tool_home, force=force_statusline)
+                if sl_status == "set":
+                    print("               statusline configurada")
+                elif sl_status == "updated":
+                    print("               statusline do north atualizada (-> ~/.north)")
+                elif sl_status == "forced":
+                    print("               statusline SUBSTITUIDA (--statusline)")
+                elif sl_status == "exists":
+                    print("               statusline ja existe (outra); preservada (--statusline forca)")
+
+    ensure_gh(install_gh)
 
     if do_build:
-        print("  gerando o primeiro painel (auto-descoberta)...")
-        sys.path.insert(0, str(engine))
-        from painel.cli import main as cli_main  # noqa
-        cli_main(["build"], engine)
+        sys.path.insert(0, str(tool_home))
+        try:
+            from painel.cli import main as cli_main  # noqa
+            cli_main(["build"], tool_home)
+        except Exception as e:
+            print("  (painel sera gerado no primeiro uso — {})".format(e))
 
-    out = engine / "output" / "dashboard.html"
     print("")
     print("=" * 64)
-    print("  PRONTO. Como usar:")
+    print("  PRONTO. north instalado para: {}".format(
+        ", ".join(RT.RUNTIMES[t][0] for t in targets)))
     print("=" * 64)
-    print("  No Claude Code (de QUALQUER projeto):")
-    print("    /foco          a próxima ação + squad sugerido")
-    print("    /btw <ideia>   captura rápida sem quebrar o fluxo")
-    print("    /inbox         tria as ideias capturadas")
-    print("    /bom-dia       foco do dia + lembretes + abre o painel")
-    print("    /fim-do-dia    resumos do dia por projeto")
-    print("    /painel        regenera e abre o painel")
+    if "claude" in targets:
+        print("  Claude Code: /foco · /btw <ideia> · /inbox · /bom-dia · /fim-do-dia · /painel")
+    if "codex" in targets:
+        print("  Codex:       /north-foco · /north-btw · /north-painel · ...")
+    if "gemini" in targets:
+        print("  Gemini CLI:  /north:foco · /north:btw · /north:painel · ...")
     print("")
-    print("  Direto no terminal (ou 'north <cmd>' se instalou via npm):")
-    print('    python "{}" foco'.format(engine / "run.py"))
-    print("    north status              ver o que esta instalado e rastreado")
-    print("    north config              ver/editar config (scan_roots, settings, projetos)")
-    print("    north config add-root \"<pasta>\"   adicionar outra pasta de projetos")
-    print("")
-    print("  Painel: {}".format(out))
-    print("  Config (apelidos/cores/toggles): {}".format(cfg_path))
-    if sl_status in ("set", "forced"):
-        print("  Statusline ativa: reinicie o Claude Code para ver a barra.")
-    print("  Plugins habilitados: reinicie o Claude Code (ou /hooks) para carregar.")
+    print("  Terminal:    north status | north config | north config add-root \"<pasta>\"")
+    print("  Config:      {}".format(cfg_path))
+    if sl_status in ("set", "forced", "updated"):
+        print("  Reinicie o Claude Code para a statusline aparecer.")
     print("=" * 64)
 
 

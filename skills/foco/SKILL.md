@@ -16,9 +16,9 @@ vale a pena fazer agora, considerando todos os projetos ativos.
 
    ```bash
    # macOS / Linux
-   python3 ~/.claude/painel/run.py foco
+   python3 ~/.north/run.py foco
    # Windows (PowerShell)
-   python "$env:USERPROFILE\.claude\painel\run.py" foco
+   python "$env:USERPROFILE\.north\run.py" foco
    ```
 
    (Instalou via npm? `north foco` funciona em qualquer SO.)

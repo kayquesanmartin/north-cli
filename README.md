@@ -40,42 +40,39 @@ north te dá **sinais vitais e direção**:
 
 ## Instalação
 
-Requisitos: **Python 3.8+** e o **[Claude Code](https://claude.com/claude-code)**. `git` opcional (habilita autoria e sinais vitais de git). Funciona em **Windows, macOS e Linux**.
-
-**Via npx** (recomendado — não precisa clonar):
+Requisitos: **Python 3.8+**. `git` opcional (habilita autoria e sinais vitais de git). Funciona em **Windows, macOS e Linux**. north é **para IAs** — instala em vários runtimes.
 
 ```bash
-npx north-cli            # baixa e instala (bootstrap)
-# ou, global:
-npm install -g north-cli && north install
+npx north-cli@latest
 ```
 
-O pacote npm é só um **lançador cross-plataforma**: detecta o Python
-(`python3`/`python`/`py`) e roda o `install.py` embutido — north continua sendo
-um app Python, sem nuvem e sem reescrever nada em Node.
+Um comando. O instalador interativo (cross-plataforma, **sem você digitar "python"**):
 
-**Via clone** (para desenvolver o north):
+1. Pergunta **para quais runtimes** instalar — **Claude Code**, **Codex**, **Gemini CLI** (ou todos);
+2. Pergunta o **escopo** — global (`~/.north`, `~/.claude`, …) ou local (`./…`);
+3. Pergunta a **pasta dos seus projetos** (sugere o diretório atual);
+4. Instala o **motor uma vez** em `~/.north/` e gera as integrações por runtime;
+5. Gera o primeiro painel.
+
+> Como funciona: north é um motor Python; o pacote npm é o **lançador cross-plataforma** — detecta `python3`/`python`/`py` e instala. O motor mora num home neutro (`~/.north`) e cada runtime ganha só os comandos que o chamam.
+
+Integração por runtime (mesmo motor, casca diferente):
+
+| Runtime | Comandos | Onde |
+|---|---|---|
+| **Claude Code** | `/foco`, `/btw`, `/painel`… (skills) + statusline | `~/.claude/skills/` |
+| **Codex** | `/north-foco`, `/north-btw`… (prompts) | `~/.codex/prompts/` |
+| **Gemini CLI** | `/north:foco`, `/north:btw`… (comandos `!{}`) | `~/.gemini/commands/north/` |
+
+Modo não-interativo (CI / scriptado) e flags:
 
 ```bash
-git clone https://github.com/kayquesanmartin/north-cli.git
-cd north-cli
-python install.py
+npx north-cli install --runtimes claude,codex,gemini --scope global \
+    --scan-root "/caminho/dos/projetos" --all
 ```
+`--runtimes <csv>` · `--scope global|local` · `--scan-root "<pasta>"` · `--all` · `--skip-plugins` · `--no-statusline` · `--no-build`
 
-O instalador (idempotente):
-
-1. Copia o motor para a *tool home* `~/.claude/painel/`.
-2. Instala as skills globais em `~/.claude/skills/`.
-3. Detecta seus projetos sob a raiz do workspace e **abre um menu** para você escolher quais acompanhar (templates são detectados e ignorados).
-4. Gera o primeiro painel.
-
-| Flag | Efeito |
-|---|---|
-| `--all` | Acompanha todos os projetos achados, sem menu |
-| `--scan-root "<caminho>"` | Adiciona uma raiz extra de busca |
-| `--skip-plugins` | Não mexe nos plugins do `settings.json` |
-| `--no-build` | Não gera o painel ao final |
-| `--install-gh` | Tenta instalar o `gh` CLI via winget (Windows) |
+**Via clone** (para desenvolver o north): `git clone … && cd north-cli && python install.py --runtimes claude`.
 
 ---
 
@@ -95,26 +92,25 @@ O instalador (idempotente):
 ### No terminal
 
 ```bash
-python ~/.claude/painel/run.py bom-dia        # foco do dia + abre painel
-python ~/.claude/painel/run.py foco           # só a próxima ação
-python ~/.claude/painel/run.py fim-do-dia     # resumos do dia por projeto
-python ~/.claude/painel/run.py build          # só regenera o painel
-python ~/.claude/painel/run.py btw "<ideia>"  # captura rápida
-python ~/.claude/painel/run.py inbox          # lista a inbox
-python ~/.claude/painel/run.py status         # o que está instalado, scan_roots, projetos rastreados
-python ~/.claude/painel/run.py config         # ver/editar config sem reinstalar
-python ~/.claude/painel/run.py open           # abre o painel já gerado
+python ~/.north/run.py bom-dia        # foco do dia + abre painel
+python ~/.north/run.py foco           # só a próxima ação
+python ~/.north/run.py fim-do-dia     # resumos do dia por projeto
+python ~/.north/run.py build          # só regenera o painel
+python ~/.north/run.py btw "<ideia>"  # captura rápida
+python ~/.north/run.py inbox          # lista a inbox
+python ~/.north/run.py status         # o que está instalado, scan_roots, projetos rastreados
+python ~/.north/run.py config         # ver/editar config sem reinstalar
+python ~/.north/run.py open           # abre o painel já gerado
 ```
 
-> Com a instalação npm, troque `python ~/.claude/painel/run.py` por **`north`** em qualquer SO (`north foco`, `north status`, …).
+> Com a instalação npm, troque `python ~/.north/run.py` por **`north`** em qualquer SO (`north foco`, `north status`, …).
 
 ### Setup passo a passo
 
 ```bash
-# 1. instale (de qualquer lugar — o motor vai pra ~/.claude)
+# 1. instale (de qualquer lugar — o motor vai pra ~/.north)
 npx north-cli@latest
-#    o instalador PERGUNTA a pasta dos seus projetos (sugere o diretório atual)
-#    e abre um menu pra escolher quais acompanhar.
+#    pergunta os runtimes (Claude Code/Codex/Gemini), o escopo e a pasta dos projetos.
 
 # 2. veja o que ficou configurado
 north status
@@ -148,7 +144,7 @@ já tenha (nesse caso ele só imprime o trecho pra você compor/colar). Para for
 
 ```jsonc
 { "statusLine": { "type": "command",
-  "command": "python \"~/.claude/painel/run.py\" statusline", "padding": 1 } }
+  "command": "python \"~/.north/run.py\" statusline", "padding": 1 } }
 ```
 
 É barata por design: lê só um cache (`output/state.json`, regenerado a cada
@@ -174,7 +170,7 @@ seus projetos/
     plan-build/...
           │
           ▼
-   north (motor)  ──lê, nunca escreve──▶  ~/.claude/painel/output/dashboard.html
+   north (motor)  ──lê, nunca escreve──▶  ~/.north/output/dashboard.html
 ```
 
 ### 🔗 Interoperabilidade com o GSD
@@ -223,7 +219,7 @@ do estado atual — sem precisar de histórico:
 
 ## Configuração
 
-Tudo vive em `~/.claude/painel/config/projects.json`:
+Tudo vive em `~/.north/config/projects.json`:
 
 ```jsonc
 {
@@ -255,10 +251,11 @@ a config só **ajusta** (liga/desliga, apelido, cor, ordem, thresholds).
 ```
 north-cli/
 ├── package.json            # camada npm (npx north-cli)
-├── bin/north.js            # lançador cross-plataforma: acha o Python e delega
-├── install.py              # o instalável — rode este (ou via npx)
+├── bin/north.js            # lançador/instalador interativo cross-plataforma (npx)
+├── install.py              # orquestrador do install (flags: --runtimes, --scope)
+├── runtimes.py             # motor (1×) + adapters por runtime (Claude/Codex/Gemini)
 ├── src/
-│   ├── run.py              # launcher (vai para a tool home ~/.claude/painel/)
+│   ├── run.py              # launcher (vai para a tool home ~/.north/)
 │   ├── north_hook.py       # painel "vivo": regenera ao parar uma sessão
 │   └── painel/
 │       ├── config.py       # projects.json: scan_roots, toggles, settings
