@@ -2,7 +2,7 @@
 name: focus
 description: north — Direção do dia. Mostra A próxima ação de maior valor entre todos os projetos (sprint atual > caminho crítico > desbloqueada), respeita o limite de WIP e sugere o squad para atacar. Ative para "/focus", "/agora", "o que faço agora", "qual a próxima", "tô perdido", "por onde começo".
 allowed-tools: Bash
-argument-hint: ""
+argument-hint: "[--only <projeto> | --all]"
 ---
 
 # /focus — Direção (north)
@@ -22,6 +22,15 @@ vale a pena fazer agora, considerando todos os projetos ativos.
    ```
 
    (Instalou via npm? `north focus` funciona em qualquer SO.)
+
+   **Foco do dia (1 projeto):** se o usuário só quer acompanhar um projeto hoje,
+   fixe o foco — `morning`, `wrap-up` e `focus` passam a mostrar só ele (o painel
+   continua completo):
+
+   ```bash
+   python3 ~/.north/run.py focus --only <id-do-projeto>   # fixa o foco do dia
+   python3 ~/.north/run.py focus --all                    # volta ao portfólio
+   ```
 
 2. Mostre a saída completa: a **próxima ação** (task + projeto + sprint), o
    **porquê** (em andamento / sprint atual / desbloqueada), o **squad sugerido**,

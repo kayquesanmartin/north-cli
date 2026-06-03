@@ -75,6 +75,20 @@ class Config:
             return cfg["color"]
         return PALETTE[order % len(PALETTE)]
 
+    @property
+    def focused_project(self):
+        """Projeto unico em foco no dia (None = portfolio completo)."""
+        return (self.data.get("settings", {}) or {}).get("focused_project") or None
+
+    def set_focused_project(self, pid):
+        """Fixa (ou limpa, com pid falsy) o projeto em foco e persiste."""
+        st = self.data.setdefault("settings", {})
+        if pid:
+            st["focused_project"] = pid
+        else:
+            st.pop("focused_project", None)
+        self.save()
+
     def is_enabled(self, pid: str) -> bool:
         if pid in self.exclude:
             return False

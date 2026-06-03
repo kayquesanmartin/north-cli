@@ -6,6 +6,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **Daily project focus.** `north focus --only <project>` scopes `/morning`,
+  `/wrap-up` and `/focus` to a single project for the day; `north focus --all`
+  returns to the full portfolio. The dashboard always shows everything — only the
+  ritual output is scoped. The focus is sticky until changed.
+
 ## [0.3.0] - 2026-06-03
 
 ### Added
