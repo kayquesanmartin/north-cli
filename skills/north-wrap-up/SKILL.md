@@ -13,6 +13,12 @@ não commitados, bloqueios, próximos passos).
 
 **Passos obrigatórios (nessa ordem):**
 
+0. **Atualize os refs git** (best-effort, para a checagem pré-push ser precisa):
+
+   ```bash
+   git fetch --all --quiet 2>/dev/null || true
+   ```
+
 1. Rode o launcher da central:
 
    ```bash
@@ -36,5 +42,14 @@ não commitados, bloqueios, próximos passos).
 5. Se houver linhas `[PREENCHER]` que exigem decisão humana (ex.: próxima TASK
    quando não há planejadas), liste-as como itens que precisam do input do usuário.
 
+6. **Versionamento antes de encerrar (boas práticas git):** se algum resumo trouxer
+   "⚠ ANTES DE PUSHAR" (branch atrás do remoto/base) ou commits locais não pushados,
+   oriente o fechamento seguro — **sem executar sozinho, apenas guiando**:
+   - `git pull --rebase` (sincroniza sem merge-commit ruidoso) e resolver conflitos agora;
+   - rodar os testes após o rebase;
+   - revisar o diff (`/north-...`? não — `git diff`) antes do push;
+   - então `git push`. Se a branch é de feature, lembre de abrir/atualizar o PR.
+   Objetivo: terminar o dia com a branch sincronizada, sem conflito pendente.
+
 **Não faça mais nada além disso.** Não invoque outras skills, não acione squads,
-não rode testes. Este é o ritual de encerramento — só consolidar o dia.
+não rode testes você mesmo (além do fetch best-effort). Este é o ritual de encerramento.

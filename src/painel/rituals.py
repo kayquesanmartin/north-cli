@@ -121,6 +121,23 @@ def build_bom_dia(projects, owner="Kayque"):
             L.append("      -> {}".format(tip))
         L.append("")
 
+    sync_lines = []
+    for p in projects:
+        sy = (p["git"] or {}).get("sync", {}) or {}
+        bits = []
+        if sy.get("behind"):
+            bits.append("{} atras de {}".format(sy["behind"], sy.get("upstream") or "upstream"))
+        if sy.get("base_behind"):
+            bits.append("{} atras de {}".format(sy["base_behind"], sy.get("base") or "base"))
+        if bits:
+            sync_lines.append("    {} — {} (rode: git pull --rebase antes de novos commits)".format(
+                p["name"], "; ".join(bits)))
+    if sync_lines:
+        L.append("  ⚠ VERSIONAMENTO — atualize antes de trabalhar (evita conflito)")
+        L.append("  " + "-" * 50)
+        L.extend(sync_lines)
+        L.append("")
+
     L.append(bar)
     L.append("  Painel atualizado e abrindo no navegador.")
     L.append(bar)
@@ -161,6 +178,13 @@ def build_resumo_projeto(p, data_br):
             p["name"], r["pct"], r["done"], r["total"])
         entregue = "- [PREENCHER] nenhum commit detectado hoje — descrever avanco manual se houver."
         revisao = "- Sem alteracoes de codigo para revisar hoje."
+
+    sy = git.get("sync", {}) or {}
+    if (sy.get("behind") or 0) or (sy.get("base_behind") or 0):
+        ref = sy.get("upstream") or sy.get("base") or "o remoto"
+        entregue += "\n- ANTES DE PUSHAR: {} esta a frente — rode `git pull --rebase` para evitar conflito.".format(ref)
+    elif (sy.get("ahead") or 0):
+        entregue += "\n- {} commit(s) local(is) ainda nao pushado(s).".format(sy["ahead"])
 
     open_blk = p["open_blockers"]
     bloqueios = ("\n".join("- {} {}".format((b["id"] + ":") if b["id"] else "-", b["desc"][:110])

@@ -58,6 +58,23 @@ def compute_alerts(proj, settings):
             "detail": "{} dias sem commit".format(idle),
         })
 
+    # 2b. Sincronia git -> evitar conflito antes de novos commits/push
+    sync = git.get("sync", {}) or {}
+    if (sync.get("behind") or 0) > 0:
+        alerts.append({
+            "kind": "behind", "severity": "warn",
+            "title": "Remoto a frente",
+            "detail": "{} tem {} commit(s) novo(s) — pull/rebase antes de continuar".format(
+                sync.get("upstream") or "upstream", sync["behind"]),
+        })
+    if (sync.get("base_behind") or 0) > 0:
+        alerts.append({
+            "kind": "base-behind", "severity": "warn",
+            "title": "Base avancou",
+            "detail": "{} tem {} commit(s) novo(s) — rebase para evitar conflito".format(
+                sync.get("base") or "base", sync["base_behind"]),
+        })
+
     # 3. Bloqueio aberto agora -> caminho critico travado
     open_blk = proj.get("open_blockers", []) or []
     if open_blk:

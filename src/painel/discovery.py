@@ -139,6 +139,32 @@ def contributors(cwd: Path, plan_build: Path, limit=6):
     return [{"name": n, "count": k} for n, k in c.most_common(limit)]
 
 
+def _git_sync(cwd: Path, branch: str):
+    """Estado de sincronia (refs LOCAIS, sem fetch): ahead/behind do upstream e
+    quanto a branch-base (origin/HEAD) avancou. Tudo degrada p/ 0/None offline."""
+    s = {"upstream": None, "ahead": 0, "behind": 0, "base": None, "base_behind": 0}
+    up = _git(["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], cwd)
+    if up and "{u}" not in up:
+        s["upstream"] = up
+        lr = _git(["rev-list", "--left-right", "--count", "@{u}...HEAD"], cwd)
+        parts = lr.split()
+        if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+            s["behind"], s["ahead"] = int(parts[0]), int(parts[1])
+    base = _git(["rev-parse", "--abbrev-ref", "origin/HEAD"], cwd)  # ex.: origin/main
+    if not (base and "/" in base):
+        for cand in ("origin/main", "origin/master", "origin/dev", "origin/develop"):
+            if _git(["rev-parse", "--verify", "--quiet", cand], cwd):
+                base = cand
+                break
+    if base and "/" in base:
+        s["base"] = base
+        if base.rsplit("/", 1)[-1] != branch:
+            bb = _git(["rev-list", "--count", "HEAD.." + base], cwd)
+            if bb.isdigit():
+                s["base_behind"] = int(bb)
+    return s
+
+
 def git_info(project_dir: Path):
     branch = _git(["rev-parse", "--abbrev-ref", "HEAD"], project_dir)
     dirty = 0
@@ -159,7 +185,7 @@ def git_info(project_dir: Path):
     if ct.isdigit():
         idle_days = int((datetime.now().timestamp() - int(ct)) // 86400)
     return {"branch": branch, "dirty": dirty, "today_commits": commits,
-            "idle_days": idle_days}
+            "idle_days": idle_days, "sync": _git_sync(project_dir, branch)}
 
 
 # ----------------------------------------------------------------------------
