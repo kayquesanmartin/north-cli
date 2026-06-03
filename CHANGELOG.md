@@ -6,6 +6,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **Mentor tracks (F2): `/north-review` and `/north-test`.** Curated learning tracks
+  (behavior skills): review teaches you to read your own diff before opening a PR; test
+  teaches real validation (API via Postman/Insomnia, DB, frontend/e2e) — you do it, the AI guides.
+
 ## [0.7.0] - 2026-06-03
 
 ### Added
