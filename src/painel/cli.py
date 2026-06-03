@@ -144,9 +144,26 @@ def cmd_build(home: Path, cfg, projects, quiet=False):
     return out_file
 
 
+def _focus_subset(cfg, projects):
+    """Lente do dia: restringe a saida dos rituais ao projeto focado (se houver).
+    Devolve (lista, focused_id|None). Nunca filtra o dashboard — so o texto."""
+    fp = getattr(cfg, "focused_project", None)
+    if not fp:
+        return projects, None
+    sub = [p for p in projects if p["id"] == fp]
+    return (sub, fp) if sub else (projects, None)
+
+
+def _focus_banner(fp):
+    print("📌 Foco do dia: {}  (north focus --all para o portfolio completo)".format(fp))
+
+
 def cmd_bom_dia(home: Path, cfg, projects):
     out_file = cmd_build(home, cfg, projects, quiet=True)
-    txt = rituals.build_bom_dia(projects, cfg.settings.get("owner_name", "dev"))
+    projs, fp = _focus_subset(cfg, projects)
+    if fp:
+        _focus_banner(fp)
+    txt = rituals.build_bom_dia(projs, cfg.settings.get("owner_name", "dev"))
     print(txt)
     reminder = _inbox_reminder_block(
         home, "LEMBRETE — ideias/notas capturadas que ainda pedem decisão:")
@@ -165,8 +182,11 @@ def cmd_fim_do_dia(home: Path, cfg, projects):
     data_iso = now.strftime("%Y-%m-%d")
     data_br = now.strftime("%d/%m/%Y")
     resumos_root = home / "resumos"
+    projs, fp = _focus_subset(cfg, projects)
+    if fp:
+        _focus_banner(fp)
     written = []
-    for p in projects:
+    for p in projs:
         body = rituals.build_resumo_projeto(p, data_br)
         # central
         pdir = resumos_root / p["id"]
@@ -198,10 +218,28 @@ def cmd_fim_do_dia(home: Path, cfg, projects):
     return out_file
 
 
-def cmd_foco(home: Path, cfg, projects):
-    """Imprime a proxima acao (direcao). Tambem regenera o painel (silencioso)."""
+def cmd_foco(home: Path, cfg, projects, args=None):
+    """Imprime a proxima acao (direcao). Tambem regenera o painel (silencioso).
+    Flags: --only <id> fixa o foco do dia; --all/--clear volta ao portfolio."""
+    args = args or []
+    if ("--all" in args) or ("--clear" in args):
+        cfg.set_focused_project(None)
+        print("📌 Foco limpo — acompanhando todos os projetos.")
+    elif "--only" in args:
+        i = args.index("--only")
+        pid = args[i + 1] if i + 1 < len(args) else ""
+        ids = {p["id"] for p in projects}
+        if pid not in ids:
+            print("Projeto '{}' nao encontrado.".format(pid))
+            print("Disponiveis: {}".format(", ".join(sorted(ids))))
+            return
+        cfg.set_focused_project(pid)
+        print("📌 Foco do dia fixado: {}".format(pid))
     cmd_build(home, cfg, projects, quiet=True)
-    print(F.build_focus_text(projects, cfg.settings.get("wip_limit", F.WIP_LIMIT)))
+    projs, fp = _focus_subset(cfg, projects)
+    if fp:
+        _focus_banner(fp)
+    print(F.build_focus_text(projs, cfg.settings.get("wip_limit", F.WIP_LIMIT)))
 
 
 def cmd_inbox_add(home: Path, text: str):
@@ -580,10 +618,10 @@ def main(argv, home: Path):
     elif cmd in ("wrap-up", "wrapup", "wrap_up", "fim-do-dia", "fimdodia", "fim_do_dia"):
         cmd_fim_do_dia(home, cfg, projects)
     elif cmd in ("focus", "foco", "agora", "next"):
-        cmd_foco(home, cfg, projects)
+        cmd_foco(home, cfg, projects, argv[1:])
     else:
         print("Comando desconhecido: {}".format(cmd))
-        print("Use: build | morning | wrap-up | focus | note <ideia> | inbox | "
+        print("Use: build | morning | wrap-up | focus [--only <id>|--all] | note <ideia> | inbox | "
               "config | status | statusline | open")
         return 2
     return 0

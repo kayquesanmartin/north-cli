@@ -37,5 +37,9 @@ consolida o progresso e mostra onde focar.
    (Backend, Frontend, QA, Arquitetura, Security, DevOps…). Use as ferramentas
    já recomendadas pelo script como pista. Seja breve — uma linha por sugestão.
 
+5. Se houver vários projetos e o usuário sinalizar que hoje só vai mexer em um,
+   **ofereça fixar o foco do dia** (`north focus --only <id>`) — assim o `/morning`
+   e o `/wrap-up` mostram só esse projeto. `north focus --all` volta ao portfólio.
+
 **Não faça mais nada além disso.** Não edite código, não rode testes, não
 invoque outras skills. Este é só o ritual de bom dia.
