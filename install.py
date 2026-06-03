@@ -529,7 +529,7 @@ def main():
         ", ".join(RT.RUNTIMES[t][0] for t in targets)))
     print("=" * 64)
     if "claude" in targets:
-        print("  Claude Code: /focus · /note <ideia> · /inbox · /morning · /wrap-up · /panel · /status · /config")
+        print("  Claude Code: /north-focus · /north-note <ideia> · /north-inbox · /north-morning · /north-wrap-up · /north-panel · /north-status · /north-config")
     if "codex" in targets:
         print("  Codex:       /north-focus · /north-note · /north-panel · ...")
     if "gemini" in targets:

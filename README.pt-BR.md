@@ -26,12 +26,12 @@ Tudo local. Zero nuvem. Ele nunca edita seus planos.
 Ferramentas de planejamento te dão uma **fotografia** — onde cada projeto está.
 north te dá **sinais vitais e direção**:
 
-- 🧭 **`/focus`** responde a única pergunta que importa de manhã: *o que eu faço agora?* — a próxima ação de maior valor entre **todos** os projetos, respeitando seu limite de WIP.
+- 🧭 **`/north-focus`** responde a única pergunta que importa de manhã: *o que eu faço agora?* — a próxima ação de maior valor entre **todos** os projetos, respeitando seu limite de WIP.
 - 📍 **Statusline ambiente**: sua próxima ação + alertas direto na barra de status do Claude Code, **a cada prompt** — north presente sem você precisar pedir.
 - 🩺 **Sinais vitais** te avisam *antes* de travar: trabalho não commitado virando risco, branch parada, bloqueio no caminho crítico, WIP acima do limite.
 - 🔍 **Auto-descoberta**: aponte para uma pasta e ele acha todo projeto com tracking. Projeto novo aparece sozinho no painel.
 - 🔗 **Interopera com o [GSD](https://github.com/glamp/get-shit-done)**: lê o `.planning/` (STATE/ROADMAP/HANDOFF) e mostra seus projetos GSD — fases, progresso, bloqueios, próxima ação — no mesmo painel, ao lado dos `plan-build`. north é a camada de largura *sobre* o GSD, não um concorrente.
-- 📥 **Captura sem fricção** (`/note`): salva uma ideia no meio de qualquer tarefa sem perder o foco — e te lembra dela no fim do dia.
+- 📥 **Captura sem fricção** (`/north-note`): salva uma ideia no meio de qualquer tarefa sem perder o foco — e te lembra dela no fim do dia.
 - 📊 **Painel profissional** em HTML puro (sem build, sem dependência) — portfólio, kanban, sprints, bloqueios, débito técnico e autoria via git.
 - 🔒 **Fonte única de verdade**: north **só lê** seus `.md`. Nunca escreve neles.
 
@@ -62,7 +62,7 @@ Integração por runtime (mesmo motor, casca diferente):
 
 | Runtime | Comandos | Onde |
 |---|---|---|
-| **Claude Code** | `/focus`, `/note`, `/panel`… (skills) + statusline | `~/.claude/skills/` |
+| **Claude Code** | `/north-focus`, `/north-note`, `/north-panel`… (skills) + statusline | `~/.claude/skills/` |
 | **Codex** | `/north-focus`, `/north-note`… (prompts) | `~/.codex/prompts/` |
 | **Gemini CLI** | `/north:focus`, `/north:note`… (comandos `!{}`) | `~/.gemini/commands/north/` |
 
@@ -84,12 +84,12 @@ npx north-cli install --runtimes claude,codex,gemini --scope global \
 
 | Skill | O que faz |
 |---|---|
-| `/morning` | Regenera o painel, mostra o **foco do dia** consolidado e abre no navegador |
-| `/focus` | A próxima ação de maior valor agora (sprint atual › caminho crítico › desbloqueada) + squad sugerido |
-| `/note <ideia>` | Captura rápida — salva na inbox sem quebrar o que você está fazendo |
-| `/inbox` | Tria as capturas: validar/fazer agora ou descartar |
-| `/panel` | Abre/regenera a Central de Produtividade (dashboard multi-projeto) |
-| `/wrap-up` | Regenera o painel e gera um **resumo do dia** por projeto |
+| `/north-morning` | Regenera o painel, mostra o **foco do dia** consolidado e abre no navegador |
+| `/north-focus` | A próxima ação de maior valor agora (sprint atual › caminho crítico › desbloqueada) + squad sugerido |
+| `/north-note <ideia>` | Captura rápida — salva na inbox sem quebrar o que você está fazendo |
+| `/north-inbox` | Tria as capturas: validar/fazer agora ou descartar |
+| `/north-panel` | Abre/regenera a Central de Produtividade (dashboard multi-projeto) |
+| `/north-wrap-up` | Regenera o painel e gera um **resumo do dia** por projeto |
 
 ### No terminal
 
@@ -122,7 +122,7 @@ north config add-root "C:/outro/workspace"     # rastrear outra pasta
 north config project backoffice source gsd     # fixar a fonte primária
 north config set theme light                    # tema / wip_limit / etc.
 
-# 4. no dia a dia (no Claude Code): /morning · /focus · /note · /panel · /wrap-up
+# 4. no dia a dia (no Claude Code): /north-morning · /north-focus · /north-note · /north-panel · /north-wrap-up
 ```
 
 A instalação é **global** (um north serve todos os projetos); o que muda por
@@ -266,7 +266,7 @@ north-cli/
 │       ├── parsers.py      # normaliza formatos heterogêneos de progresso
 │       ├── focus.py        # motor de direção ("o que faço agora?") + WIP guard
 │       ├── health.py       # sinais vitais (alertas de saúde do portfólio)
-│       ├── inbox.py        # captura rápida (/note) e triagem (/inbox)
+│       ├── inbox.py        # captura rápida (/north-note) e triagem (/north-inbox)
 │       ├── render.py       # dashboard.html (CSS/JS puro, tema claro/escuro)
 │       ├── rituals.py      # bom-dia / fim-do-dia (multi-projeto)
 │       └── cli.py          # build | foco | bom-dia | fim-do-dia | inbox | open

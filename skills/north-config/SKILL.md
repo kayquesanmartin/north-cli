@@ -1,11 +1,11 @@
 ---
-name: config
-description: north — Ajusta a configuração sem reinstalar: pastas varridas (scan_roots), preferências (tema, limite de WIP, abrir browser) e ajustes por projeto (ligar/desligar, apelido, fonte primária). Ative para "/config", "configurar o north", "adicionar pasta de projetos", "desligar um projeto", "mudar o tema", "mudar o limite de WIP".
+name: north-config
+description: north — Ajusta a configuração sem reinstalar: pastas varridas (scan_roots), preferências (tema, limite de WIP, abrir browser) e ajustes por projeto (ligar/desligar, apelido, fonte primária). Ative para "/north-config", "configurar o north", "adicionar pasta de projetos", "desligar um projeto", "mudar o tema", "mudar o limite de WIP".
 allowed-tools: Bash
 argument-hint: "[show | add-root <pasta> | set <chave> <valor> | project <id> <enable|disable|...>]"
 ---
 
-# /config — Configuração do north
+# /north-config — Configuração do north
 
 CRUD leve da config (`projects.json`) — **não reinstala** nada.
 

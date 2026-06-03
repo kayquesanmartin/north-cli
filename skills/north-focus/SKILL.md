@@ -1,11 +1,11 @@
 ---
-name: focus
-description: north — Direção do dia. Mostra A próxima ação de maior valor entre todos os projetos (sprint atual > caminho crítico > desbloqueada), respeita o limite de WIP e sugere o squad para atacar. Ative para "/focus", "/agora", "o que faço agora", "qual a próxima", "tô perdido", "por onde começo".
+name: north-focus
+description: north — Direção do dia. Mostra A próxima ação de maior valor entre todos os projetos (sprint atual > caminho crítico > desbloqueada), respeita o limite de WIP e sugere o squad para atacar. Ative para "/north-focus", "/agora", "o que faço agora", "qual a próxima", "tô perdido", "por onde começo".
 allowed-tools: Bash
 argument-hint: "[--only <projeto> | --all]"
 ---
 
-# /focus — Direção (north)
+# /north-focus — Direção (north)
 
 Tira a fadiga de decisão. Em vez de uma lista, aponta **A próxima ação** que mais
 vale a pena fazer agora, considerando todos os projetos ativos.

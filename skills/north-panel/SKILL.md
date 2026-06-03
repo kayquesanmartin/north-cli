@@ -1,11 +1,11 @@
 ---
-name: panel
-description: Abre/regenera a Central de Produtividade — dashboard multi-projeto que consolida progresso, sprints, kanban, bloqueios e débito técnico de todos os projetos rastreados. Ative para "/panel", "abrir o painel", "dashboard", "status dos projetos", "como estão os projetos".
+name: north-panel
+description: Abre/regenera a Central de Produtividade — dashboard multi-projeto que consolida progresso, sprints, kanban, bloqueios e débito técnico de todos os projetos rastreados. Ative para "/north-panel", "abrir o painel", "dashboard", "status dos projetos", "como estão os projetos".
 allowed-tools: Bash
 argument-hint: "[build|open]"
 ---
 
-# /panel — Central de Produtividade
+# /north-panel — Central de Produtividade
 
 Painel HTML profissional (CSS/JS puro, sem dependências) que consolida **todos
 os projetos** rastreados em arquivos `plan-build/*.md`. Tem visão de portfólio

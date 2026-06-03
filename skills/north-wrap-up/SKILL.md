@@ -1,11 +1,11 @@
 ---
-name: wrap-up
-description: Ritual de fim de dia — regenera a Central de Produtividade e gera um RESUMO-DO-DIA central por projeto (espelhado em <projeto>/docs). Ative para "/wrap-up", "fim do dia", "encerrar o dia", "resumo do dia".
+name: north-wrap-up
+description: Ritual de fim de dia — regenera a Central de Produtividade e gera um RESUMO-DO-DIA central por projeto (espelhado em <projeto>/docs). Ative para "/north-wrap-up", "fim do dia", "encerrar o dia", "resumo do dia".
 allowed-tools: Bash, Read, Edit
 argument-hint: ""
 ---
 
-# /wrap-up — Fim de dia (Central de Produtividade)
+# /north-wrap-up — Fim de dia (Central de Produtividade)
 
 Ritual de encerramento, multi-projeto e 100% local. Regenera o painel e gera um
 resumo datado por projeto, consolidando o que avançou no dia (commits, arquivos
