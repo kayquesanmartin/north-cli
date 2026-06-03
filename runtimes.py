@@ -210,3 +210,95 @@ def adapter_gemini(home: Path, tool_home: Path, pyexe: str):
 
 
 ADAPTERS = {"claude": adapter_claude, "codex": adapter_codex, "gemini": adapter_gemini}
+
+
+# ---------------------------------------------------------------------------
+# Uninstall: reverte exatamente o que os adapters/o motor criaram.
+# ---------------------------------------------------------------------------
+def _north_skill_names():
+    """Nomes de skills/diretórios que pertencem ao north (canônicos + aliases + legados)."""
+    names = set()
+    for c in CMDSPEC:
+        names.add(c["name"])
+        names.update(c.get("aliases", []))
+    names.update({"btw", "uninstall"})  # legado (pré-rename) + a própria skill de uninstall
+    return names
+
+
+def _strip_north_statusline(settings_path):
+    """Remove a statusLine do north de settings.json (preserva o resto). True se removeu."""
+    if not settings_path.exists():
+        return False
+    try:
+        data = json.loads(settings_path.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    sl = data.get("statusLine")
+    cmd = (sl or {}).get("command", "") if isinstance(sl, dict) else ""
+    if "run.py" in cmd and "statusline" in cmd:
+        data.pop("statusLine", None)
+        settings_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        return True
+    return False
+
+
+def runtime_installed(rt_key):
+    """True se houver artefatos do north para aquele runtime."""
+    _, home = RUNTIMES[rt_key]
+    if rt_key == "claude":
+        sk = home / "skills"
+        return any((sk / n).exists() for n in _north_skill_names())
+    if rt_key == "codex":
+        p = home / "prompts"
+        return p.exists() and any(p.glob("north-*.md"))
+    if rt_key == "gemini":
+        return (home / "commands" / "north").exists()
+    return False
+
+
+def uninstall_runtime(rt_key):
+    """Remove os adapters do north de um runtime. Devolve a lista do que saiu."""
+    _, home = RUNTIMES[rt_key]
+    removed = []
+    if rt_key == "claude":
+        sk = home / "skills"
+        for n in _north_skill_names():
+            d = sk / n
+            if d.exists():
+                shutil.rmtree(d, ignore_errors=True)
+                removed.append("skills/" + n)
+        if _strip_north_statusline(home / "settings.json"):
+            removed.append("statusLine")
+    elif rt_key == "codex":
+        p = home / "prompts"
+        if p.exists():
+            for f in sorted(p.glob("north-*.md")):
+                f.unlink()
+                removed.append("prompts/" + f.name)
+    elif rt_key == "gemini":
+        d = home / "commands" / "north"
+        if d.exists():
+            shutil.rmtree(d, ignore_errors=True)
+            removed.append("commands/north/")
+    return removed
+
+
+def uninstall_engine(tool_home, purge=False):
+    """Remove o motor (~/.north). Preserva config/output/resumos salvo purge=True."""
+    removed = []
+    if not tool_home.exists():
+        return removed
+    if purge:
+        shutil.rmtree(tool_home, ignore_errors=True)
+        return [str(tool_home) + " (tudo, inclusive dados)"]
+    for f in ("run.py", "north_hook.py"):
+        fp = tool_home / f
+        if fp.exists():
+            fp.unlink()
+            removed.append(f)
+    for d in ("painel", "templates"):
+        dp = tool_home / d
+        if dp.exists():
+            shutil.rmtree(dp, ignore_errors=True)
+            removed.append(d + "/")
+    return removed

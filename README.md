@@ -97,7 +97,9 @@ your projects/
 
 ### Commands
 
-In your AI runtime: `/focus` · `/morning` · `/wrap-up` · `/note <idea>` · `/inbox` · `/panel`
+In your AI runtime: `/focus` · `/morning` · `/wrap-up` · `/note <idea>` · `/inbox` · `/panel` · `/uninstall`
+
+Uninstall anytime: `north uninstall` (preserves your data; `--purge` wipes it too).
 (Codex: `/north-focus`… · Gemini: `/north:focus`…)
 
 In the terminal (or `north <cmd>` if installed via npm):

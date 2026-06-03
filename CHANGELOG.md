@@ -6,6 +6,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- `north uninstall` — removes north from one or all runtimes (Claude/Codex/Gemini)
+  and the `~/.north` engine, **preserving your data by default**. Flags: `--runtimes`,
+  `--all`, `--purge` (also wipes config/inbox/resumos), `--yes`. Interactive menu when
+  run in a terminal. Also available as the `/uninstall` skill.
+
 ### Changed
 - Renamed the quick-capture command `/btw` → `/note` to avoid a collision with a
   native Claude command. `btw` still works as a legacy alias at the engine level;

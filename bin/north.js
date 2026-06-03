@@ -133,6 +133,8 @@ if (cmd === '' || cmd === 'install') {
     interactiveInstall(py).then(code => process.exit(code))
       .catch(e => fail(String(e && e.message || e)));
   }
+} else if (cmd === 'uninstall' || cmd === 'remove') {
+  process.exit(runInstall(py, args));               // 'uninstall' + flags -> install.py
 } else {
   const run = engineRun();
   if (!run) fail('motor não instalado. Rode primeiro:  npx north-cli   (ou: north install)');

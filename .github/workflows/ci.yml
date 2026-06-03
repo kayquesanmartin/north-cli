@@ -51,6 +51,13 @@ jobs:
           test -f "$HOME/.codex/prompts/north-foco.md"
           test -f "$HOME/.gemini/commands/north/foco.toml"
           python "$HOME/.north/run.py" status
+          # uninstall round-trip (remove tudo, preserva dados por padrão)
+          mkdir -p "$HOME/.north/config" && echo '{}' > "$HOME/.north/config/projects.json"
+          node bin/north.js uninstall --all --yes
+          test ! -f "$HOME/.north/run.py"
+          test ! -f "$HOME/.codex/prompts/north-focus.md"
+          test ! -d "$HOME/.gemini/commands/north"
+          test -f "$HOME/.north/config/projects.json"   # dados preservados
 
   package:
     name: npm tarball is clean (no bytecode)
