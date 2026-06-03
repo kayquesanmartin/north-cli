@@ -1,6 +1,6 @@
 {
   "name": "north-cli",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Copiloto de produtividade multi-projeto para o Claude Code: foco do dia, sinais vitais e painel — lê seus planos (plan-build/GSD) e nunca os edita.",
   "bin": {
     "north": "bin/north.js"
