@@ -477,7 +477,7 @@ _SHELL = r"""<!DOCTYPE html>
     else{const b=document.querySelector('[data-pid="'+CSS.escape(state.project)+'"]'); if(b)b.classList.add("active");}
   }
 
-  /* ---------- inbox (captura /btw) ---------- */
+  /* ---------- inbox (captura /note) ---------- */
   const TAG_EMOJI={idea:"💡",meeting:"🗣️",todo:"✅",question:"❓"};
   function inboxSection(){
     const items=DATA.inbox||[];
@@ -487,7 +487,7 @@ _SHELL = r"""<!DOCTYPE html>
       (e.project?'<span class="ib-proj">'+esc(e.project)+'</span>':'')+
       '<span class="ib-date">'+esc(e.date)+'</span></div>').join("");
     return '<div class="sec-h">🗒️ Inbox de ideias <span class="ln"></span>'+
-      '<span style="font-size:11px;color:var(--dim)">'+items.length+' p/ revisar · /btw captura · /inbox tria</span></div>'+
+      '<span style="font-size:11px;color:var(--dim)">'+items.length+' p/ revisar · /note captura · /inbox tria</span></div>'+
       '<div class="ib-box">'+rows+'</div>';
   }
 

@@ -31,7 +31,7 @@ north te dá **sinais vitais e direção**:
 - 🩺 **Sinais vitais** te avisam *antes* de travar: trabalho não commitado virando risco, branch parada, bloqueio no caminho crítico, WIP acima do limite.
 - 🔍 **Auto-descoberta**: aponte para uma pasta e ele acha todo projeto com tracking. Projeto novo aparece sozinho no painel.
 - 🔗 **Interopera com o [GSD](https://github.com/glamp/get-shit-done)**: lê o `.planning/` (STATE/ROADMAP/HANDOFF) e mostra seus projetos GSD — fases, progresso, bloqueios, próxima ação — no mesmo painel, ao lado dos `plan-build`. north é a camada de largura *sobre* o GSD, não um concorrente.
-- 📥 **Captura sem fricção** (`/btw`): salva uma ideia no meio de qualquer tarefa sem perder o foco — e te lembra dela no fim do dia.
+- 📥 **Captura sem fricção** (`/note`): salva uma ideia no meio de qualquer tarefa sem perder o foco — e te lembra dela no fim do dia.
 - 📊 **Painel profissional** em HTML puro (sem build, sem dependência) — portfólio, kanban, sprints, bloqueios, débito técnico e autoria via git.
 - 🔒 **Fonte única de verdade**: north **só lê** seus `.md`. Nunca escreve neles.
 
@@ -62,9 +62,9 @@ Integração por runtime (mesmo motor, casca diferente):
 
 | Runtime | Comandos | Onde |
 |---|---|---|
-| **Claude Code** | `/foco`, `/btw`, `/painel`… (skills) + statusline | `~/.claude/skills/` |
-| **Codex** | `/north-foco`, `/north-btw`… (prompts) | `~/.codex/prompts/` |
-| **Gemini CLI** | `/north:foco`, `/north:btw`… (comandos `!{}`) | `~/.gemini/commands/north/` |
+| **Claude Code** | `/foco`, `/note`, `/painel`… (skills) + statusline | `~/.claude/skills/` |
+| **Codex** | `/north-foco`, `/north-note`… (prompts) | `~/.codex/prompts/` |
+| **Gemini CLI** | `/north:foco`, `/north:note`… (comandos `!{}`) | `~/.gemini/commands/north/` |
 
 Modo não-interativo (CI / scriptado) e flags:
 
@@ -86,7 +86,7 @@ npx north-cli install --runtimes claude,codex,gemini --scope global \
 |---|---|
 | `/bom-dia` | Regenera o painel, mostra o **foco do dia** consolidado e abre no navegador |
 | `/foco` | A próxima ação de maior valor agora (sprint atual › caminho crítico › desbloqueada) + squad sugerido |
-| `/btw <ideia>` | Captura rápida — salva na inbox sem quebrar o que você está fazendo |
+| `/note <ideia>` | Captura rápida — salva na inbox sem quebrar o que você está fazendo |
 | `/inbox` | Tria as capturas: validar/fazer agora ou descartar |
 | `/painel` | Abre/regenera a Central de Produtividade (dashboard multi-projeto) |
 | `/fim-do-dia` | Regenera o painel e gera um **resumo do dia** por projeto |
@@ -98,7 +98,7 @@ python ~/.north/run.py bom-dia        # foco do dia + abre painel
 python ~/.north/run.py foco           # só a próxima ação
 python ~/.north/run.py fim-do-dia     # resumos do dia por projeto
 python ~/.north/run.py build          # só regenera o painel
-python ~/.north/run.py btw "<ideia>"  # captura rápida
+python ~/.north/run.py note "<ideia>"  # captura rápida
 python ~/.north/run.py inbox          # lista a inbox
 python ~/.north/run.py status         # o que está instalado, scan_roots, projetos rastreados
 python ~/.north/run.py config         # ver/editar config sem reinstalar
@@ -122,7 +122,7 @@ north config add-root "C:/outro/workspace"     # rastrear outra pasta
 north config project backoffice source gsd     # fixar a fonte primária
 north config set theme light                    # tema / wip_limit / etc.
 
-# 4. no dia a dia (no Claude Code): /bom-dia · /foco · /btw · /painel · /fim-do-dia
+# 4. no dia a dia (no Claude Code): /bom-dia · /foco · /note · /painel · /fim-do-dia
 ```
 
 A instalação é **global** (um north serve todos os projetos); o que muda por
@@ -266,7 +266,7 @@ north-cli/
 │       ├── parsers.py      # normaliza formatos heterogêneos de progresso
 │       ├── focus.py        # motor de direção ("o que faço agora?") + WIP guard
 │       ├── health.py       # sinais vitais (alertas de saúde do portfólio)
-│       ├── inbox.py        # captura rápida (/btw) e triagem (/inbox)
+│       ├── inbox.py        # captura rápida (/note) e triagem (/inbox)
 │       ├── render.py       # dashboard.html (CSS/JS puro, tema claro/escuro)
 │       ├── rituals.py      # bom-dia / fim-do-dia (multi-projeto)
 │       └── cli.py          # build | foco | bom-dia | fim-do-dia | inbox | open

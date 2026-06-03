@@ -31,7 +31,7 @@ you **vital signs and direction**:
 - 🩺 **Vital signs** warn you *before* you stall: uncommitted work becoming a risk, a stale branch, a blocker on the critical path, WIP over the limit.
 - 🔍 **Auto-discovery**: point it at a folder and it finds every tracked project. New projects show up on their own.
 - 🔗 **Interops with [GSD](https://github.com/open-gsd/gsd-core)**: reads `.planning/` (STATE/ROADMAP/HANDOFF) and shows your GSD projects — phases, progress, blockers, next action — in the same panel, next to your `plan-build` projects. north is the *breadth* layer **over** GSD, not a competitor.
-- 📥 **Frictionless capture** (`/btw`): save an idea mid-task without losing focus — it reminds you at end of day.
+- 📥 **Frictionless capture** (`/note`): save an idea mid-task without losing focus — it reminds you at end of day.
 - 🔒 **Single source of truth**: north **only reads** your `.md` files. It never writes to them.
 
 > north doesn't replace your planning system — it **reads** it and gives you what's
@@ -63,9 +63,9 @@ One command. The interactive installer (cross-platform, no need to type "python"
 
 | Runtime | Commands | Where |
 |---|---|---|
-| **Claude Code** | `/foco`, `/btw`, `/painel`… (skills) + status line | `~/.claude/skills/` |
-| **Codex** | `/north-foco`, `/north-btw`… (prompts) | `~/.codex/prompts/` |
-| **Gemini CLI** | `/north:foco`, `/north:btw`… (`!{}` commands) | `~/.gemini/commands/north/` |
+| **Claude Code** | `/foco`, `/note`, `/painel`… (skills) + status line | `~/.claude/skills/` |
+| **Codex** | `/north-foco`, `/north-note`… (prompts) | `~/.codex/prompts/` |
+| **Gemini CLI** | `/north:foco`, `/north:note`… (`!{}` commands) | `~/.gemini/commands/north/` |
 
 Non-interactive (CI / scripted):
 
@@ -97,7 +97,7 @@ your projects/
 
 ### Commands
 
-In your AI runtime: `/foco` · `/bom-dia` · `/fim-do-dia` · `/btw <idea>` · `/inbox` · `/painel`
+In your AI runtime: `/foco` · `/bom-dia` · `/fim-do-dia` · `/note <idea>` · `/inbox` · `/painel`
 (Codex: `/north-foco`… · Gemini: `/north:foco`…)
 
 In the terminal (or `north <cmd>` if installed via npm):

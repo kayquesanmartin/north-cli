@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-inbox.py — captura rápida ("/btw") + memória de ideias/notas/reuniões.
+inbox.py — captura rápida ("/note") + memória de ideias/notas/reuniões.
 
 Coluna "Memória & Comunicação" do north. Uma inbox central append-only guarda
 o que o dev capturou no meio do fluxo, para o north RELEMBRAR depois (fim-do-dia

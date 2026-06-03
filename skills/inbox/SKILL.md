@@ -1,13 +1,13 @@
 ---
 name: inbox
-description: north — Triagem da inbox de capturas. Lista as ideias/notas/lembretes salvos com /btw e ajuda a decidir cada um (validar/fazer agora, ou descartar). Ative para "/inbox", "minhas ideias", "o que eu anotei", "revisar capturas", "triar a inbox", "aquelas ideias que salvei".
+description: north — Triagem da inbox de capturas. Lista as ideias/notas/lembretes salvos com /note e ajuda a decidir cada um (validar/fazer agora, ou descartar). Ative para "/inbox", "minhas ideias", "o que eu anotei", "revisar capturas", "triar a inbox", "aquelas ideias que salvei".
 allowed-tools: Bash, Read
 argument-hint: ""
 ---
 
 # /inbox — Triagem de capturas (north)
 
-Revisa o que foi capturado com `/btw` e ajuda a dar destino a cada item.
+Revisa o que foi capturado com `/note` e ajuda a dar destino a cada item.
 
 **Passos:**
 

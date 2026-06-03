@@ -41,10 +41,10 @@ CMDSPEC = [
      "desc": "north — ritual de fim do dia: resumo por projeto."},
     {"name": "painel", "sub": "build", "args": False,
      "desc": "north — regenera a Central de Produtividade (dashboard multi-projeto)."},
-    {"name": "btw", "sub": "btw", "args": True,
+    {"name": "note", "sub": "note", "args": True,
      "desc": "north — captura rápida de uma ideia na inbox, sem quebrar o fluxo."},
     {"name": "inbox", "sub": "inbox", "args": False,
-     "desc": "north — tria as ideias capturadas com /btw."},
+     "desc": "north — tria as ideias capturadas com /note."},
     {"name": "status", "sub": "status", "args": False,
      "desc": "north — o que está instalado, scan_roots e projetos rastreados."},
 ]

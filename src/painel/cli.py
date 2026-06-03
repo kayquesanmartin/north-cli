@@ -547,10 +547,10 @@ def main(argv, home: Path):
         return cmd_status(home)
 
     # --- comandos de inbox: LEVES, sem discovery (captura instantanea) ---
-    if cmd in ("inbox-add", "btw", "capturar"):
+    if cmd in ("inbox-add", "note", "btw", "capturar"):
         text = " ".join(argv[1:]).strip()
         if not text:
-            print("Nada para capturar. Uso: btw <sua ideia>")
+            print("Nada para capturar. Uso: note <sua ideia>")
             return 1
         cmd_inbox_add(home, text)
         return 0
@@ -583,7 +583,7 @@ def main(argv, home: Path):
         cmd_foco(home, cfg, projects)
     else:
         print("Comando desconhecido: {}".format(cmd))
-        print("Use: build | bom-dia | fim-do-dia | foco | btw <ideia> | inbox | "
+        print("Use: build | bom-dia | fim-do-dia | foco | note <ideia> | inbox | "
               "config | status | statusline | open")
         return 2
     return 0
