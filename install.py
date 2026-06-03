@@ -458,16 +458,29 @@ def main():
     scan_root = Path(extra_root).expanduser() if extra_root else detect_scan_root()
     if sys.stdin.isatty() and not auto_all and not extra_root:
         print("")
-        print("  Onde ficam seus projetos? (o north varre essa pasta atras de")
-        print("  plan-build/ e .planning/). Enter aceita a sugestao.")
+        print("  Onde ficam seus projetos? O north varre essa pasta (e subpastas)")
+        print("  atras de projetos com plan-build/ ou .planning/.")
+        print("  Dica: aponte para a pasta-raiz que contem todos os seus repos.")
+        print("  Exemplos: ~/code  ~/projetos  ./workspace   (Enter = sugestao)")
         try:
             ans = input("  Pasta dos projetos [{}]: ".format(scan_root)).strip().strip('"').strip("'")
         except (EOFError, KeyboardInterrupt):
             ans = ""
         if ans:
             scan_root = Path(ans).expanduser()
-            if not scan_root.exists():
-                print("  (aviso: '{}' nao existe ainda — registrando mesmo assim)".format(scan_root))
+        if not scan_root.exists():
+            try:
+                yn = input("  '{}' nao existe. Criar agora? [S/n]: ".format(scan_root)).strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                yn = ""
+            if yn in ("", "s", "sim", "y", "yes"):
+                try:
+                    scan_root.mkdir(parents=True, exist_ok=True)
+                    print("  (criada: {})".format(scan_root))
+                except Exception as e:
+                    print("  (nao consegui criar: {} — registrando assim mesmo)".format(e))
+            else:
+                print("  (registrando '{}' sem existir — crie depois)".format(scan_root))
     cfg_path = seed_config(tool_home, scan_root)
     print("  scan root      -> {}".format(scan_root))
 
