@@ -33,19 +33,19 @@ RUNTIMES = {
 # Comandos do north expostos em cada runtime.
 #   name: nome do comando/skill   sub: subcomando do run.py   args: aceita texto livre
 CMDSPEC = [
-    {"name": "foco", "sub": "foco", "args": False,
+    {"name": "focus", "sub": "focus", "args": False, "aliases": ["foco"],
      "desc": "north — a próxima ação de maior valor entre todos os projetos + squad sugerido."},
-    {"name": "bom-dia", "sub": "bom-dia", "args": False,
+    {"name": "morning", "sub": "morning", "args": False, "aliases": ["bom-dia"],
      "desc": "north — ritual de início do dia: foco consolidado + abre o painel."},
-    {"name": "fim-do-dia", "sub": "fim-do-dia", "args": False,
+    {"name": "wrap-up", "sub": "wrap-up", "args": False, "aliases": ["fim-do-dia"],
      "desc": "north — ritual de fim do dia: resumo por projeto."},
-    {"name": "painel", "sub": "build", "args": False,
+    {"name": "panel", "sub": "build", "args": False, "aliases": ["painel"],
      "desc": "north — regenera a Central de Produtividade (dashboard multi-projeto)."},
-    {"name": "note", "sub": "note", "args": True,
+    {"name": "note", "sub": "note", "args": True, "aliases": [],
      "desc": "north — captura rápida de uma ideia na inbox, sem quebrar o fluxo."},
-    {"name": "inbox", "sub": "inbox", "args": False,
+    {"name": "inbox", "sub": "inbox", "args": False, "aliases": [],
      "desc": "north — tria as ideias capturadas com /note."},
-    {"name": "status", "sub": "status", "args": False,
+    {"name": "status", "sub": "status", "args": False, "aliases": [],
      "desc": "north — o que está instalado, scan_roots e projetos rastreados."},
 ]
 
@@ -101,6 +101,30 @@ def engine_cmd(pyexe: str, tool_home: Path) -> str:
 # ---------------------------------------------------------------------------
 # Adapter: Claude Code (skills SKILL.md) — copia as skills prontas do repo.
 # ---------------------------------------------------------------------------
+_ALIAS_SKILL_TMPL = """---
+name: {alias}
+description: north — alias de /{name} (mesmo comando, nome em pt-BR).
+allowed-tools: Bash
+---
+
+# /{alias} — alias de /{name}
+
+Execute exatamente o mesmo que `/{name}`:
+
+```bash
+python3 ~/.north/run.py {sub}{argh}
+```
+
+Siga as mesmas regras de `/{name}`.
+"""
+
+
+def _alias_skill_md(alias, c):
+    """SKILL.md leve para um alias pt-BR que delega ao comando canônico."""
+    argh = ' "<texto>"' if c["args"] else ""
+    return _ALIAS_SKILL_TMPL.format(alias=alias, name=c["name"], sub=c["sub"], argh=argh)
+
+
 def adapter_claude(home: Path, tool_home: Path, pyexe: str):
     skills_dst = home / "skills"
     skills_dst.mkdir(parents=True, exist_ok=True)
@@ -112,6 +136,12 @@ def adapter_claude(home: Path, tool_home: Path, pyexe: str):
         dst.mkdir(exist_ok=True)
         shutil.copy2(skill_dir / "SKILL.md", dst / "SKILL.md")
         installed.append(skill_dir.name)
+    for c in CMDSPEC:
+        for alias in c.get("aliases", []):
+            adst = skills_dst / alias
+            adst.mkdir(exist_ok=True)
+            (adst / "SKILL.md").write_text(_alias_skill_md(alias, c), encoding="utf-8")
+            installed.append(alias)
     return installed
 
 
@@ -145,8 +175,9 @@ def adapter_codex(home: Path, tool_home: Path, pyexe: str):
         argnote = ("\nO texto livre do usuário chega em $ARGUMENTS." if c["args"] else "")
         body = _CODEX_PROMPT.format(desc=c["desc"], cmd=base, sub=c["sub"],
                                     argline=argline, argnote=argnote)
-        (prompts / "north-{}.md".format(c["name"])).write_text(body, encoding="utf-8")
-        installed.append("north-" + c["name"])
+        for nm in [c["name"]] + c.get("aliases", []):
+            (prompts / "north-{}.md".format(nm)).write_text(body, encoding="utf-8")
+            installed.append("north-" + nm)
     return installed
 
 
@@ -172,8 +203,9 @@ def adapter_gemini(home: Path, tool_home: Path, pyexe: str):
         ).format(name=c["name"], shell=shell)
         toml = 'description = "{}"\nprompt = """\n{}\n"""\n'.format(
             _toml_escape(c["desc"]), prompt)
-        (cmds / "{}.toml".format(c["name"])).write_text(toml, encoding="utf-8")
-        installed.append("/north:" + c["name"])
+        for nm in [c["name"]] + c.get("aliases", []):
+            (cmds / "{}.toml".format(nm)).write_text(toml, encoding="utf-8")
+            installed.append("/north:" + nm)
     return installed
 
 

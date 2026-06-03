@@ -4,7 +4,7 @@
  *
  *   npx north-cli            -> instalador interativo (escolhe runtimes, escopo, pasta)
  *   north install [flags]    -> instala (não-interativo se receber flags)
- *   north <cmd> [args]       -> roda o motor (~/.north/run.py) — foco, note, status, ...
+ *   north <cmd> [args]       -> roda o motor (~/.north/run.py) — focus, note, status, ...
  *
  * O north é um app Python; este shim acha o Python e delega. Nunca o usuário
  * precisa digitar "python install.py".

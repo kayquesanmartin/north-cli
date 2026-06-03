@@ -1,11 +1,11 @@
 ---
-name: bom-dia
-description: Ritual de início de dia — regenera a Central de Produtividade (todos os projetos), mostra o FOCO DO DIA consolidado e abre o painel no navegador. Ative para "/bom-dia", "bom dia", "começar o dia", "o que faço hoje".
+name: morning
+description: Ritual de início de dia — regenera a Central de Produtividade (todos os projetos), mostra o FOCO DO DIA consolidado e abre o painel no navegador. Ative para "/morning", "bom dia", "começar o dia", "o que faço hoje".
 allowed-tools: Bash
 argument-hint: ""
 ---
 
-# /bom-dia — Início de dia (Central de Produtividade)
+# /morning — Início de dia (Central de Produtividade)
 
 Ritual de início de dia, multi-projeto e 100% local. O motor varre todos os
 projetos rastreados (qualquer `plan-build/` com `Progress*.md` + `Sprint*.md`),
@@ -17,12 +17,12 @@ consolida o progresso e mostra onde focar.
 
    ```bash
    # macOS / Linux
-   python3 ~/.north/run.py bom-dia
+   python3 ~/.north/run.py morning
    # Windows (PowerShell)
-   python "$env:USERPROFILE\.north\run.py" bom-dia
+   python "$env:USERPROFILE\.north\run.py" morning
    ```
 
-   (Instalou via npm? `north bom-dia` funciona em qualquer SO.)
+   (Instalou via npm? `north morning` funciona em qualquer SO.)
 
 2. Mostre a saída completa do script — ela já vem formatada: cabeçalho
    "BOM DIA", progresso global do portfólio, FOCO DE HOJE por projeto

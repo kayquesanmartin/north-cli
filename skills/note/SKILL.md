@@ -32,5 +32,5 @@ sendo feito. Nada de derailing: é só registrar para não perder.
    parou. A captura é uma interrupção mínima, não uma troca de contexto.
 
 **Regra de ouro:** capturar ≠ executar. A ideia fica guardada para decisão posterior
-(no `/fim-do-dia` ou `/inbox`). Só comece a trabalhar nela se o usuário pedir
+(no `/wrap-up` ou `/inbox`). Só comece a trabalhar nela se o usuário pedir
 explicitamente.

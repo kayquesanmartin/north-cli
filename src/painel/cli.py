@@ -379,7 +379,7 @@ def cmd_statusline(home: Path):
     except Exception:
         # sem cache: nao deixa a barra vazia; ainda mostra modelo + contexto
         a = _ANSI
-        base = "{}\U0001f9ed north{} {}rode /painel{}".format(
+        base = "{}\U0001f9ed north{} {}rode /panel{}".format(
             a["north"], a["reset"], a["dim"], a["reset"])
         if hook.get("model"):
             base = "{}{}{} {} {}".format(
@@ -573,17 +573,17 @@ def main(argv, home: Path):
         print("Verifique scan_roots em: {}".format(home / "config" / "projects.json"))
         return 1
 
-    if cmd in ("build", "dashboard", "painel"):
+    if cmd in ("build", "dashboard", "panel", "painel"):
         cmd_build(home, cfg, projects)
-    elif cmd in ("bom-dia", "bomdia", "bom_dia"):
+    elif cmd in ("morning", "bom-dia", "bomdia", "bom_dia"):
         cmd_bom_dia(home, cfg, projects)
-    elif cmd in ("fim-do-dia", "fimdodia", "fim_do_dia"):
+    elif cmd in ("wrap-up", "wrapup", "wrap_up", "fim-do-dia", "fimdodia", "fim_do_dia"):
         cmd_fim_do_dia(home, cfg, projects)
-    elif cmd in ("foco", "focus", "agora", "next"):
+    elif cmd in ("focus", "foco", "agora", "next"):
         cmd_foco(home, cfg, projects)
     else:
         print("Comando desconhecido: {}".format(cmd))
-        print("Use: build | bom-dia | fim-do-dia | foco | note <ideia> | inbox | "
+        print("Use: build | morning | wrap-up | focus | note <ideia> | inbox | "
               "config | status | statusline | open")
         return 2
     return 0

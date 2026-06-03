@@ -44,6 +44,10 @@ jobs:
             --runtimes claude,codex,gemini --scope global \
             --scan-root "$PWD" --all --skip-plugins --no-statusline --no-build
           test -f "$HOME/.north/run.py"
+          # English primary names
+          test -f "$HOME/.codex/prompts/north-focus.md"
+          test -f "$HOME/.gemini/commands/north/focus.toml"
+          # pt-BR legacy aliases still generated
           test -f "$HOME/.codex/prompts/north-foco.md"
           test -f "$HOME/.gemini/commands/north/foco.toml"
           python "$HOME/.north/run.py" status
