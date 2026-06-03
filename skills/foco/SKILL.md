@@ -12,13 +12,16 @@ vale a pena fazer agora, considerando todos os projetos ativos.
 
 **Passos:**
 
-1. Rode:
+1. Rode (use o python e o caminho do seu SO):
 
    ```bash
-   python "%USERPROFILE%\.claude\painel\run.py" foco
+   # macOS / Linux
+   python3 ~/.claude/painel/run.py foco
+   # Windows (PowerShell)
+   python "$env:USERPROFILE\.claude\painel\run.py" foco
    ```
 
-   (Fallback: `C:\Users\<seu-usuario>\.claude\painel\run.py`.)
+   (Instalou via npm? `north foco` funciona em qualquer SO.)
 
 2. Mostre a saída completa: a **próxima ação** (task + projeto + sprint), o
    **porquê** (em andamento / sprint atual / desbloqueada), o **squad sugerido**,

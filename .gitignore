@@ -5,6 +5,12 @@ __pycache__/
 .venv/
 venv/
 
+# Node (camada de distribuição npm/npx)
+node_modules/
+npm-debug.log*
+*.tgz
+package-lock.json
+
 # Painel gerado (artefato, não fonte)
 dashboard.html
 

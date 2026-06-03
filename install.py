@@ -60,12 +60,20 @@ def claude_home() -> Path:
 
 
 def detect_scan_root() -> Path:
-    """Raiz do workspace a rastrear: sobe a partir do install.py procurando uma
-    pasta que contenha 'plan-build' em algum nivel. Fallback: pasta do install."""
+    """Raiz do workspace a rastrear. Cross-contexto (clone, npm global, npx):
+      1. o diretorio atual onde o usuario invocou (caso npx/terminal — o mais comum);
+      2. se invocado de DENTRO do proprio pacote/repo do north, sobe um nivel
+         (clone: .../<workspace>/north/install.py -> workspace).
+    O scan_root e apenas ANEXADO a config (nunca substitui), entao e seguro."""
     here = Path(__file__).resolve().parent
-    # install.py mora em .../<workspace>/dashboard/install.py -> workspace = parent.parent
-    candidate = here.parent
-    return candidate
+    try:
+        cwd = Path.cwd().resolve()
+    except Exception:
+        return here.parent
+    # rodando de dentro do pacote (ex.: node_modules/north-cli, ou o proprio repo)
+    if cwd == here:
+        return here.parent
+    return cwd
 
 
 def copy_engine(home: Path):
@@ -234,11 +242,16 @@ def ensure_gh(install_opt=False):
             print("  gh cli         -> falha no winget ({}); instale manualmente".format(e))
         return
 
-    mgr = next((m for m in ("winget", "scoop", "choco") if _which(m)), None)
+    mgr = next((m for m in ("brew", "winget", "scoop", "choco", "apt", "dnf", "pacman")
+                if _which(m)), None)
     hint = {
+        "brew": "brew install gh",
         "winget": "winget install --id GitHub.cli -e",
         "scoop": "scoop install gh",
         "choco": "choco install gh",
+        "apt": "sudo apt install gh",
+        "dnf": "sudo dnf install gh",
+        "pacman": "sudo pacman -S github-cli",
     }.get(mgr, "baixe em https://cli.github.com")
     print("  gh cli         -> NAO encontrado. A autoria @github do north precisa dele.")
     print("                    Instale: {}   (depois: gh auth login)".format(hint))

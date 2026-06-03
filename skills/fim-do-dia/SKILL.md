@@ -16,13 +16,16 @@ não commitados, bloqueios, próximos passos).
 1. Rode o launcher da central:
 
    ```bash
-   python "%USERPROFILE%\.claude\painel\run.py" fim-do-dia
+   # macOS / Linux
+   python3 ~/.claude/painel/run.py fim-do-dia
+   # Windows (PowerShell)
+   python "$env:USERPROFILE\.claude\painel\run.py" fim-do-dia
    ```
 
-   (Fallback: caminho absoluto `C:\Users\<seu-usuario>\.claude\painel\run.py`.)
+   (Instalou via npm? `north fim-do-dia` funciona em qualquer SO.)
 
 2. Mostre a saída do script (linha "FIM DO DIA —" + a lista de resumos gerados,
-   um por projeto, em `%USERPROFILE%\.claude\painel\resumos\<projeto>\`).
+   um por projeto, em `~/.claude/painel/resumos/<projeto>/`).
 
 3. Leia os resumos recém-gerados (caminhos impressos pelo script) e mostre o
    conteúdo formatado ao usuário, agrupado por projeto.

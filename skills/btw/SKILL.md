@@ -15,12 +15,14 @@ sendo feito. Nada de derailing: é só registrar para não perder.
 1. Pegue o texto que o usuário passou como argumento e capture:
 
    ```bash
-   python "%USERPROFILE%\.claude\painel\run.py" btw "<texto da ideia>"
+   # macOS / Linux
+   python3 ~/.claude/painel/run.py btw "<texto da ideia>"
+   # Windows (PowerShell)
+   python "$env:USERPROFILE\.claude\painel\run.py" btw "<texto da ideia>"
    ```
 
-   (Fallback: `C:\Users\<seu-usuario>\.claude\painel\run.py`. O projeto é inferido
-   automaticamente do diretório atual; o tipo — ideia/reunião/todo/pergunta — é
-   detectado do texto.)
+   (Instalou via npm? `north btw "<texto>"`. O projeto é inferido automaticamente
+   do diretório atual; o tipo — ideia/reunião/todo/pergunta — é detectado do texto.)
 
 2. Confirme em **UMA linha** (o id capturado + lembrete de que será relembrado no
    fim do dia). **Não** abra o painel, **não** acione squads, **não** comece a

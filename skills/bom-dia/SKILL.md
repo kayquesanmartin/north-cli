@@ -16,18 +16,20 @@ consolida o progresso e mostra onde focar.
 1. Rode o launcher da central:
 
    ```bash
-   python "%USERPROFILE%\.claude\painel\run.py" bom-dia
+   # macOS / Linux
+   python3 ~/.claude/painel/run.py bom-dia
+   # Windows (PowerShell)
+   python "$env:USERPROFILE\.claude\painel\run.py" bom-dia
    ```
 
-   (Se `%USERPROFILE%` não expandir no seu shell, use o caminho absoluto
-   `C:\Users\<seu-usuario>\.claude\painel\run.py`.)
+   (Instalou via npm? `north bom-dia` funciona em qualquer SO.)
 
 2. Mostre a saída completa do script — ela já vem formatada: cabeçalho
    "BOM DIA", progresso global do portfólio, FOCO DE HOJE por projeto
    (sprint atual em aberto, próximas tasks desbloqueadas, bloqueios, débito de
    alta prioridade) e ferramentas/squads recomendados.
 
-3. O script já regenera o `dashboard.html` e o abre no navegador (Windows).
+3. O script já regenera o `dashboard.html` e o abre no navegador (Windows/macOS/Linux).
    Apenas confirme ao usuário que o painel foi atualizado — não tente abrir
    manualmente.
 

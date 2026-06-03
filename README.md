@@ -40,7 +40,21 @@ north te dá **sinais vitais e direção**:
 
 ## Instalação
 
-Requisitos: **Python 3.8+** e o **[Claude Code](https://claude.com/claude-code)**. `git` opcional (habilita autoria e sinais vitais de git).
+Requisitos: **Python 3.8+** e o **[Claude Code](https://claude.com/claude-code)**. `git` opcional (habilita autoria e sinais vitais de git). Funciona em **Windows, macOS e Linux**.
+
+**Via npx** (recomendado — não precisa clonar):
+
+```bash
+npx north-cli            # baixa e instala (bootstrap)
+# ou, global:
+npm install -g north-cli && north install
+```
+
+O pacote npm é só um **lançador cross-plataforma**: detecta o Python
+(`python3`/`python`/`py`) e roda o `install.py` embutido — north continua sendo
+um app Python, sem nuvem e sem reescrever nada em Node.
+
+**Via clone** (para desenvolver o north):
 
 ```bash
 git clone https://github.com/kayquesanmartin/north-cli.git
@@ -214,7 +228,9 @@ a config só **ajusta** (liga/desliga, apelido, cor, ordem, thresholds).
 
 ```
 north-cli/
-├── install.py              # o instalável — rode este
+├── package.json            # camada npm (npx north-cli)
+├── bin/north.js            # lançador cross-plataforma: acha o Python e delega
+├── install.py              # o instalável — rode este (ou via npx)
 ├── src/
 │   ├── run.py              # launcher (vai para a tool home ~/.claude/painel/)
 │   ├── north_hook.py       # painel "vivo": regenera ao parar uma sessão
