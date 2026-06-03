@@ -12,6 +12,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   the internal inbox id prefix stays `BTW-` for backward compatibility.
 - Adopted **English** as the standard for dev artifacts (branch names, commit messages,
   command/skill names, identifiers). User-facing copy stays pt-BR.
+- Renamed the pt-BR commands to English: `/foco`→`/focus`, `/bom-dia`→`/morning`,
+  `/fim-do-dia`→`/wrap-up`, `/painel`→`/panel`. The pt-BR names stay as aliases (slash
+  commands across Claude/Codex/Gemini + engine), so existing usage keeps working.
 
 ## [0.2.1] - 2026-06-03
 

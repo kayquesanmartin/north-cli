@@ -26,7 +26,7 @@ Tudo local. Zero nuvem. Ele nunca edita seus planos.
 Ferramentas de planejamento te dão uma **fotografia** — onde cada projeto está.
 north te dá **sinais vitais e direção**:
 
-- 🧭 **`/foco`** responde a única pergunta que importa de manhã: *o que eu faço agora?* — a próxima ação de maior valor entre **todos** os projetos, respeitando seu limite de WIP.
+- 🧭 **`/focus`** responde a única pergunta que importa de manhã: *o que eu faço agora?* — a próxima ação de maior valor entre **todos** os projetos, respeitando seu limite de WIP.
 - 📍 **Statusline ambiente**: sua próxima ação + alertas direto na barra de status do Claude Code, **a cada prompt** — north presente sem você precisar pedir.
 - 🩺 **Sinais vitais** te avisam *antes* de travar: trabalho não commitado virando risco, branch parada, bloqueio no caminho crítico, WIP acima do limite.
 - 🔍 **Auto-descoberta**: aponte para uma pasta e ele acha todo projeto com tracking. Projeto novo aparece sozinho no painel.
@@ -62,9 +62,9 @@ Integração por runtime (mesmo motor, casca diferente):
 
 | Runtime | Comandos | Onde |
 |---|---|---|
-| **Claude Code** | `/foco`, `/note`, `/painel`… (skills) + statusline | `~/.claude/skills/` |
-| **Codex** | `/north-foco`, `/north-note`… (prompts) | `~/.codex/prompts/` |
-| **Gemini CLI** | `/north:foco`, `/north:note`… (comandos `!{}`) | `~/.gemini/commands/north/` |
+| **Claude Code** | `/focus`, `/note`, `/panel`… (skills) + statusline | `~/.claude/skills/` |
+| **Codex** | `/north-focus`, `/north-note`… (prompts) | `~/.codex/prompts/` |
+| **Gemini CLI** | `/north:focus`, `/north:note`… (comandos `!{}`) | `~/.gemini/commands/north/` |
 
 Modo não-interativo (CI / scriptado) e flags:
 
@@ -84,19 +84,19 @@ npx north-cli install --runtimes claude,codex,gemini --scope global \
 
 | Skill | O que faz |
 |---|---|
-| `/bom-dia` | Regenera o painel, mostra o **foco do dia** consolidado e abre no navegador |
-| `/foco` | A próxima ação de maior valor agora (sprint atual › caminho crítico › desbloqueada) + squad sugerido |
+| `/morning` | Regenera o painel, mostra o **foco do dia** consolidado e abre no navegador |
+| `/focus` | A próxima ação de maior valor agora (sprint atual › caminho crítico › desbloqueada) + squad sugerido |
 | `/note <ideia>` | Captura rápida — salva na inbox sem quebrar o que você está fazendo |
 | `/inbox` | Tria as capturas: validar/fazer agora ou descartar |
-| `/painel` | Abre/regenera a Central de Produtividade (dashboard multi-projeto) |
-| `/fim-do-dia` | Regenera o painel e gera um **resumo do dia** por projeto |
+| `/panel` | Abre/regenera a Central de Produtividade (dashboard multi-projeto) |
+| `/wrap-up` | Regenera o painel e gera um **resumo do dia** por projeto |
 
 ### No terminal
 
 ```bash
-python ~/.north/run.py bom-dia        # foco do dia + abre painel
-python ~/.north/run.py foco           # só a próxima ação
-python ~/.north/run.py fim-do-dia     # resumos do dia por projeto
+python ~/.north/run.py morning        # foco do dia + abre painel
+python ~/.north/run.py focus           # só a próxima ação
+python ~/.north/run.py wrap-up     # resumos do dia por projeto
 python ~/.north/run.py build          # só regenera o painel
 python ~/.north/run.py note "<ideia>"  # captura rápida
 python ~/.north/run.py inbox          # lista a inbox
@@ -105,7 +105,7 @@ python ~/.north/run.py config         # ver/editar config sem reinstalar
 python ~/.north/run.py open           # abre o painel já gerado
 ```
 
-> Com a instalação npm, troque `python ~/.north/run.py` por **`north`** em qualquer SO (`north foco`, `north status`, …).
+> Com a instalação npm, troque `python ~/.north/run.py` por **`north`** em qualquer SO (`north focus`, `north status`, …).
 
 ### Setup passo a passo
 
@@ -122,7 +122,7 @@ north config add-root "C:/outro/workspace"     # rastrear outra pasta
 north config project backoffice source gsd     # fixar a fonte primária
 north config set theme light                    # tema / wip_limit / etc.
 
-# 4. no dia a dia (no Claude Code): /bom-dia · /foco · /note · /painel · /fim-do-dia
+# 4. no dia a dia (no Claude Code): /morning · /focus · /note · /panel · /wrap-up
 ```
 
 A instalação é **global** (um north serve todos os projetos); o que muda por

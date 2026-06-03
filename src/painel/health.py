@@ -68,7 +68,7 @@ def compute_alerts(proj, settings):
             "detail": first[:70] or "resolva o bloqueio do caminho critico",
         })
 
-    # 4. WIP acima do limite (mesmo criterio do /foco: Em Andamento e nao bloqueada)
+    # 4. WIP acima do limite (mesmo criterio do /focus: Em Andamento e nao bloqueada)
     wip = sum(1 for t in proj.get("tasks", [])
               if t.get("col") == P.COL_ANDAMENTO and not t.get("blocked"))
     if wip > wip_limit:

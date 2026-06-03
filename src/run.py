@@ -6,8 +6,8 @@ A tool home e o diretorio deste arquivo. O pacote `painel/` fica ao lado.
 
 Uso:
   python run.py build        # regenera o dashboard
-  python run.py bom-dia      # foco do dia + abre painel
-  python run.py fim-do-dia   # gera resumos do dia
+  python run.py morning      # foco do dia + abre painel
+  python run.py wrap-up      # gera resumos do dia
   python run.py open         # abre o painel ja gerado
 """
 

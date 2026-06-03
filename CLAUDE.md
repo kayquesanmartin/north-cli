@@ -125,7 +125,7 @@ nomeada pelo que resolve: `tipo/descricao-curta`.
 | `src/painel/config.py`     | config (`north config`/`status`) |
 | `bin/north.js`             | launcher npm cross-platform |
 | `install.py` / `runtimes.py` | instalador multi-runtime (Claude/Codex/Gemini) |
-| `skills/`                  | comandos: foco, note, inbox, painel, bom-dia, fim-do-dia |
+| `skills/`                  | comandos: focus, note, inbox, panel, morning, wrap-up |
 
 ---
 

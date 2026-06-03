@@ -26,7 +26,7 @@ It never edits your plans — it only reads them.
 Planning tools give you a **snapshot** — where each project stands. north gives
 you **vital signs and direction**:
 
-- 🧭 **`/foco`** answers the only question that matters each morning: *what do I do now?* — the highest-value next action across **all** your projects, respecting your WIP limit.
+- 🧭 **`/focus`** answers the only question that matters each morning: *what do I do now?* — the highest-value next action across **all** your projects, respecting your WIP limit.
 - 📍 **Ambient status line**: your next action + alerts right in the Claude Code status bar, **every prompt** — present without you asking.
 - 🩺 **Vital signs** warn you *before* you stall: uncommitted work becoming a risk, a stale branch, a blocker on the critical path, WIP over the limit.
 - 🔍 **Auto-discovery**: point it at a folder and it finds every tracked project. New projects show up on their own.
@@ -63,9 +63,9 @@ One command. The interactive installer (cross-platform, no need to type "python"
 
 | Runtime | Commands | Where |
 |---|---|---|
-| **Claude Code** | `/foco`, `/note`, `/painel`… (skills) + status line | `~/.claude/skills/` |
-| **Codex** | `/north-foco`, `/north-note`… (prompts) | `~/.codex/prompts/` |
-| **Gemini CLI** | `/north:foco`, `/north:note`… (`!{}` commands) | `~/.gemini/commands/north/` |
+| **Claude Code** | `/focus`, `/note`, `/panel`… (skills) + status line | `~/.claude/skills/` |
+| **Codex** | `/north-focus`, `/north-note`… (prompts) | `~/.codex/prompts/` |
+| **Gemini CLI** | `/north:focus`, `/north:note`… (`!{}` commands) | `~/.gemini/commands/north/` |
 
 Non-interactive (CI / scripted):
 
@@ -97,16 +97,16 @@ your projects/
 
 ### Commands
 
-In your AI runtime: `/foco` · `/bom-dia` · `/fim-do-dia` · `/note <idea>` · `/inbox` · `/painel`
-(Codex: `/north-foco`… · Gemini: `/north:foco`…)
+In your AI runtime: `/focus` · `/morning` · `/wrap-up` · `/note <idea>` · `/inbox` · `/panel`
+(Codex: `/north-focus`… · Gemini: `/north:focus`…)
 
 In the terminal (or `north <cmd>` if installed via npm):
 
 ```bash
-north foco        # the single next action + suggested squad
+north focus        # the single next action + suggested squad
 north status      # what's installed, scan_roots, tracked projects
 north config      # view/edit config without reinstalling
-north painel      # regenerate the dashboard
+north panel      # regenerate the dashboard
 ```
 
 ### 🩺 Vital signs

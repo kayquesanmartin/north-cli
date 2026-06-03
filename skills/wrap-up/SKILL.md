@@ -1,11 +1,11 @@
 ---
-name: fim-do-dia
-description: Ritual de fim de dia — regenera a Central de Produtividade e gera um RESUMO-DO-DIA central por projeto (espelhado em <projeto>/docs). Ative para "/fim-do-dia", "fim do dia", "encerrar o dia", "resumo do dia".
+name: wrap-up
+description: Ritual de fim de dia — regenera a Central de Produtividade e gera um RESUMO-DO-DIA central por projeto (espelhado em <projeto>/docs). Ative para "/wrap-up", "fim do dia", "encerrar o dia", "resumo do dia".
 allowed-tools: Bash, Read, Edit
 argument-hint: ""
 ---
 
-# /fim-do-dia — Fim de dia (Central de Produtividade)
+# /wrap-up — Fim de dia (Central de Produtividade)
 
 Ritual de encerramento, multi-projeto e 100% local. Regenera o painel e gera um
 resumo datado por projeto, consolidando o que avançou no dia (commits, arquivos
@@ -17,12 +17,12 @@ não commitados, bloqueios, próximos passos).
 
    ```bash
    # macOS / Linux
-   python3 ~/.north/run.py fim-do-dia
+   python3 ~/.north/run.py wrap-up
    # Windows (PowerShell)
-   python "$env:USERPROFILE\.north\run.py" fim-do-dia
+   python "$env:USERPROFILE\.north\run.py" wrap-up
    ```
 
-   (Instalou via npm? `north fim-do-dia` funciona em qualquer SO.)
+   (Instalou via npm? `north wrap-up` funciona em qualquer SO.)
 
 2. Mostre a saída do script (linha "FIM DO DIA —" + a lista de resumos gerados,
    um por projeto, em `~/.north/resumos/<projeto>/`).

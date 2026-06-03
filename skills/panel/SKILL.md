@@ -1,11 +1,11 @@
 ---
-name: painel
-description: Abre/regenera a Central de Produtividade — dashboard multi-projeto que consolida progresso, sprints, kanban, bloqueios e débito técnico de todos os projetos rastreados. Ative para "/painel", "abrir o painel", "dashboard", "status dos projetos", "como estão os projetos".
+name: panel
+description: Abre/regenera a Central de Produtividade — dashboard multi-projeto que consolida progresso, sprints, kanban, bloqueios e débito técnico de todos os projetos rastreados. Ative para "/panel", "abrir o painel", "dashboard", "status dos projetos", "como estão os projetos".
 allowed-tools: Bash
 argument-hint: "[build|open]"
 ---
 
-# /painel — Central de Produtividade
+# /panel — Central de Produtividade
 
 Painel HTML profissional (CSS/JS puro, sem dependências) que consolida **todos
 os projetos** rastreados em arquivos `plan-build/*.md`. Tem visão de portfólio
@@ -22,7 +22,7 @@ bloqueios, débito técnico e tema claro/escuro.
    python3 ~/.north/run.py open
    ```
 
-   (Instalou via npm? `north build` / `north open`. Ou `north bom-dia` se também
+   (Instalou via npm? `north build` / `north open`. Ou `north morning` se também
    quiser o foco do dia.)
 
 2. Se o usuário passar `open` como argumento e o painel já existir, apenas abra
