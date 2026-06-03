@@ -28,6 +28,7 @@ north te dá **sinais vitais e direção**:
 - 📍 **Statusline ambiente**: sua próxima ação + alertas direto na barra de status do Claude Code, **a cada prompt** — north presente sem você precisar pedir.
 - 🩺 **Sinais vitais** te avisam *antes* de travar: trabalho não commitado virando risco, branch parada, bloqueio no caminho crítico, WIP acima do limite.
 - 🔍 **Auto-descoberta**: aponte para uma pasta e ele acha todo projeto com tracking. Projeto novo aparece sozinho no painel.
+- 🔗 **Interopera com o [GSD](https://github.com/glamp/get-shit-done)**: lê o `.planning/` (STATE/ROADMAP/HANDOFF) e mostra seus projetos GSD — fases, progresso, bloqueios, próxima ação — no mesmo painel, ao lado dos `plan-build`. north é a camada de largura *sobre* o GSD, não um concorrente.
 - 📥 **Captura sem fricção** (`/btw`): salva uma ideia no meio de qualquer tarefa sem perder o foco — e te lembra dela no fim do dia.
 - 📊 **Painel profissional** em HTML puro (sem build, sem dependência) — portfólio, kanban, sprints, bloqueios, débito técnico e autoria via git.
 - 🔒 **Fonte única de verdade**: north **só lê** seus `.md`. Nunca escreve neles.
@@ -136,6 +137,24 @@ seus projetos/
    north (motor)  ──lê, nunca escreve──▶  ~/.claude/painel/output/dashboard.html
 ```
 
+### 🔗 Interoperabilidade com o GSD
+
+Se você usa o [GSD](https://github.com/glamp/get-shit-done) (spec-driven development),
+o north lê o `.planning/` automaticamente e trata cada projeto GSD como mais um no
+portfólio — **sem reimplementar o motor do GSD**, só lendo o estado dele:
+
+| GSD (`.planning/`) | vira no north |
+|---|---|
+| `ROADMAP.md` → Phases | sprints (CONCLUÍDA→done · LIBERADA→em andamento · BLOQUEADA→bloqueado) |
+| Plans (`04-01: …`) | tasks do quadro |
+| `STATE.md` → Progress / Blockers | rollup de progresso + sinais vitais |
+| `HANDOFF.json` → next_action | dica da próxima ação |
+
+Projetos GSD ganham um selo **`GSD`** no card. Se um diretório tem **os dois**
+sistemas (`plan-build/` e `.planning/`), ambos aparecem (o GSD com sufixo no id).
+A divisão de papéis: **GSD = profundidade** (um projeto, ciclo completo) · **north
+= largura** (todos os projetos, foco e sinais vitais por cima).
+
 ### 🩺 Sinais vitais
 
 Alertas *point-in-time* que aparecem no painel (overview e por card), derivados
@@ -189,6 +208,7 @@ north-cli/
 │   └── painel/
 │       ├── config.py       # projects.json: scan_roots, toggles, settings
 │       ├── discovery.py    # auto-descoberta + montagem do modelo + git
+│       ├── gsd.py          # adapter: lê projetos GSD (.planning/) no modelo do north
 │       ├── parsers.py      # normaliza formatos heterogêneos de progresso
 │       ├── focus.py        # motor de direção ("o que faço agora?") + WIP guard
 │       ├── health.py       # sinais vitais (alertas de saúde do portfólio)

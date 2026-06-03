@@ -36,6 +36,7 @@ def build_data(projects, settings, inbox_items=None):
             "id": p["id"],
             "name": p["name"],
             "color": p["color"],
+            "source": p.get("source", "plan-build"),
             "branch": p["branch"] or "—",
             "currentSprint": p["current_sprint"] or "—",
             "dirty": p["git"]["dirty"],
@@ -293,6 +294,9 @@ _SHELL = r"""<!DOCTYPE html>
     font-size:11px;color:var(--dim)}
   .branch{font-family:var(--mono);color:var(--muted);max-width:160px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .src-tag{font-size:8.5px;font-weight:800;letter-spacing:.5px;vertical-align:middle;
+    padding:1px 5px;border-radius:5px;background:rgba(139,92,246,.18);color:#c4b5fd;
+    border:1px solid rgba(139,92,246,.4)}
   .pcard.has-risk{border-color:rgba(239,68,68,.55)}
   .pcard.has-warn{border-color:rgba(245,158,11,.5)}
   .pcard-alerts{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
@@ -555,8 +559,8 @@ _SHELL = r"""<!DOCTYPE html>
       return '<div class="pcard'+(sev?' has-'+sev:'')+'" data-pid="'+esc(p.id)+'" style="--pc:'+p.color+'">'+
         '<div class="pcard-h">'+
           '<div class="donut" style="--p:'+r.pct+';--pc:'+p.color+'"><span style="color:'+p.color+'">'+r.pct+'%</span></div>'+
-          '<div><div class="pcard-t">'+esc(p.name)+'</div>'+
-          '<div class="pcard-s">'+r.done+'/'+r.total+' '+(r.level==="task"?"tasks":"sprints")+' · '+esc(p.currentSprint).slice(0,42)+'</div>'+
+          '<div><div class="pcard-t">'+esc(p.name)+(p.source==="gsd"?' <span class="src-tag">GSD</span>':'')+'</div>'+
+          '<div class="pcard-s">'+r.done+'/'+r.total+' '+(r.level==="task"?"tasks":(p.source==="gsd"?"fases":"sprints"))+' · '+esc(p.currentSprint).slice(0,42)+'</div>'+
           '<div class="pcard-stats">'+stats.join("")+'</div></div></div>'+
           chips+
         '<div class="pcard-foot"><span class="branch">⎇ '+esc(p.branch)+'</span><span title="última atualização">'+esc(foot)+'</span></div>'+

@@ -16,6 +16,7 @@ from pathlib import Path
 
 from . import parsers as P
 from . import health as H
+from . import gsd as G
 
 
 def read(path: Path) -> str:
@@ -399,10 +400,36 @@ def discover_projects(config):
         # pula templates (a menos que o usuario habilite explicitamente na config)
         if proj.get("is_template") and not config.project_cfg(pid).get("force_include"):
             continue
+        proj.setdefault("source", "plan-build")
         order = config.order_for(pid, hint)
         proj["order"] = order
         proj["name"] = config.alias_for(pid, pid)
         proj["color"] = config.color_for(pid, order)
+        proj["alerts"] = H.compute_alerts(proj, config.settings)
+        projects.append(proj)
+
+    # ---- projetos GSD (.planning/) — adicionados ao lado dos plan-build ----
+    pb_ids = {p["id"] for p in projects}
+    hint = len(raw)
+    for pl in G.discover_planning_dirs(config.scan_roots):
+        dirname = pl.parent.name
+        # evita colisao: se ja existe um plan-build com esse nome, sufixa o GSD
+        gid = dirname if dirname not in pb_ids else "{}-gsd".format(dirname)
+        if config.register_discovered(gid, hint):
+            new_ids.append(gid)
+        hint += 1
+        if not config.is_enabled(gid):
+            continue
+        proj = G.build_gsd_project(pl, git_info, file_author)
+        if not proj["sprints"] and not proj["tasks"]:
+            continue
+        proj["id"] = gid
+        order = config.order_for(gid, hint)
+        proj["order"] = order
+        # nome: alias da config, ou "<dir> · GSD" quando coexiste com um plan-build
+        default_name = "{} · GSD".format(dirname) if gid != dirname else dirname
+        proj["name"] = config.alias_for(gid, default_name)
+        proj["color"] = config.color_for(gid, order)
         proj["alerts"] = H.compute_alerts(proj, config.settings)
         projects.append(proj)
 
