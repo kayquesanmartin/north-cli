@@ -375,61 +375,98 @@ def scan_candidates(scan_roots):
     return out
 
 
+# ----------------------------------------------------------------------------
+# Source adapters — cada estrutura de planejamento (plan-build, GSD, ...) e um
+# adapter com contrato uniforme. Adicionar suporte a uma nova estrutura =
+# registrar um adapter aqui; o core de discover_projects nao muda.
+#   discover(scan_roots) -> [planning_root]
+#   project_dir(root)    -> Path raiz do projeto (chave de agrupamento)
+#   build(root, roots)   -> modelo do projeto (formato north)
+#   mtime(root)          -> float (recencia: arquivo de plano mais novo)
+# ----------------------------------------------------------------------------
+def _newest_mtime(paths):
+    best = 0.0
+    for p in paths:
+        try:
+            best = max(best, p.stat().st_mtime)
+        except Exception:
+            pass
+    return best
+
+
+def _pb_mtime(pb: Path):
+    return _newest_mtime(list(pb.glob("*.md")))
+
+
+def _gsd_mtime(pl: Path):
+    return _newest_mtime([pl / "STATE.md", pl / "ROADMAP.md", pl / "HANDOFF.json"])
+
+
+ADAPTERS = [
+    {"name": "plan-build", "label": "plan-build",
+     "discover": discover_plan_dirs, "project_dir": project_dir_for,
+     "build": lambda root, roots: build_project(root, roots), "mtime": _pb_mtime},
+    {"name": "gsd", "label": "GSD",
+     "discover": G.discover_planning_dirs, "project_dir": lambda pl: pl.parent,
+     "build": lambda root, roots: G.build_gsd_project(root, git_info, file_author),
+     "mtime": _gsd_mtime},
+]
+
+
 def discover_projects(config):
-    """Descobre + monta todos os projetos habilitados. Devolve (lista, novos_ids)."""
-    plan_dirs = discover_plan_dirs(config.scan_roots)
-    raw = []
-    for pb in plan_dirs:
-        pid = project_dir_for(pb).name
-        raw.append((pid, pb))
+    """Descobre + monta todos os projetos habilitados. Devolve (lista, novos_ids).
 
-    # ordena por nome p/ atribuir order_hint estavel
-    raw.sort(key=lambda x: x[0].lower())
+    Reconciliacao por diretorio: cada projeto e UM card, mesmo que tenha varias
+    estruturas de planejamento. A fonte primaria e a mais recentemente ativa
+    (mtime), ou a fixada em config (projects.<id>.source); as demais viram
+    secundarias (selo discreto)."""
+    # 1. detecta todas as fontes, agrupadas por diretorio de projeto
+    by_dir = {}   # Path resolvido -> [ {name,label,root,mtime,build} ]
+    for ad in ADAPTERS:
+        for root in ad["discover"](config.scan_roots):
+            try:
+                pdir = ad["project_dir"](root).resolve()
+            except Exception:
+                continue
+            by_dir.setdefault(pdir, []).append({
+                "name": ad["name"], "label": ad["label"], "root": root,
+                "mtime": ad["mtime"](root), "build": ad["build"],
+            })
 
-    new_ids = []
-    projects = []
-    for hint, (pid, pb) in enumerate(raw):
+    items = sorted(by_dir.items(), key=lambda kv: kv[0].name.lower())
+
+    new_ids, projects = [], []
+    for hint, (pdir, srcs) in enumerate(items):
+        pid = pdir.name
         if config.register_discovered(pid, hint):
             new_ids.append(pid)
         if not config.is_enabled(pid):
             continue
-        proj = build_project(pb, config.scan_roots)
-        # so inclui se tem algum sinal (sprint ou task)
-        if not proj["sprints"] and not proj["tasks"]:
+
+        # ordem de tentativa: primaria fixada em config, depois por recencia (desc)
+        pinned = config.project_cfg(pid).get("source")
+        ordered = sorted(srcs, key=lambda s: (s["name"] != pinned, -s["mtime"]))
+
+        # constroi a primeira fonte com conteudo (fallback se a primaria vier vazia)
+        proj = primary = None
+        for s in ordered:
+            cand = s["build"](s["root"], config.scan_roots)
+            if cand.get("sprints") or cand.get("tasks"):
+                proj, primary = cand, s
+                break
+        if proj is None:
             continue
-        # pula templates (a menos que o usuario habilite explicitamente na config)
         if proj.get("is_template") and not config.project_cfg(pid).get("force_include"):
             continue
-        proj.setdefault("source", "plan-build")
+
         order = config.order_for(pid, hint)
+        proj["id"] = pid
         proj["order"] = order
         proj["name"] = config.alias_for(pid, pid)
         proj["color"] = config.color_for(pid, order)
-        proj["alerts"] = H.compute_alerts(proj, config.settings)
-        projects.append(proj)
-
-    # ---- projetos GSD (.planning/) — adicionados ao lado dos plan-build ----
-    pb_ids = {p["id"] for p in projects}
-    hint = len(raw)
-    for pl in G.discover_planning_dirs(config.scan_roots):
-        dirname = pl.parent.name
-        # evita colisao: se ja existe um plan-build com esse nome, sufixa o GSD
-        gid = dirname if dirname not in pb_ids else "{}-gsd".format(dirname)
-        if config.register_discovered(gid, hint):
-            new_ids.append(gid)
-        hint += 1
-        if not config.is_enabled(gid):
-            continue
-        proj = G.build_gsd_project(pl, git_info, file_author)
-        if not proj["sprints"] and not proj["tasks"]:
-            continue
-        proj["id"] = gid
-        order = config.order_for(gid, hint)
-        proj["order"] = order
-        # nome: alias da config, ou "<dir> · GSD" quando coexiste com um plan-build
-        default_name = "{} · GSD".format(dirname) if gid != dirname else dirname
-        proj["name"] = config.alias_for(gid, default_name)
-        proj["color"] = config.color_for(gid, order)
+        proj["source"] = primary["name"]
+        proj["sources"] = [s["name"] for s in srcs]
+        proj["secondary"] = [s["label"] for s in srcs if s["name"] != primary["name"]]
         proj["alerts"] = H.compute_alerts(proj, config.settings)
         projects.append(proj)
 

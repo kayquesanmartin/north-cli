@@ -5,7 +5,9 @@ config.py — carga/persistencia da configuracao da central (projects.json).
 A config controla:
   - scan_roots : pastas onde procurar projetos (auto-descoberta)
   - exclude    : ids de projeto a ignorar
-  - projects   : por-projeto -> enabled / alias / color / order
+  - projects   : por-projeto -> enabled / alias / color / order / source
+                 (source fixa a fonte primaria quando o projeto tem varias
+                  estruturas de planejamento; ausente = automatica por recencia)
   - settings   : comportamento global (abrir browser, espelhar resumo, tema)
 
 Filosofia "auto + config": a descoberta encontra os projetos sozinha; a config

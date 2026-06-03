@@ -37,6 +37,7 @@ def build_data(projects, settings, inbox_items=None):
             "name": p["name"],
             "color": p["color"],
             "source": p.get("source", "plan-build"),
+            "secondary": p.get("secondary", []),
             "branch": p["branch"] or "—",
             "currentSprint": p["current_sprint"] or "—",
             "dirty": p["git"]["dirty"],
@@ -297,6 +298,8 @@ _SHELL = r"""<!DOCTYPE html>
   .src-tag{font-size:8.5px;font-weight:800;letter-spacing:.5px;vertical-align:middle;
     padding:1px 5px;border-radius:5px;background:rgba(139,92,246,.18);color:#c4b5fd;
     border:1px solid rgba(139,92,246,.4)}
+  .src-tag.sec{background:var(--card);color:var(--dim);border-color:var(--line);
+    font-weight:700;letter-spacing:0}
   .pcard.has-risk{border-color:rgba(239,68,68,.55)}
   .pcard.has-warn{border-color:rgba(245,158,11,.5)}
   .pcard-alerts{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
@@ -488,6 +491,15 @@ _SHELL = r"""<!DOCTYPE html>
       '<div class="ib-box">'+rows+'</div>';
   }
 
+  /* ---------- selos de origem (fonte primaria + secundarias) ---------- */
+  function srcTags(p){
+    var t = (p.source==="gsd") ? ' <span class="src-tag">GSD</span>' : '';
+    (p.secondary||[]).forEach(function(s){
+      t += ' <span class="src-tag sec" title="tambem rastreado por '+esc(s)+'">+'+esc(s)+'</span>';
+    });
+    return t;
+  }
+
   /* ---------- sinais vitais (saude do portfolio) ---------- */
   const SEV_META={risk:{cls:"sev-risk",ico:"⛔"},warn:{cls:"sev-warn",ico:"⚠"}};
   function alertChips(p){
@@ -559,7 +571,7 @@ _SHELL = r"""<!DOCTYPE html>
       return '<div class="pcard'+(sev?' has-'+sev:'')+'" data-pid="'+esc(p.id)+'" style="--pc:'+p.color+'">'+
         '<div class="pcard-h">'+
           '<div class="donut" style="--p:'+r.pct+';--pc:'+p.color+'"><span style="color:'+p.color+'">'+r.pct+'%</span></div>'+
-          '<div><div class="pcard-t">'+esc(p.name)+(p.source==="gsd"?' <span class="src-tag">GSD</span>':'')+'</div>'+
+          '<div><div class="pcard-t">'+esc(p.name)+srcTags(p)+'</div>'+
           '<div class="pcard-s">'+r.done+'/'+r.total+' '+(r.level==="task"?"tasks":(p.source==="gsd"?"fases":"sprints"))+' · '+esc(p.currentSprint).slice(0,42)+'</div>'+
           '<div class="pcard-stats">'+stats.join("")+'</div></div></div>'+
           chips+
@@ -617,7 +629,7 @@ _SHELL = r"""<!DOCTYPE html>
         '</div>';
     }).join("") || '<div class="empty">Sem sprints detectados neste projeto.</div>';
 
-    let body='<div class="top"><div><h1>'+esc(p.name)+' <small>— acompanhamento</small></h1>'+
+    let body='<div class="top"><div><h1>'+esc(p.name)+srcTags(p)+' <small>— acompanhamento</small></h1>'+
       meta+'</div><div class="gen">Gerado '+esc(DATA.meta.generated)+'</div></div>'+
       '<div class="kpis">'+kpis+'</div>'+
       '<div class="sec-h">Sprints <span class="ln"></span></div>'+

@@ -150,10 +150,22 @@ portfólio — **sem reimplementar o motor do GSD**, só lendo o estado dele:
 | `STATE.md` → Progress / Blockers | rollup de progresso + sinais vitais |
 | `HANDOFF.json` → next_action | dica da próxima ação |
 
-Projetos GSD ganham um selo **`GSD`** no card. Se um diretório tem **os dois**
-sistemas (`plan-build/` e `.planning/`), ambos aparecem (o GSD com sufixo no id).
 A divisão de papéis: **GSD = profundidade** (um projeto, ciclo completo) · **north
 = largura** (todos os projetos, foco e sinais vitais por cima).
+
+#### Múltiplas estruturas no mesmo repo
+
+O north resolve cada repo como **um card só**, mesmo que ele tenha várias
+estruturas de planejamento (`plan-build/` + `.planning/` + o que vier). A fonte
+**primária** é a mais recentemente ativa (arquivo de plano mais novo); as demais
+viram um selo discreto **`+GSD`** / **`+plan-build`**. Para fixar a primária:
+
+```jsonc
+"projects": { "backoffice": { "source": "gsd" } }   // ignora a recência
+```
+
+Suporte a novas estruturas é um **adapter** (`detect` + `build` + `mtime`) — o
+`plan-build` e o `GSD` são os dois primeiros; adicionar outro não toca o core.
 
 ### 🩺 Sinais vitais
 
@@ -178,7 +190,8 @@ Tudo vive em `~/.claude/painel/config/projects.json`:
   "scan_roots": ["C:/Users/voce/workspace"],   // onde procurar projetos
   "exclude": [],                                 // ids a ignorar
   "projects": {
-    "meu-projeto": { "enabled": true, "alias": "Meu Projeto", "color": "#f97316", "order": 0 }
+    "meu-projeto": { "enabled": true, "alias": "Meu Projeto", "color": "#f97316", "order": 0,
+                     "source": "gsd" }   // opcional: fixa a fonte primária (senão: por recência)
   },
   "settings": {
     "owner_name": "Seu Nome",
@@ -207,8 +220,8 @@ north-cli/
 │   ├── north_hook.py       # painel "vivo": regenera ao parar uma sessão
 │   └── painel/
 │       ├── config.py       # projects.json: scan_roots, toggles, settings
-│       ├── discovery.py    # auto-descoberta + montagem do modelo + git
-│       ├── gsd.py          # adapter: lê projetos GSD (.planning/) no modelo do north
+│       ├── discovery.py    # registry de source adapters + reconciliação por repo + git
+│       ├── gsd.py          # adapter GSD: lê .planning/ (STATE/ROADMAP/HANDOFF)
 │       ├── parsers.py      # normaliza formatos heterogêneos de progresso
 │       ├── focus.py        # motor de direção ("o que faço agora?") + WIP guard
 │       ├── health.py       # sinais vitais (alertas de saúde do portfólio)
