@@ -27,7 +27,8 @@ def should_regen(payload) -> bool:
     tool = payload.get("tool_name", "")
     ti = payload.get("tool_input", {}) or {}
     if tool == "Bash":
-        return "git commit" in (ti.get("command", "") or "")
+        cmd = ti.get("command", "") or ""
+        return ("git commit" in cmd) or ("git push" in cmd) or ("gh pr create" in cmd)
     if tool in ("Edit", "Write", "MultiEdit", "NotebookEdit"):
         return bool(RELEVANT_FILE.search(ti.get("file_path", "") or ""))
     return False

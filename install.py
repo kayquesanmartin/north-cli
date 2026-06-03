@@ -175,6 +175,33 @@ def ensure_plugins(home: Path):
     return novos, ja
 
 
+def setup_hooks(home: Path, engine: Path):
+    """Registra o north_hook (PostToolUse) em settings.json — NAO-destrutivo.
+    Regenera o painel quando ha git commit/push ou edicao de plano. 'set'|'updated'|'invalid'."""
+    settings = home / "settings.json"
+    if settings.exists():
+        try:
+            data = json.loads(settings.read_text(encoding="utf-8"))
+        except Exception:
+            return "invalid"
+    else:
+        data = {}
+    command = '"{}" "{}"'.format(
+        sys.executable.replace("\\", "/"), str(engine / "north_hook.py").replace("\\", "/"))
+    post = data.setdefault("hooks", {}).setdefault("PostToolUse", [])
+    for entry in post:
+        for h in entry.get("hooks", []):
+            if "north_hook.py" in (h.get("command", "") or ""):
+                h["command"] = command  # migra caminho antigo
+                settings.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+                return "updated"
+    post.append({"matcher": "Bash|Edit|Write|MultiEdit|NotebookEdit",
+                 "hooks": [{"type": "command", "command": command}]})
+    settings.parent.mkdir(parents=True, exist_ok=True)
+    settings.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    return "set"
+
+
 def setup_statusline(home: Path, engine: Path, force=False):
     """Configura a statusline do north em ~/.claude/settings.json (NAO-destrutivo).
     So escreve se nao houver statusLine, a menos que force=True. Devolve um status:
@@ -432,6 +459,7 @@ def main():
     install_gh = "--install-gh" in args
     skip_plugins = "--skip-plugins" in args
     skip_statusline = "--no-statusline" in args
+    skip_hooks = "--no-hooks" in args
     force_statusline = "--statusline" in args
     do_build = "--no-build" not in args
     extra_root = _arg_value(args, "--scan-root")
@@ -512,6 +540,12 @@ def main():
                     print("               statusline SUBSTITUIDA (--statusline)")
                 elif sl_status == "exists":
                     print("               statusline ja existe (outra); preservada (--statusline forca)")
+            if not skip_hooks:
+                hk = setup_hooks(home, tool_home)
+                if hk == "set":
+                    print("               hook 'painel vivo' registrado (regenera no commit/push/edicao)")
+                elif hk == "updated":
+                    print("               hook 'painel vivo' atualizado (-> ~/.north)")
 
     ensure_gh(install_gh)
 
