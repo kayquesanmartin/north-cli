@@ -1,0 +1,13 @@
+# Bytecode Python (NUNCA empacotar — é gerado por versão e só pesa o tarball)
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Artefatos / dev
+dashboard.html
+node_modules/
+*.tgz
+npm-debug.log*
+.git/
+.gitignore

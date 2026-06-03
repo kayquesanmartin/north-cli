@@ -1,6 +1,6 @@
 {
   "name": "north-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Copiloto de produtividade multi-projeto para o Claude Code: foco do dia, sinais vitais e painel — lê seus planos (plan-build/GSD) e nunca os edita.",
   "bin": {
     "north": "bin/north.js"
@@ -15,6 +15,7 @@
     "LICENSE"
   ],
   "scripts": {
+    "prepack": "node bin/clean-pycache.js",
     "postinstall": "node -e \"process.stdout.write('north-cli instalado. Rode: north install\\n')\""
   },
   "keywords": [
