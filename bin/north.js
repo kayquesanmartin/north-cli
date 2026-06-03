@@ -98,9 +98,19 @@ async function interactiveInstall(py) {
     const sc = await ask(rl, '  Escolha [1]: ', '1');
     const scope = (sc === '2') ? 'local' : 'global';
 
-    process.stdout.write('\n  Onde ficam seus projetos? (o north varre essa pasta atrás de\n');
-    process.stdout.write('  plan-build/ e .planning/).\n');
-    const root = await ask(rl, '  Pasta dos projetos [' + process.cwd() + ']: ', process.cwd());
+    process.stdout.write('\n  Onde ficam seus projetos? O north varre essa pasta (e subpastas)\n');
+    process.stdout.write('  atrás de projetos com plan-build/ ou .planning/.\n');
+    process.stdout.write('  \x1b[2mDica: aponte para a pasta-raiz que contém todos os seus repos.\x1b[0m\n');
+    process.stdout.write('  \x1b[2mExemplos: ~/code · ~/projetos · ' + process.cwd() + '\x1b[0m\n');
+    let root = await ask(rl, '  Pasta dos projetos [' + process.cwd() + ']: ', process.cwd());
+    if (root[0] === '~') root = path.join(os.homedir(), root.slice(1));
+    if (!fs.existsSync(root)) {
+      const yn = await ask(rl, "  '" + root + "' não existe. Criar agora? [S/n]: ", 's');
+      if (/^(s|sim|y|yes)$/i.test(yn.trim())) {
+        try { fs.mkdirSync(root, { recursive: true }); process.stdout.write('  (criada)\n'); }
+        catch (e) { process.stdout.write('  (não consegui criar: ' + e.message + ')\n'); }
+      }
+    }
 
     rl.close();
     process.stdout.write('\n');

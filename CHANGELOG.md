@@ -12,6 +12,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   returns to the full portfolio. The dashboard always shows everything — only the
   ritual output is scoped. The focus is sticky until changed.
 
+### Changed
+- Installer projects-folder prompt now shows examples, validates the path, and
+  **offers to create it** if missing (instead of just warning). Applies to both
+  the `npx north-cli` launcher and `install.py`.
+
 ## [0.3.0] - 2026-06-03
 
 ### Added
