@@ -58,7 +58,10 @@ jobs:
           node-version: "20"
       - name: Pack and assert no .pyc / __pycache__
         run: |
-          npm pack --dry-run 2>&1 | tee /tmp/pack.txt
-          if grep -qE "cpython-|__pycache__|\.pyc" /tmp/pack.txt; then
+          npm pack
+          tarball="$(ls north-cli-*.tgz)"
+          echo "inspecting $tarball"
+          if tar tzf "$tarball" | grep -E "cpython-|__pycache__|\.pyc$"; then
             echo "::error::tarball contains Python bytecode"; exit 1
           fi
+          echo "clean: no bytecode in $tarball"

@@ -19,3 +19,6 @@ dashboard.html
 Thumbs.db
 .vscode/
 .idea/
+
+# Local harness settings (Claude Code)
+.claude/
