@@ -51,6 +51,10 @@ CMDSPEC = [
      "desc": "north — ajusta a configuração (scan_roots, settings, projetos) sem reinstalar."},
     {"name": "learn", "sub": "", "args": True, "aliases": [], "behavior": True,
      "desc": "north — modo mentor: a IA orienta e você implementa (entender o código, não só copiar)."},
+    {"name": "review", "sub": "", "args": True, "aliases": [], "behavior": True,
+     "desc": "north — trilha mentor de code review: te guia a revisar o seu próprio diff."},
+    {"name": "test", "sub": "", "args": True, "aliases": [], "behavior": True,
+     "desc": "north — trilha mentor de testes: validar de verdade (API/banco/front), você executa."},
 ]
 
 

@@ -537,7 +537,7 @@ def main():
     if "gemini" in targets:
         print("      Gemini CLI    digite  /north:focus   (depois: /north:morning · /north:panel)")
     print("")
-    print("  Comandos: focus · morning · wrap-up · panel · note · inbox · status · config · learn · uninstall")
+    print("  Comandos: focus · morning · wrap-up · panel · note · inbox · status · config · learn · review · test · uninstall")
     print("            (todos viram /north-<cmd> na sua IA; /north:<cmd> no Gemini)")
     print("")
     print("  Terminal (opcional): north status · north config add-root \"<pasta>\"")
