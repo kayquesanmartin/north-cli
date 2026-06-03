@@ -525,20 +525,25 @@ def main():
 
     print("")
     print("=" * 64)
-    print("  PRONTO. north instalado para: {}".format(
+    print("  ✅ PRONTO — north instalado para: {}".format(
         ", ".join(RT.RUNTIMES[t][0] for t in targets)))
     print("=" * 64)
-    if "claude" in targets:
-        print("  Claude Code: /north-focus · /north-note <ideia> · /north-inbox · /north-morning · /north-wrap-up · /north-panel · /north-status · /north-config")
-    if "codex" in targets:
-        print("  Codex:       /north-focus · /north-note · /north-panel · ...")
-    if "gemini" in targets:
-        print("  Gemini CLI:  /north:focus · /north:note · /north:panel · ...")
     print("")
-    print("  Terminal:    north status | north config | north config add-root \"<pasta>\"")
-    print("  Config:      {}".format(cfg_path))
+    print("  ▶ Comece agora, DENTRO da sua IA (é onde o north vive):")
+    if "claude" in targets:
+        print("      Claude Code   digite  /north-focus   (depois: /north-morning · /north-panel)")
+    if "codex" in targets:
+        print("      Codex         digite  /north-focus   (depois: /north-morning · /north-panel)")
+    if "gemini" in targets:
+        print("      Gemini CLI    digite  /north:focus   (depois: /north:morning · /north:panel)")
+    print("")
+    print("  Comandos: focus · morning · wrap-up · panel · note · inbox · status · config · uninstall")
+    print("            (todos viram /north-<cmd> na sua IA; /north:<cmd> no Gemini)")
+    print("")
+    print("  Terminal (opcional): north status · north config add-root \"<pasta>\"")
+    print("  Config: {}".format(cfg_path))
     if sl_status in ("set", "forced", "updated"):
-        print("  Reinicie o Claude Code para a statusline aparecer.")
+        print("  ↻ Reinicie o Claude Code para a statusline aparecer.")
     print("=" * 64)
 
 
