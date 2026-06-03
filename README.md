@@ -101,9 +101,35 @@ python ~/.claude/painel/run.py fim-do-dia     # resumos do dia por projeto
 python ~/.claude/painel/run.py build          # só regenera o painel
 python ~/.claude/painel/run.py btw "<ideia>"  # captura rápida
 python ~/.claude/painel/run.py inbox          # lista a inbox
-python ~/.claude/painel/run.py statusline     # 1 linha p/ a barra de status (lê do cwd no stdin)
+python ~/.claude/painel/run.py status         # o que está instalado, scan_roots, projetos rastreados
+python ~/.claude/painel/run.py config         # ver/editar config sem reinstalar
 python ~/.claude/painel/run.py open           # abre o painel já gerado
 ```
+
+> Com a instalação npm, troque `python ~/.claude/painel/run.py` por **`north`** em qualquer SO (`north foco`, `north status`, …).
+
+### Setup passo a passo
+
+```bash
+# 1. instale (de qualquer lugar — o motor vai pra ~/.claude)
+npx north-cli@latest
+#    o instalador PERGUNTA a pasta dos seus projetos (sugere o diretório atual)
+#    e abre um menu pra escolher quais acompanhar.
+
+# 2. veja o que ficou configurado
+north status
+
+# 3. ajuste sem reinstalar
+north config add-root "C:/outro/workspace"     # rastrear outra pasta
+north config project backoffice source gsd     # fixar a fonte primária
+north config set theme light                    # tema / wip_limit / etc.
+
+# 4. no dia a dia (no Claude Code): /bom-dia · /foco · /btw · /painel · /fim-do-dia
+```
+
+A instalação é **global** (um north serve todos os projetos); o que muda por
+máquina são os `scan_roots` — as pastas que ele varre. Rode o install da
+**pasta-mãe dos seus projetos**, ou aponte com `--scan-root`/`north config add-root`.
 
 ### Barra de status (statusline)
 

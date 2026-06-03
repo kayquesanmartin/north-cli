@@ -390,6 +390,136 @@ def cmd_statusline(home: Path):
     return 0
 
 
+def cmd_config(home: Path, args):
+    """CRUD leve da config (projects.json) — sem discovery. Subcomandos:
+       show | add-root <p> | remove-root <p> | set <chave> <valor> |
+       project <id> <enable|disable|source <v>|alias <v>|order <n>|clear-source>"""
+    cfg = load_config(_config_path(home))
+    sub = args[0] if args else "show"
+
+    if sub in ("show", "list"):
+        s = cfg.settings
+        print("north — configuração")
+        print("  config:  {}".format(_config_path(home)))
+        print("  scan_roots:")
+        for r in (cfg.data.get("scan_roots") or ["(nenhum — use: north config add-root \"<pasta>\")"]):
+            print("    - {}".format(r))
+        print("  settings:")
+        for k in ("owner_name", "theme", "wip_limit", "dirty_risk_files",
+                  "stale_branch_days", "open_browser", "mirror_to_project_docs"):
+            print("    {:<22} {}".format(k, s.get(k)))
+        projs = cfg.data.get("projects", {})
+        if projs:
+            print("  projetos ({}):".format(len(projs)))
+            for pid, pc in sorted(projs.items()):
+                flags = []
+                if pc.get("enabled", True) is False:
+                    flags.append("OFF")
+                if pc.get("source"):
+                    flags.append("source=" + pc["source"])
+                if pc.get("alias"):
+                    flags.append("alias=" + pc["alias"])
+                print("    {:<26} {}".format(pid, " ".join(flags) or "on"))
+        print("\n  Ex.: north config add-root \"<pasta>\"  |  set theme light  |  "
+              "project backoffice source gsd")
+        return 0
+
+    if sub in ("add-root", "add_root"):
+        if len(args) < 2:
+            print("uso: north config add-root \"<caminho>\""); return 1
+        roots = cfg.data.setdefault("scan_roots", [])
+        if args[1] in roots:
+            print("já existe:", args[1])
+        else:
+            roots.append(args[1]); cfg.save(); print("✓ raiz adicionada:", args[1])
+        return 0
+
+    if sub in ("remove-root", "rm-root", "remove_root"):
+        if len(args) < 2:
+            print("uso: north config remove-root \"<caminho>\""); return 1
+        roots = cfg.data.setdefault("scan_roots", [])
+        if args[1] in roots:
+            roots.remove(args[1]); cfg.save(); print("✓ raiz removida:", args[1])
+        else:
+            print("não encontrada:", args[1])
+        return 0
+
+    if sub == "set":
+        if len(args) < 3:
+            print("uso: north config set <chave> <valor>"); return 1
+        key, val = args[1], args[2]
+        st = cfg.data.setdefault("settings", {})
+        if key in ("wip_limit", "dirty_risk_files", "stale_branch_days"):
+            try:
+                val = int(val)
+            except ValueError:
+                print("valor inteiro esperado para", key); return 1
+        elif key in ("open_browser", "mirror_to_project_docs"):
+            val = val.lower() in ("1", "true", "sim", "yes", "on")
+        st[key] = val; cfg.save(); print("✓ {} = {}".format(key, val))
+        return 0
+
+    if sub == "project":
+        if len(args) < 3:
+            print("uso: north config project <id> <enable|disable|source <v>|"
+                  "alias <v>|order <n>|clear-source>"); return 1
+        pid, action = args[1], args[2]
+        pc = cfg.data.setdefault("projects", {}).setdefault(
+            pid, {"enabled": True, "alias": "", "color": "", "order": 0})
+        if action == "enable":
+            pc["enabled"] = True
+        elif action == "disable":
+            pc["enabled"] = False
+        elif action == "clear-source":
+            pc.pop("source", None)
+        elif action == "order" and len(args) >= 4:
+            try:
+                pc["order"] = int(args[3])
+            except ValueError:
+                print("order deve ser inteiro"); return 1
+        elif action in ("source", "alias", "color") and len(args) >= 4:
+            pc[action] = args[3]
+        else:
+            print("ação inválida ou falta valor:", action); return 1
+        cfg.save(); print("✓ {} -> {} {}".format(pid, action, args[3] if len(args) >= 4 else ""))
+        return 0
+
+    print("config: subcomando desconhecido '{}'. Use: show | add-root | remove-root | "
+          "set | project".format(sub))
+    return 2
+
+
+def cmd_status(home: Path):
+    """Mostra o que o north tem instalado, o que rastreia e onde estão as coisas."""
+    a = _ANSI
+    print("{}\U0001f9ed north{} — status\n".format(a["north"], a["reset"]))
+    ok = lambda c: "{}ok{}".format(a["ok"], a["reset"]) if c else "{}ausente{}".format(a["risk"], a["reset"])
+    print("  motor:   {}  ({})".format(home, ok((home / "run.py").exists())))
+    cfgp = _config_path(home)
+    print("  config:  {}  ({})".format(cfgp, ok(cfgp.exists())))
+    dash = home / "output" / "dashboard.html"
+    print("  painel:  {}  ({})".format(
+        dash, "{}gerado{}".format(a["ok"], a["reset"]) if dash.exists()
+        else "{}rode: north build{}".format(a["warn"], a["reset"])))
+    try:
+        cfg = load_config(cfgp)
+        roots = cfg.data.get("scan_roots", [])
+        print("\n  scan_roots ({}):".format(len(roots)))
+        for r in (roots or ["(nenhum — north config add-root \"<pasta>\")"]):
+            print("    - {}".format(r))
+    except Exception:
+        pass
+    try:
+        st = json.loads((home / "output" / "state.json").read_text(encoding="utf-8"))
+        projs = st.get("projects", {})
+        print("\n  projetos rastreados ({}):".format(len(projs)))
+        for pid, pd in projs.items():
+            print("    {:<26} {:>3}%   [{}]".format(pd.get("name", pid)[:26], pd.get("pct", 0), pid))
+    except Exception:
+        print("\n  projetos: rode 'north build' para descobrir/listar")
+    return 0
+
+
 def cmd_open(home: Path):
     out_file = home / "output" / "dashboard.html"
     if not out_file.exists():
@@ -409,6 +539,12 @@ def main(argv, home: Path):
     # --- statusline: LEVE, sem discovery (le so o cache output/state.json) ---
     if cmd in ("statusline", "status-line"):
         return cmd_statusline(home)
+
+    # --- config / status: LEVES, sem discovery (so leem/escrevem a config) ---
+    if cmd in ("config", "cfg"):
+        return cmd_config(home, argv[1:])
+    if cmd in ("status", "where", "info"):
+        return cmd_status(home)
 
     # --- comandos de inbox: LEVES, sem discovery (captura instantanea) ---
     if cmd in ("inbox-add", "btw", "capturar"):
@@ -447,6 +583,7 @@ def main(argv, home: Path):
         cmd_foco(home, cfg, projects)
     else:
         print("Comando desconhecido: {}".format(cmd))
-        print("Use: build | bom-dia | fim-do-dia | foco | btw <ideia> | inbox | statusline | open")
+        print("Use: build | bom-dia | fim-do-dia | foco | btw <ideia> | inbox | "
+              "config | status | statusline | open")
         return 2
     return 0

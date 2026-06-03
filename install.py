@@ -383,6 +383,19 @@ def main():
             print("  statusline     -> settings.json invalido; pulei (corrija manualmente)")
 
     scan_root = detect_scan_root()
+    # pergunta a pasta dos projetos (a menos que --all, --scan-root, ou sem TTY)
+    if sys.stdin.isatty() and not auto_all and not extra_root:
+        print("")
+        print("  Onde ficam seus projetos? (o north varre essa pasta atras de")
+        print("  plan-build/ e .planning/). Enter aceita a sugestao.")
+        try:
+            ans = input("  Pasta dos projetos [{}]: ".format(scan_root)).strip().strip('"').strip("'")
+        except (EOFError, KeyboardInterrupt):
+            ans = ""
+        if ans:
+            scan_root = Path(ans).expanduser()
+            if not scan_root.exists():
+                print("  (aviso: '{}' nao existe ainda — registrando mesmo assim)".format(scan_root))
     cfg_path = seed_config(engine, scan_root, extra_root)
     print("  config         -> {}".format(cfg_path))
     print("  scan root      -> {}".format(scan_root))
@@ -419,8 +432,11 @@ def main():
     print("    /fim-do-dia    resumos do dia por projeto")
     print("    /painel        regenera e abre o painel")
     print("")
-    print("  Direto no terminal:")
+    print("  Direto no terminal (ou 'north <cmd>' se instalou via npm):")
     print('    python "{}" foco'.format(engine / "run.py"))
+    print("    north status              ver o que esta instalado e rastreado")
+    print("    north config              ver/editar config (scan_roots, settings, projetos)")
+    print("    north config add-root \"<pasta>\"   adicionar outra pasta de projetos")
     print("")
     print("  Painel: {}".format(out))
     print("  Config (apelidos/cores/toggles): {}".format(cfg_path))
