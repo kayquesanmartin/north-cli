@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- `/status` and `/config` are now **skills inside the AI runtime** (Claude/Codex/Gemini),
+  not just terminal commands — north is IA-first, every command works inside the AI.
+
 ## [0.4.0] - 2026-06-03
 
 ### Added
