@@ -342,12 +342,92 @@ def _arg_value(args, flag, default=None):
     return default
 
 
+def do_uninstall(args):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+    purge = "--purge" in args
+    assume_yes = ("--yes" in args) or ("-y" in args)
+    all_rt = "--all" in args
+    rt_csv = _arg_value(args, "--runtimes")
+    tool_home = RT.engine_home("global")
+
+    installed = [k for k in RT.RUNTIMES if RT.runtime_installed(k)]
+    print("=" * 64)
+    print("  Desinstalar o north")
+    print("=" * 64)
+    if not installed and not tool_home.exists():
+        print("  Nada do north encontrado. Nada a fazer.")
+        return 0
+    print("  Runtimes com north: {}".format(", ".join(installed) or "nenhum"))
+    print("  Motor: {}{}".format(tool_home, "" if tool_home.exists() else " (ausente)"))
+
+    # --- seleção de runtimes (flags > --all > menu interativo > todos) ---
+    if rt_csv:
+        sel = [r.strip() for r in rt_csv.split(",") if r.strip() in RT.RUNTIMES]
+    elif all_rt or not sys.stdin.isatty():
+        sel = list(installed)
+    else:
+        print("")
+        print("  De quais runtimes remover?")
+        for i, k in enumerate(installed, 1):
+            print("   [{}] {}".format(i, RT.RUNTIMES[k][0]))
+        print("   [a] todos")
+        try:
+            raw = input("  Escolha [Enter = todos]: ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            raw = ""
+        if raw in ("", "a", "todos"):
+            sel = list(installed)
+        else:
+            idxs = _parse_selection(raw, len(installed))
+            sel = [installed[i - 1] for i in idxs] or list(installed)
+
+    # --- apagar dados? ---
+    if not purge and not assume_yes and sys.stdin.isatty():
+        try:
+            ans = input("  Apagar tambem seus DADOS (config/inbox/resumos)? [s/N]: ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            ans = ""
+        purge = ans in ("s", "sim", "y", "yes")
+
+    # --- confirmação ---
+    if not assume_yes and sys.stdin.isatty():
+        extra = " + DADOS" if purge else " (dados preservados)"
+        try:
+            ans = input("  Confirmar remocao de [{}]{}? [s/N]: ".format(", ".join(sel), extra)).strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            ans = ""
+        if ans not in ("s", "sim", "y", "yes"):
+            print("  Cancelado.")
+            return 1
+
+    for k in sel:
+        rem = RT.uninstall_runtime(k)
+        print("  {:<12} -> {}".format(RT.RUNTIMES[k][0], ", ".join(rem) or "nada"))
+
+    remaining = [k for k in RT.RUNTIMES if RT.runtime_installed(k)]
+    if purge or all_rt or not remaining:
+        rem = RT.uninstall_engine(tool_home, purge=purge)
+        print("  {:<12} -> {}".format("Motor", ", ".join(rem) or "nada"))
+        if not purge and tool_home.exists():
+            print("  (seus dados ficaram preservados em {})".format(tool_home))
+    else:
+        print("  Motor preservado (ainda usado por: {}).".format(", ".join(remaining)))
+    print("")
+    print("  north desinstalado.")
+    return 0
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
     args = sys.argv[1:]
+    if args and args[0] in ("uninstall", "remove"):
+        sys.exit(do_uninstall(args[1:]))
     auto_all = "--all" in args
     install_gh = "--install-gh" in args
     skip_plugins = "--skip-plugins" in args
