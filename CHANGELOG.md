@@ -7,6 +7,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Changed
+- Installer summary is now **IA-first**: it leads with "start inside your AI" and the first
+  command to type per runtime; the terminal path is shown as optional.
 - Claude skills are now **namespaced** `north-*` (`/north-focus`, `/north-status`, `/north-config`…),
   matching Codex (`/north-*`) and Gemini (`/north:*`). Avoids collisions with native/other
   commands. Old un-namespaced skills are removed automatically on reinstall.
