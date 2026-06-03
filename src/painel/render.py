@@ -265,6 +265,20 @@ _SHELL = r"""<!DOCTYPE html>
     letter-spacing:.6px;margin-top:7px}
   .kpi.ok .v{color:var(--ok)} .kpi.warn .v{color:var(--warn)}
   .kpi.bad .v{color:var(--bad)} .kpi.acc .v{color:var(--accent)}
+  /* ---- resumo executivo (C-level) ---- */
+  .exec{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:var(--radius);padding:16px 18px;margin-bottom:18px}
+  .exec.ok{border-left-color:var(--ok)} .exec.warn{border-left-color:var(--warn)} .exec.bad{border-left-color:var(--bad)}
+  .exec-h{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;
+    display:flex;align-items:center;gap:10px;margin-bottom:13px}
+  .exec-verdict{font-weight:600;text-transform:none;letter-spacing:0;font-size:13px;color:var(--muted)}
+  .exec.ok .exec-verdict{color:var(--ok)} .exec.warn .exec-verdict{color:var(--warn)} .exec.bad .exec-verdict{color:var(--bad)}
+  .exec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+  .exec-row{display:flex;flex-direction:column;gap:3px}
+  .exec-k{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+  .exec-v{font-size:15px;font-weight:700}
+  .exec-attn{margin-top:13px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;cursor:pointer}
+  .exec-attn:hover{color:var(--accent)}
 
   /* ---- secao ---- */
   .sec-h{font-size:12px;text-transform:uppercase;letter-spacing:1.4px;
@@ -543,6 +557,32 @@ _SHELL = r"""<!DOCTYPE html>
       warn+alts+'</div>';
   }
 
+  /* ---------- resumo executivo (C-level) ---------- */
+  function execSummary(){
+    const t=DATA.totals, ps=DATA.projects;
+    const isRisk=p=>(p.alerts||[]).some(a=>a.severity==="risk");
+    const atRisk=ps.filter(isRisk);
+    const warnOnly=ps.filter(p=>!isRisk(p)&&(p.alerts||[]).length>0);
+    const onTrack=ps.length-atRisk.length-warnOnly.length;
+    let verdict,vcls;
+    if(atRisk.length){verdict=atRisk.length+" projeto(s) em risco — ação necessária";vcls="bad";}
+    else if(warnOnly.length){verdict=warnOnly.length+" projeto(s) pedem atenção";vcls="warn";}
+    else{verdict="Portfólio saudável — sem riscos abertos";vcls="ok";}
+    const rows=[
+      ["Progresso global", t.pct+"% · "+t.done+"/"+t.total+" tasks"],
+      ["Saúde do portfólio", onTrack+" no prazo · "+warnOnly.length+" atenção · "+atRisk.length+" risco"],
+      ["Bloqueios abertos", String(t.blockers)],
+      ["Atividade hoje", t.commits+" commit(s)"],
+    ].map(r=>'<div class="exec-row"><span class="exec-k">'+r[0]+'</span><span class="exec-v">'+r[1]+'</span></div>').join("");
+    const top=atRisk[0]||warnOnly[0];
+    let attn="";
+    if(top){const a=(top.alerts||[]).find(x=>x.severity==="risk")||top.alerts[0];
+      attn='<div class="exec-attn" data-go="'+esc(top.id)+'">▸ Prioridade agora: <b>'+esc(top.name)+'</b> — '+esc(a.title)+' ('+esc(a.detail)+')</div>';}
+    return '<div class="exec '+vcls+'"><div class="exec-h">📊 Resumo executivo'+
+      '<span class="exec-verdict">'+esc(verdict)+'</span></div>'+
+      '<div class="exec-grid">'+rows+'</div>'+attn+'</div>';
+  }
+
   /* ---------- overview ---------- */
   function viewOverview(){
     const t=DATA.totals;
@@ -581,6 +621,7 @@ _SHELL = r"""<!DOCTYPE html>
 
     return '<div class="top"><div><h1>'+esc(DATA.meta.title)+' <small>— portfólio</small></h1>'+
       '<div class="gen">Visão consolidada de todos os projetos rastreados</div></div></div>'+
+      execSummary()+
       focusBanner()+
       '<div class="kpis">'+kpis+'</div>'+
       vitalsBanner()+
@@ -703,9 +744,10 @@ _SHELL = r"""<!DOCTYPE html>
     // binds intra-main
     m.querySelectorAll(".pcard[data-pid]").forEach(c=>c.onclick=()=>{
       state.view="project";state.project=c.dataset.pid;state.filter.clear();state.q="";render();});
-    const fb=m.querySelector(".focus[data-go]");
-    if(fb) fb.style.cursor="pointer", fb.onclick=()=>{
-      state.view="project";state.project=fb.dataset.go;state.filter.clear();state.q="";render();};
+    m.querySelectorAll("[data-go]").forEach(el=>{
+      if(el.dataset.go==="overview") return;
+      el.style.cursor="pointer";
+      el.onclick=()=>{state.view="project";state.project=el.dataset.go;state.filter.clear();state.q="";render();};});
     const s=document.getElementById("search");
     if(s) s.oninput=e=>{state.q=e.target.value; rerenderKanban();};
     m.querySelectorAll(".chip[data-col]").forEach(ch=>ch.onclick=()=>{
