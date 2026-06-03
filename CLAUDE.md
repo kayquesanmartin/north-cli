@@ -14,6 +14,13 @@ projetos, mostra foco do dia, sinais vitais e um painel — lendo seus planos
 Arquitetura: **engine Python** (`src/painel/`) instalado uma vez em `~/.north`, embrulhado
 por um **launcher npm cross-platform** (`bin/north.js`) distribuído como `north-cli`.
 
+### north é IA-first
+Todo comando é uma **skill invocável dentro do runtime** (Claude Code/Codex/Gemini) —
+essa é a superfície principal. O terminal (`north <cmd>`) é um caminho **equivalente e
+secundário**: nenhum comando pode existir só no terminal. O `CMDSPEC` em `runtimes.py` é
+a **fonte de verdade** dos comandos; toda capability nova vira skill nos 3 runtimes
+(e ganha um `skills/<nome>/SKILL.md` próprio quando precisa de instruções ricas).
+
 ### Invariante sagrado — north é READ-ONLY sobre os planos do usuário
 north **lê** os planos/projetos do usuário e **nunca os edita**. Nenhuma feature pode
 escrever, mover ou deletar arquivos dentro dos projetos descobertos. O único lugar onde

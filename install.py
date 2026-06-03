@@ -8,7 +8,7 @@ O que faz (bootstrap completo do ambiente dev):
   1. Detecta ~/.claude (cria se preciso) e a raiz do workspace atual (scan root).
   2. Copia o motor (src/painel + run.py + north_hook.py) para ~/.claude/painel/.
   3. Copia os templates para ~/.claude/painel/templates/.
-  4. Instala as skills globais em ~/.claude/skills/: focus, note, inbox, panel,
+  4. Instala as skills globais em ~/.claude/skills/: focus, note, inbox, panel, status, config,
      morning, wrap-up (+ aliases pt-BR).
   5. Habilita os plugins do toolchain no ~/.claude/settings.json (code-review,
      code-simplifier, commit-commands, context7, csharp-lsp, frontend-design,
@@ -529,7 +529,7 @@ def main():
         ", ".join(RT.RUNTIMES[t][0] for t in targets)))
     print("=" * 64)
     if "claude" in targets:
-        print("  Claude Code: /focus · /note <ideia> · /inbox · /morning · /wrap-up · /panel")
+        print("  Claude Code: /focus · /note <ideia> · /inbox · /morning · /wrap-up · /panel · /status · /config")
     if "codex" in targets:
         print("  Codex:       /north-focus · /north-note · /north-panel · ...")
     if "gemini" in targets:
