@@ -6,6 +6,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+- Renamed the quick-capture command `/btw` → `/note` to avoid a collision with a
+  native Claude command. `btw` still works as a legacy alias at the engine level;
+  the internal inbox id prefix stays `BTW-` for backward compatibility.
+- Adopted **English** as the standard for dev artifacts (branch names, commit messages,
+  command/skill names, identifiers). User-facing copy stays pt-BR.
+
 ## [0.2.1] - 2026-06-03
 
 ### Added

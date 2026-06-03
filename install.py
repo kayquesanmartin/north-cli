@@ -8,7 +8,7 @@ O que faz (bootstrap completo do ambiente dev):
   1. Detecta ~/.claude (cria se preciso) e a raiz do workspace atual (scan root).
   2. Copia o motor (src/painel + run.py + north_hook.py) para ~/.claude/painel/.
   3. Copia os templates para ~/.claude/painel/templates/.
-  4. Instala as skills globais em ~/.claude/skills/: foco, btw, inbox, painel,
+  4. Instala as skills globais em ~/.claude/skills/: foco, note, inbox, painel,
      bom-dia, fim-do-dia.
   5. Habilita os plugins do toolchain no ~/.claude/settings.json (code-review,
      code-simplifier, commit-commands, context7, csharp-lsp, frontend-design,
@@ -436,11 +436,11 @@ def main():
         ", ".join(RT.RUNTIMES[t][0] for t in targets)))
     print("=" * 64)
     if "claude" in targets:
-        print("  Claude Code: /foco · /btw <ideia> · /inbox · /bom-dia · /fim-do-dia · /painel")
+        print("  Claude Code: /foco · /note <ideia> · /inbox · /bom-dia · /fim-do-dia · /painel")
     if "codex" in targets:
-        print("  Codex:       /north-foco · /north-btw · /north-painel · ...")
+        print("  Codex:       /north-foco · /north-note · /north-painel · ...")
     if "gemini" in targets:
-        print("  Gemini CLI:  /north:foco · /north:btw · /north:painel · ...")
+        print("  Gemini CLI:  /north:foco · /north:note · /north:painel · ...")
     print("")
     print("  Terminal:    north status | north config | north config add-root \"<pasta>\"")
     print("  Config:      {}".format(cfg_path))

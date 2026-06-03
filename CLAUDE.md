@@ -40,7 +40,7 @@ Se algum item não tem resposta boa, **não comece a codar** — alinhe primeiro
 ### Princípios de UX (CLI é interface)
 - **Defaults > configuração.** Funciona out-of-the-box; configurar é opcional.
 - **Falha nunca é silenciosa.** Erro mostra causa e próximo passo, não stack trace cru.
-- **Mensagens em pt-BR, claras e curtas.** O usuário não deveria precisar do README.
+- **Mensagens ao usuário final em pt-BR, claras e curtas.** Não deveria precisar do README.
 - **Idempotência.** Rodar de novo não quebra nem duplica.
 
 ---
@@ -53,6 +53,9 @@ Se algum item não tem resposta boa, **não comece a codar** — alinhe primeiro
 - **Launcher Node >= 14.** `bin/north.js` só detecta o Python e delega — sem lógica de negócio.
 - **Cross-platform sempre.** Use `pathlib`/`os.path`, nunca paths com `/` ou `\` hardcoded,
   nunca assuma bash/PowerShell. Teste mentalmente nos 3 SOs.
+- **Idioma — inglês no código, pt-BR no produto.** Branch, mensagens de commit, nomes de
+  comandos/skills, identificadores, arquivos e comentários: **inglês**. O que é voltado ao
+  usuário final (output do CLI, descrições de skill, READMEs já em EN): segue o idioma do produto.
 - **Sem dados pessoais embutidos.** Nome do dono, caminhos locais, e-mails ficam em config,
   nunca no código do engine.
 
@@ -63,11 +66,11 @@ Se algum item não tem resposta boa, **não comece a codar** — alinhe primeiro
 ### Branches (sempre)
 Trabalho não-trivial **nunca** vai direto na `main`. Crie uma branch por unidade de trabalho,
 nomeada pelo que resolve: `tipo/descricao-curta`.
-- `feat/inbox-filtros`, `fix/ci-bytecode-gate`, `docs/claude-md`, `refactor/discovery-adapters`, `chore/bump-actions`
+- `feat/inbox-filters`, `fix/ci-bytecode-gate`, `docs/claude-md`, `refactor/discovery-adapters`, `chore/bump-actions`
 
 ### Commits
 - **NUNCA adicione co-author.** Sem trailer `Co-Authored-By`. Sem "Generated with".
-- **Conventional Commits, em pt-BR:** `tipo(escopo): descrição no imperativo`.
+- **Conventional Commits, em inglês:** `type(scope): description in the imperative`.
   Tipos: `feat`, `fix`, `docs`, `refactor`, `chore`, `ci`, `test`, `release`, `perf`.
   Escopos comuns: `install`, `discovery`, `statusline`, `painel`, `inbox`, `gsd`, `config`.
 - **Curto e direto: o assunto basta.** Uma linha no imperativo, ~50 (máx. 72) caracteres,
@@ -117,12 +120,12 @@ nomeada pelo que resolve: `tipo/descricao-curta`.
 | `src/painel/render.py`     | renderização do painel/dashboard |
 | `src/painel/health.py`     | sinais vitais / alertas |
 | `src/painel/focus.py`      | foco do dia |
-| `src/painel/inbox.py`      | captura rápida (`/btw`) + inbox |
+| `src/painel/inbox.py`      | captura rápida (`/note`) + inbox |
 | `src/painel/rituals.py`    | rituais (bom-dia / fim-do-dia) |
 | `src/painel/config.py`     | config (`north config`/`status`) |
 | `bin/north.js`             | launcher npm cross-platform |
 | `install.py` / `runtimes.py` | instalador multi-runtime (Claude/Codex/Gemini) |
-| `skills/`                  | comandos: foco, btw, inbox, painel, bom-dia, fim-do-dia |
+| `skills/`                  | comandos: foco, note, inbox, painel, bom-dia, fim-do-dia |
 
 ---
 
