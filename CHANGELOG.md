@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-03
+
 ### Added
 - **Daily project focus.** `north focus --only <project>` scopes `/morning`,
   `/wrap-up` and `/focus` to a single project for the day; `north focus --all`
@@ -79,7 +81,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   rituals, quick capture (`/btw`) + inbox, GSD `.planning/` interop, and a rich
   Claude Code status line.
 
-[Unreleased]: https://github.com/kayquesanmartin/north-cli/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/kayquesanmartin/north-cli/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/kayquesanmartin/north-cli/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kayquesanmartin/north-cli/releases/tag/v0.2.0
