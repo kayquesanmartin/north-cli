@@ -34,23 +34,58 @@ def should_regen(payload) -> bool:
     return False
 
 
+def handle_post(payload):
+    """PostToolUse: regenera o painel silenciosamente quando algo relevante muda."""
+    if not should_regen(payload):
+        return 0
+    try:
+        sys.path.insert(0, str(HOME))
+        from painel.cli import main as cli_main
+        with redirect_stdout(io.StringIO()):  # nao polui o contexto do Claude
+            cli_main(["build"], HOME)
+    except Exception:
+        pass
+    return 0
+
+
+def handle_pre(payload):
+    """PreToolUse: antes de `git push`/`gh pr create`, avisa se a branch esta atrasada
+    (evita conflito). Best-effort, NAO bloqueia (sai 0)."""
+    if payload.get("tool_name") != "Bash":
+        return 0
+    cmd = (payload.get("tool_input", {}) or {}).get("command", "") or ""
+    if not ("git push" in cmd or "gh pr create" in cmd):
+        return 0
+    cwd = payload.get("cwd") or os.getcwd()
+    try:
+        sys.path.insert(0, str(HOME))
+        from painel.discovery import _git, _git_sync
+        _git(["fetch", "--quiet"], Path(cwd))  # best-effort: dados frescos
+        branch = _git(["rev-parse", "--abbrev-ref", "HEAD"], Path(cwd))
+        sy = _git_sync(Path(cwd), branch)
+    except Exception:
+        return 0
+    behind, base_behind = sy.get("behind") or 0, sy.get("base_behind") or 0
+    if behind or base_behind:
+        bits = []
+        if behind:
+            bits.append("{} commit(s) atras de {}".format(behind, sy.get("upstream") or "upstream"))
+        if base_behind:
+            bits.append("{} atras de {}".format(base_behind, sy.get("base") or "base"))
+        print("north [!] antes de pushar: {} — rode `git pull --rebase` "
+              "para evitar conflito.".format("; ".join(bits)))
+    return 0
+
+
 def main():
     try:
         raw = sys.stdin.read()
         payload = json.loads(raw) if raw.strip() else {}
     except Exception:
         return 0
-    if not should_regen(payload):
-        return 0
-    try:
-        sys.path.insert(0, str(HOME))
-        from painel.cli import main as cli_main
-        # build silencioso: nao polui o contexto do Claude
-        with redirect_stdout(io.StringIO()):
-            cli_main(["build"], HOME)
-    except Exception:
-        pass
-    return 0
+    if payload.get("hook_event_name") == "PreToolUse":
+        return handle_pre(payload)
+    return handle_post(payload)
 
 
 if __name__ == "__main__":

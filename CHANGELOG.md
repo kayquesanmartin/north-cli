@@ -6,6 +6,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **Pre-push guard.** Before `git push` / `gh pr create`, north fetches (best-effort) and
+  warns if your branch is behind its upstream or base — "git pull --rebase first" — to avoid
+  conflicts. Non-blocking, fast, offline-safe. (PreToolUse hook, alongside the live-panel hook.)
+
 ### Fixed
 - **Live-panel hook is now actually wired.** `north_hook.py` was copied to `~/.north` but
   never registered in `settings.json`, so the auto-regenerate-on-activity feature was dead.

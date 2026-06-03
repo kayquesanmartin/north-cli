@@ -188,18 +188,26 @@ def setup_hooks(home: Path, engine: Path):
         data = {}
     command = '"{}" "{}"'.format(
         sys.executable.replace("\\", "/"), str(engine / "north_hook.py").replace("\\", "/"))
-    post = data.setdefault("hooks", {}).setdefault("PostToolUse", [])
-    for entry in post:
-        for h in entry.get("hooks", []):
-            if "north_hook.py" in (h.get("command", "") or ""):
-                h["command"] = command  # migra caminho antigo
-                settings.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-                return "updated"
-    post.append({"matcher": "Bash|Edit|Write|MultiEdit|NotebookEdit",
-                 "hooks": [{"type": "command", "command": command}]})
+    hooks = data.setdefault("hooks", {})
+    status = "set"
+    # PostToolUse: regenera o painel (commit/push/PR/edicao de plano)
+    # PreToolUse:  avisa antes de push/PR se a branch esta atrasada
+    for event, matcher in (("PostToolUse", "Bash|Edit|Write|MultiEdit|NotebookEdit"),
+                           ("PreToolUse", "Bash")):
+        bucket = hooks.setdefault(event, [])
+        found = False
+        for entry in bucket:
+            for h in entry.get("hooks", []):
+                if "north_hook.py" in (h.get("command", "") or ""):
+                    h["command"] = command  # migra caminho antigo
+                    found = True
+                    status = "updated"
+        if not found:
+            bucket.append({"matcher": matcher,
+                           "hooks": [{"type": "command", "command": command}]})
     settings.parent.mkdir(parents=True, exist_ok=True)
     settings.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-    return "set"
+    return status
 
 
 def setup_statusline(home: Path, engine: Path, force=False):
