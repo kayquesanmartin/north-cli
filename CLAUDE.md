@@ -127,7 +127,7 @@ nomeada pelo que resolve: `tipo/descricao-curta`.
 | `src/painel/render.py`     | renderização do painel/dashboard |
 | `src/painel/health.py`     | sinais vitais / alertas |
 | `src/painel/focus.py`      | foco do dia |
-| `src/painel/inbox.py`      | captura rápida (`/note`) + inbox |
+| `src/painel/inbox.py`      | captura rápida (`/north-note`) + inbox |
 | `src/painel/rituals.py`    | rituais (bom-dia / fim-do-dia) |
 | `src/painel/config.py`     | config (`north config`/`status`) |
 | `bin/north.js`             | launcher npm cross-platform |

@@ -1,11 +1,11 @@
 ---
-name: note
-description: north — Captura rápida ("by the way"). Salva uma ideia/nota/lembrete/insight de reunião na inbox SEM quebrar o que está sendo feito, para revisar depois. O north relembra no fim do dia e no bom-dia seguinte. Ative para "/note", "/capturar", "/ideia", "anota aí", "salva essa ideia", "não quero esquecer", "lembra disso", "ó, ideia:".
+name: north-note
+description: north — Captura rápida ("by the way"). Salva uma ideia/nota/lembrete/insight de reunião na inbox SEM quebrar o que está sendo feito, para revisar depois. O north relembra no fim do dia e no bom-dia seguinte. Ative para "/north-note", "/capturar", "/ideia", "anota aí", "salva essa ideia", "não quero esquecer", "lembra disso", "ó, ideia:".
 allowed-tools: Bash
 argument-hint: "<sua ideia em uma frase>"
 ---
 
-# /note — Captura rápida (north)
+# /north-note — Captura rápida (north)
 
 Captura um pensamento no meio do fluxo e **volta imediatamente** ao que estava
 sendo feito. Nada de derailing: é só registrar para não perder.
@@ -28,9 +28,9 @@ sendo feito. Nada de derailing: é só registrar para não perder.
    fim do dia). **Não** abra o painel, **não** acione squads, **não** comece a
    trabalhar na ideia.
 
-3. **Se havia uma tarefa em andamento antes do `/note`, retome-a** exatamente de onde
+3. **Se havia uma tarefa em andamento antes do `/north-note`, retome-a** exatamente de onde
    parou. A captura é uma interrupção mínima, não uma troca de contexto.
 
 **Regra de ouro:** capturar ≠ executar. A ideia fica guardada para decisão posterior
-(no `/wrap-up` ou `/inbox`). Só comece a trabalhar nela se o usuário pedir
+(no `/north-wrap-up` ou `/north-inbox`). Só comece a trabalhar nela se o usuário pedir
 explicitamente.

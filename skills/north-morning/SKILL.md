@@ -1,11 +1,11 @@
 ---
-name: morning
-description: Ritual de início de dia — regenera a Central de Produtividade (todos os projetos), mostra o FOCO DO DIA consolidado e abre o painel no navegador. Ative para "/morning", "bom dia", "começar o dia", "o que faço hoje".
+name: north-morning
+description: Ritual de início de dia — regenera a Central de Produtividade (todos os projetos), mostra o FOCO DO DIA consolidado e abre o painel no navegador. Ative para "/north-morning", "bom dia", "começar o dia", "o que faço hoje".
 allowed-tools: Bash
 argument-hint: ""
 ---
 
-# /morning — Início de dia (Central de Produtividade)
+# /north-morning — Início de dia (Central de Produtividade)
 
 Ritual de início de dia, multi-projeto e 100% local. O motor varre todos os
 projetos rastreados (qualquer `plan-build/` com `Progress*.md` + `Sprint*.md`),
@@ -38,8 +38,8 @@ consolida o progresso e mostra onde focar.
    já recomendadas pelo script como pista. Seja breve — uma linha por sugestão.
 
 5. Se houver vários projetos e o usuário sinalizar que hoje só vai mexer em um,
-   **ofereça fixar o foco do dia** (`north focus --only <id>`) — assim o `/morning`
-   e o `/wrap-up` mostram só esse projeto. `north focus --all` volta ao portfólio.
+   **ofereça fixar o foco do dia** (`north focus --only <id>`) — assim o `/north-morning`
+   e o `/north-wrap-up` mostram só esse projeto. `north focus --all` volta ao portfólio.
 
 **Não faça mais nada além disso.** Não edite código, não rode testes, não
 invoque outras skills. Este é só o ritual de bom dia.

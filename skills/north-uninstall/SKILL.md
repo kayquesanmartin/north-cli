@@ -1,11 +1,11 @@
 ---
-name: uninstall
-description: north — Desinstala o north. Remove as skills/comandos dos runtimes (Claude/Codex/Gemini) e o motor (~/.north), preservando seus dados por padrão. Ative para "/uninstall", "desinstalar north", "remover north", "tirar o north".
+name: north-uninstall
+description: north — Desinstala o north. Remove as skills/comandos dos runtimes (Claude/Codex/Gemini) e o motor (~/.north), preservando seus dados por padrão. Ative para "/north-uninstall", "desinstalar north", "remover north", "tirar o north".
 allowed-tools: Bash
 argument-hint: ""
 ---
 
-# /uninstall — Desinstalar o north
+# /north-uninstall — Desinstalar o north
 
 Remove o north da máquina. Por padrão **preserva seus dados** (config, inbox,
 resumos); só apaga o programa (skills/comandos + motor).

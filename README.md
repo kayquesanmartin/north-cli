@@ -26,12 +26,12 @@ It never edits your plans — it only reads them.
 Planning tools give you a **snapshot** — where each project stands. north gives
 you **vital signs and direction**:
 
-- 🧭 **`/focus`** answers the only question that matters each morning: *what do I do now?* — the highest-value next action across **all** your projects, respecting your WIP limit.
+- 🧭 **`/north-focus`** answers the only question that matters each morning: *what do I do now?* — the highest-value next action across **all** your projects, respecting your WIP limit.
 - 📍 **Ambient status line**: your next action + alerts right in the Claude Code status bar, **every prompt** — present without you asking.
 - 🩺 **Vital signs** warn you *before* you stall: uncommitted work becoming a risk, a stale branch, a blocker on the critical path, WIP over the limit.
 - 🔍 **Auto-discovery**: point it at a folder and it finds every tracked project. New projects show up on their own.
 - 🔗 **Interops with [GSD](https://github.com/open-gsd/gsd-core)**: reads `.planning/` (STATE/ROADMAP/HANDOFF) and shows your GSD projects — phases, progress, blockers, next action — in the same panel, next to your `plan-build` projects. north is the *breadth* layer **over** GSD, not a competitor.
-- 📥 **Frictionless capture** (`/note`): save an idea mid-task without losing focus — it reminds you at end of day.
+- 📥 **Frictionless capture** (`/north-note`): save an idea mid-task without losing focus — it reminds you at end of day.
 - 🔒 **Single source of truth**: north **only reads** your `.md` files. It never writes to them.
 
 > north doesn't replace your planning system — it **reads** it and gives you what's
@@ -63,7 +63,7 @@ One command. The interactive installer (cross-platform, no need to type "python"
 
 | Runtime | Commands | Where |
 |---|---|---|
-| **Claude Code** | `/focus`, `/note`, `/panel`… (skills) + status line | `~/.claude/skills/` |
+| **Claude Code** | `/north-focus`, `/north-note`, `/north-panel`… (skills) + status line | `~/.claude/skills/` |
 | **Codex** | `/north-focus`, `/north-note`… (prompts) | `~/.codex/prompts/` |
 | **Gemini CLI** | `/north:focus`, `/north:note`… (`!{}` commands) | `~/.gemini/commands/north/` |
 
@@ -97,7 +97,7 @@ your projects/
 
 ### Commands
 
-In your AI runtime: `/focus` · `/morning` · `/wrap-up` · `/note <idea>` · `/inbox` · `/panel` · `/uninstall`
+In your AI runtime: `/north-focus` · `/north-morning` · `/north-wrap-up` · `/north-note <idea>` · `/north-inbox` · `/north-panel` · `/north-uninstall`
 
 Uninstall anytime: `north uninstall` (preserves your data; `--purge` wipes it too).
 (Codex: `/north-focus`… · Gemini: `/north:focus`…)

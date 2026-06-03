@@ -121,29 +121,36 @@ Siga as mesmas regras de `/{name}`.
 """
 
 
-def _alias_skill_md(alias, c):
-    """SKILL.md leve para um alias pt-BR que delega ao comando canônico."""
+def _alias_skill_md(ns_alias, c):
+    """SKILL.md leve para um alias pt-BR (namespaced) que delega ao comando canônico."""
     argh = ' "<texto>"' if c["args"] else ""
-    return _ALIAS_SKILL_TMPL.format(alias=alias, name=c["name"], sub=c["sub"], argh=argh)
+    return _ALIAS_SKILL_TMPL.format(alias=ns_alias, name="north-" + c["name"],
+                                    sub=c["sub"], argh=argh)
 
 
 def adapter_claude(home: Path, tool_home: Path, pyexe: str):
     skills_dst = home / "skills"
     skills_dst.mkdir(parents=True, exist_ok=True)
+    # migração: remove instalações antigas SEM namespace (focus, foco, status, btw, ...)
+    for old in _legacy_bare_skill_names():
+        d = skills_dst / old
+        if d.is_dir():
+            shutil.rmtree(d, ignore_errors=True)
     installed = []
     for skill_dir in SKILLS_SRC.glob("*"):
         if not skill_dir.is_dir():
             continue
-        dst = skills_dst / skill_dir.name
+        dst = skills_dst / skill_dir.name          # dirs já são north-*
         dst.mkdir(exist_ok=True)
         shutil.copy2(skill_dir / "SKILL.md", dst / "SKILL.md")
         installed.append(skill_dir.name)
     for c in CMDSPEC:
         for alias in c.get("aliases", []):
-            adst = skills_dst / alias
+            ns = "north-" + alias
+            adst = skills_dst / ns
             adst.mkdir(exist_ok=True)
-            (adst / "SKILL.md").write_text(_alias_skill_md(alias, c), encoding="utf-8")
-            installed.append(alias)
+            (adst / "SKILL.md").write_text(_alias_skill_md(ns, c), encoding="utf-8")
+            installed.append(ns)
     return installed
 
 
@@ -217,13 +224,20 @@ ADAPTERS = {"claude": adapter_claude, "codex": adapter_codex, "gemini": adapter_
 # ---------------------------------------------------------------------------
 # Uninstall: reverte exatamente o que os adapters/o motor criaram.
 # ---------------------------------------------------------------------------
-def _north_skill_names():
-    """Nomes de skills/diretórios que pertencem ao north (canônicos + aliases + legados)."""
+def _legacy_bare_skill_names():
+    """Nomes SEM namespace (instalações pré-north-): para migração/limpeza."""
     names = set()
     for c in CMDSPEC:
         names.add(c["name"])
         names.update(c.get("aliases", []))
-    names.update({"btw", "uninstall"})  # legado (pré-rename) + a própria skill de uninstall
+    names.update({"btw", "uninstall"})
+    return names
+
+
+def _north_skill_names():
+    """Nomes de skills/diretórios do north — namespaced (atual) + bare (migração)."""
+    bare = _legacy_bare_skill_names()
+    names = set(bare) | {"north-" + n for n in bare}
     return names
 
 
