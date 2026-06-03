@@ -7,6 +7,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Executive (C-level) summary on the dashboard.** The portfolio view now opens with a
+  structured exec block: health verdict (healthy / attention / at-risk), global progress,
+  on-track vs at-risk counts, open blockers, today's activity, and the top priority —
+  clickable to drill into the project. Vital-sign rows are clickable too.
+
+### Added
 - **Pre-push guard.** Before `git push` / `gh pr create`, north fetches (best-effort) and
   warns if your branch is behind its upstream or base — "git pull --rebase first" — to avoid
   conflicts. Non-blocking, fast, offline-safe. (PreToolUse hook, alongside the live-panel hook.)
