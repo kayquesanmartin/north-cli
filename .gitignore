@@ -4,6 +4,11 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Node (camada de distribuição npm/npx)
 node_modules/
@@ -14,11 +19,20 @@ package-lock.json
 # Painel gerado (artefato, não fonte)
 dashboard.html
 
+# Segredos / ambiente (nunca versionar)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
 # OS / editor
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+.vs/
 
 # Local harness settings (Claude Code)
 .claude/
