@@ -13,6 +13,15 @@ consolida o progresso e mostra onde focar.
 
 **Passos obrigatórios (nessa ordem):**
 
+0. **Atualize os refs git** (best-effort, para o bloco VERSIONAMENTO ser preciso) —
+   se houver repositório git no diretório atual / projetos:
+
+   ```bash
+   git fetch --all --quiet 2>/dev/null || true
+   ```
+
+   Ignore silenciosamente se estiver offline ou não for um repo.
+
 1. Rode o launcher da central:
 
    ```bash
@@ -41,5 +50,10 @@ consolida o progresso e mostra onde focar.
    **ofereça fixar o foco do dia** (`north focus --only <id>`) — assim o `/north-morning`
    e o `/north-wrap-up` mostram só esse projeto. `north focus --all` volta ao portfólio.
 
+6. **Se aparecer o bloco "⚠ VERSIONAMENTO"** (branch atrás do remoto/base),
+   destaque-o e oriente o usuário a sincronizar **antes** de novos commits:
+   `git pull --rebase` (ou rebase na base), resolver conflitos cedo. Isso evita
+   conflitos grandes no fim do dia. **Não execute o pull sozinho — oriente.**
+
 **Não faça mais nada além disso.** Não edite código, não rode testes, não
-invoque outras skills. Este é só o ritual de bom dia.
+invoque outras skills (além do fetch best-effort). Este é só o ritual de bom dia.

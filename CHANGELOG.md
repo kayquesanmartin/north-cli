@@ -6,6 +6,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **Git sync awareness in the rituals.** `/north-morning` and `/north-wrap-up` now flag when
+  your branch is **behind its upstream** or **behind the base branch** (main/dev) — so you
+  pull/rebase before conflicts pile up, and validate before pushing. Counts come from local
+  refs (offline-safe); the ritual skills run `git fetch` first (best-effort) for fresh data
+  and guide safe versioning (pull --rebase → test → push). Surfaces as health alerts in the panel too.
+
 ## [0.5.0] - 2026-06-03
 
 ### Changed
