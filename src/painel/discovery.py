@@ -572,7 +572,7 @@ def _nested_planbuilds(by_dir):
 
 
 def discover_projects(config):
-    """Descobre + monta todos os projetos habilitados. Devolve (lista, novos_ids).
+    """Descobre + monta projetos habilitados. Devolve (lista, novos_ids, removidos).
 
     Reconciliacao por diretorio: cada projeto e UM card, mesmo que tenha varias
     estruturas de planejamento. A fonte primaria e a mais recentemente ativa
@@ -593,6 +593,22 @@ def discover_projects(config):
             })
 
     extra_by_root, absorbed = _nested_planbuilds(by_dir)
+
+    # auto-cura: poda da config os projetos que sumiram do disco (re-map). Um id
+    # so e considerado vivo se apareceu na varredura (by_dir = tudo que existe,
+    # inclusive desabilitados/templates/aninhados). Guarda: NAO poda se a
+    # varredura nao achou nada (scan_roots vazio/quebrado -> nao zera a config).
+    discovered_ids = {pdir.name for pdir in by_dir}
+    removed_ids = []
+    if discovered_ids:
+        for pid in list(config.projects.keys()):
+            if pid not in discovered_ids:
+                config.projects.pop(pid, None)
+                removed_ids.append(pid)
+        st = config.data.get("settings", {}) or {}
+        if st.get("focused_project") in removed_ids:
+            st.pop("focused_project", None)
+
     items = sorted(by_dir.items(), key=lambda kv: kv[0].name.lower())
 
     new_ids, projects = [], []
@@ -637,4 +653,4 @@ def discover_projects(config):
         projects.append(proj)
 
     projects.sort(key=lambda p: (p["order"], p["name"].lower()))
-    return projects, new_ids
+    return projects, new_ids, removed_ids

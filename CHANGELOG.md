@@ -20,6 +20,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   Folds into the top-most ancestor (handles deep chains); a nested dir that also has a GSD
   `.planning` stays its own card, so legitimate sub-projects aren't swallowed.
 
+### Fixed
+- **Deleted projects no longer linger (config self-heals on scan).** When a project's
+  folder/`plan-build` is gone, discovery now prunes its stale entry from `projects.json`
+  and reports it (`- N projeto(s) removido(s)…`), so `north status`/`config show` stop
+  showing ghosts. Guarded: if a scan finds nothing (e.g. a broken `scan_roots`), nothing
+  is pruned — your config is never wiped by a misconfiguration. The dashboard already
+  reflected reality on regen; this closes the gap in the persisted state.
+
 ### Added
 - **Executive (C-level) summary on the dashboard.** The portfolio view now opens with a
   structured exec block: health verdict (healthy / attention / at-risk), global progress,

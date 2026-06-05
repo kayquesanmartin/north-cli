@@ -70,15 +70,15 @@ def _open_browser(path: Path):
 def _load_and_discover(home: Path):
     cfg_path = home / "config" / "projects.json"
     cfg = load_config(cfg_path)
-    projects, new_ids = discover_projects(cfg)
+    projects, new_ids, removed_ids = discover_projects(cfg)
     # identidade do dev (gh @login + git): detecta uma vez e cacheia na config,
     # para nao chamar o gh a cada regeneracao do painel vivo
     if not cfg.data.get("settings", {}).get("identity", {}).get("github") and \
        not cfg.data.get("settings", {}).get("identity", {}).get("name"):
         sample = Path(projects[0]["path"]) if projects else home
         cfg.data.setdefault("settings", {})["identity"] = current_identity(sample)
-    cfg.save()  # persiste projetos recem-descobertos + identidade
-    return cfg, projects, new_ids
+    cfg.save()  # persiste projetos recem-descobertos, removidos e identidade
+    return cfg, projects, new_ids, removed_ids
 
 
 def _pick_json(pk):
@@ -602,10 +602,13 @@ def main(argv, home: Path):
         cmd_inbox_resolve(home, argv[1], "done" if cmd == "inbox-done" else "dismissed")
         return 0
 
-    cfg, projects, new_ids = _load_and_discover(home)
+    cfg, projects, new_ids, removed_ids = _load_and_discover(home)
     if new_ids:
         print("  + {} novo(s) projeto(s) descoberto(s): {}".format(
             len(new_ids), ", ".join(new_ids)))
+    if removed_ids:
+        print("  - {} projeto(s) removido(s) (pasta nao existe mais): {}".format(
+            len(removed_ids), ", ".join(removed_ids)))
     if not projects:
         print("Nenhum projeto com tracking encontrado.")
         print("Verifique scan_roots em: {}".format(home / "config" / "projects.json"))
