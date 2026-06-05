@@ -69,15 +69,36 @@ def project_id_for(plan_build: Path, scan_roots) -> str:
     return pdir.name
 
 
-def pick_progress_file(plan_build: Path) -> Path:
-    """Escolhe o Progress principal: ignora 'Archive', prefere 'Progress.md'."""
-    candidates = sorted(plan_build.glob("[Pp]rogress*.md"))
-    candidates = [c for c in candidates if "archive" not in c.name.lower()]
-    if not candidates:
-        return None
-    # prefere exatamente Progress*.md mais curto (menos sufixo)
-    candidates.sort(key=lambda c: (len(c.name), c.name.lower()))
-    return candidates[0]
+def group_md_by_feature(plan_build: Path):
+    """Agrupa TODOS os .md sob o plan-build por feature, descendo a arvore inteira.
+
+    feature = subpasta de 1o nivel sob o plan-build:
+      plan-build/Progress.md          -> feature ""        (raiz / "Principal")
+      plan-build/calculo/Sprint-1.md  -> feature "calculo"
+      plan-build/calculo/sub/x.md     -> feature "calculo" (1o nivel agrupa o resto)
+
+    Devolve lista ordenada de (feature, {"progress": Path|None, "sprints": [Path]}),
+    com a raiz primeiro e as features em ordem alfabetica. Arquivos/pastas que
+    contenham 'archive' no caminho sao ignorados (mesmo criterio do legado)."""
+    groups = {}
+    for md in sorted(plan_build.rglob("*.md")):
+        try:
+            rel = md.relative_to(plan_build).parts
+        except ValueError:
+            continue
+        if any("archive" in part.lower() for part in rel):
+            continue
+        feature = rel[0] if len(rel) > 1 else ""
+        g = groups.setdefault(feature, {"progress": None, "sprints": []})
+        name = md.name.lower()
+        if name.startswith("progress"):
+            # progress "principal" da feature = nome mais curto (menos sufixo)
+            cur = g["progress"]
+            if cur is None or len(md.name) < len(cur.name):
+                g["progress"] = md
+        elif name.startswith("sprint"):
+            g["sprints"].append(md)
+    return sorted(groups.items(), key=lambda kv: (kv[0] != "", kv[0].lower()))
 
 
 # ----------------------------------------------------------------------------
@@ -206,11 +227,64 @@ def parse_meta(progress_text: str):
 # ----------------------------------------------------------------------------
 # Montagem do modelo de UM projeto
 # ----------------------------------------------------------------------------
+def _build_feature_blockers(ftext):
+    """Bloqueios de um texto de progress (tabela Bloqueio|Status)."""
+    out = []
+    _, blk_rows = P.extract_table(ftext, ["bloqueio", "status"])
+    for r in blk_rows:
+        st = r.get("status", "")
+        resolved = bool(re.search(r"\U0001F7E2|resolvid|sob controle|fechad", st, re.I))
+        desc = r.get("bloqueio", "")
+        if not P.clean_desc(desc):
+            continue
+        out.append({
+            "id": P.clean_desc(r.get("#", r.get("id", ""))),
+            "desc": P.clean_desc(desc),
+            "impact": P.clean_desc(r.get("impacto", "")),
+            "status": P.clean_desc(st),
+            "resolved": resolved,
+        })
+    return out
+
+
+def _build_feature_debt(ftext):
+    """Debito tecnico de um texto de progress (tabela id|prioridade, ids DT-*)."""
+    out = []
+    _, dt_rows = P.extract_table(ftext, ["id", "prioridade"])
+    for r in dt_rows:
+        did = P.clean_desc(r.get("id", ""))
+        if not re.match(r"DT[-_]", did, re.I):
+            continue
+        desc = r.get("descrição", r.get("descricao", ""))
+        closed = "~~" in desc or "✅" in desc or "fechad" in desc.lower()
+        out.append({
+            "id": did,
+            "desc": P.clean_desc(desc),
+            "sprint": P.clean_desc(r.get("sprint", "")),
+            "prio": P.clean_desc(r.get("prioridade", "")).lower(),
+            "closed": closed,
+        })
+    return out
+
+
 def build_project(plan_build: Path, scan_roots):
     pdir = project_dir_for(plan_build)
     pid = pdir.name
-    progress_file = pick_progress_file(plan_build)
-    progress_text = read(progress_file) if progress_file else ""
+
+    # agrupa os .md por feature (subpasta de 1o nivel; raiz = ""), descendo a
+    # arvore inteira — resolve o caso "plan-build segregado por feature".
+    groups = group_md_by_feature(plan_build)
+    by_feat = dict(groups)
+
+    # progress "principal" do projeto = o da raiz (meta/branch/sprint atual);
+    # se nao houver raiz, usa o da primeira feature com progress (degrada).
+    root_progress = by_feat.get("", {}).get("progress")
+    if root_progress is None:
+        for _f, g in groups:
+            if g["progress"] is not None:
+                root_progress = g["progress"]
+                break
+    progress_text = read(root_progress) if root_progress else ""
 
     meta = parse_meta(progress_text)
     git = git_info(pdir)
@@ -221,63 +295,76 @@ def build_project(plan_build: Path, scan_roots):
     placeholders = len(re.findall(r"<[A-ZÀ-Ú][A-ZÀ-Ú0-9 _/-]{1,40}>", progress_text))
     is_template = placeholders >= 3
 
-    # ---- nivel sprint (overview) ----
-    sprints = {}
-    _, status_rows = P.extract_table(
-        progress_text, ["sprint", "status"])
-    sp_order = 0
-    for r in status_rows:
-        cell = r.get("sprint", "")
-        key = P.sprint_key(cell)
-        if not key:
-            continue
-        status_raw = r.get("status", "")
-        prog_cell = r.get("progresso", "") + " " + r.get("progress", "")
-        done, total, pct = P.parse_progress(prog_cell + " " + status_raw)
-        col, blocked = P.classify_status(status_raw)
-        if pct is None:
-            pct = 100 if col == P.COL_DONE else (0 if col == P.COL_PLANEJADO else None)
-        sprints[key] = {
-            "key": key,
-            "name": P.sprint_name(cell),
-            "status_raw": P.clean_desc(status_raw),
-            "col": col,
-            "blocked": blocked,
-            "done": done,
-            "total": total,
-            "pct": pct,
-            "order": sp_order,
-        }
-        sp_order += 1
-
-    # ---- nivel task ----
+    # ---- por feature: sprints (overview) + tasks + bloqueios + debito ----
+    sprints = {}             # (feature, key) -> sprint dict
+    sprint_author = {}       # (feature, key) -> autoria via git
     tasks = []
-    sprint_author = {}   # key -> {name, email, when} (autoria via git, por arquivo de sprint)
-    sprint_files = sorted(plan_build.glob("[Ss]print*.md"))
-    for sp in sprint_files:
-        if "archive" in sp.name.lower():
-            continue
-        key = P.sprint_key(sp.name) or sp.stem
-        sprint_author[key] = file_author(pdir, sp)
-        text = read(sp)
-        t1 = P.tasks_from_tables(text, sprint_default=key)
-        t2 = P.tasks_from_codeblocks(text, sprint_default=key) if not t1 else []
-        for t in (t1 + t2):
-            tasks.append(t)
-    # tabelas de task no proprio Progress.md (formato C):
-    # sprint_default vazio -> deriva o sprint pelo id da task (S3B-1 -> S3B)
-    for t in P.tasks_from_tables(progress_text, sprint_default=""):
-        tasks.append(t)
-    # code-blocks do proprio Progress (formato B)
-    if not tasks:
-        for t in P.tasks_from_codeblocks(progress_text):
+    blockers = []
+    debt = []
+    feature_order = []       # ordem das features que contribuiram com algo
+    sp_order = 0
+
+    for feature, g in groups:
+        ftext = read(g["progress"]) if g["progress"] else ""
+
+        # sprints da feature (tabela Status Geral)
+        _, status_rows = P.extract_table(ftext, ["sprint", "status"])
+        for r in status_rows:
+            cell = r.get("sprint", "")
+            key = P.sprint_key(cell)
+            if not key:
+                continue
+            status_raw = r.get("status", "")
+            prog_cell = r.get("progresso", "") + " " + r.get("progress", "")
+            done, total, pct = P.parse_progress(prog_cell + " " + status_raw)
+            col, blocked = P.classify_status(status_raw)
+            if pct is None:
+                pct = 100 if col == P.COL_DONE else (0 if col == P.COL_PLANEJADO else None)
+            sprints[(feature, key)] = {
+                "key": key, "feature": feature,
+                "name": P.sprint_name(cell),
+                "status_raw": P.clean_desc(status_raw),
+                "col": col, "blocked": blocked,
+                "done": done, "total": total, "pct": pct, "order": sp_order,
+            }
+            sp_order += 1
+
+        # tasks da feature: cada Sprint*.md + tabelas/code-blocks do progress
+        feat_tasks = []
+        for sp in g["sprints"]:
+            key = P.sprint_key(sp.name) or sp.stem
+            sprint_author[(feature, key)] = file_author(pdir, sp)
+            text = read(sp)
+            t1 = P.tasks_from_tables(text, sprint_default=key)
+            t2 = P.tasks_from_codeblocks(text, sprint_default=key) if not t1 else []
+            feat_tasks.extend(t1 + t2)
+        # tabelas de task no proprio progress (formato C): sprint_default vazio
+        # -> deriva o sprint pelo id da task (S3B-1 -> S3B)
+        feat_tasks.extend(P.tasks_from_tables(ftext, sprint_default=""))
+        # code-blocks do progress (formato B) so se a feature nao gerou nada
+        if not feat_tasks:
+            feat_tasks.extend(P.tasks_from_codeblocks(ftext))
+        for t in feat_tasks:
+            t["feature"] = feature
             tasks.append(t)
 
-    # dedup por (id, sprint)
+        # bloqueios / debito desta feature (agregados no nivel projeto)
+        for b in _build_feature_blockers(ftext):
+            b["feature"] = feature
+            blockers.append(b)
+        for d in _build_feature_debt(ftext):
+            d["feature"] = feature
+            debt.append(d)
+
+        if feat_tasks or any(k[0] == feature for k in sprints):
+            if feature not in feature_order:
+                feature_order.append(feature)
+
+    # dedup por (feature, id, sprint)
     seen = set()
     deduped = []
     for t in tasks:
-        k = (t["id"], t["sprint"])
+        k = (t.get("feature", ""), t["id"], t["sprint"])
         if k in seen:
             continue
         seen.add(k)
@@ -285,54 +372,42 @@ def build_project(plan_build: Path, scan_roots):
     tasks = deduped
 
     # reconciliacao: se o sprint esta COMPLETO no overview, suas tasks viram Done
+    # (casado por feature, para nao misturar sprints homonimos de features distintas)
     for t in tasks:
-        sp = sprints.get(t["sprint"])
+        sp = sprints.get((t.get("feature", ""), t["sprint"]))
         if sp and sp["col"] == P.COL_DONE and sp.get("pct") == 100:
             t["col"] = P.COL_DONE
             t["blocked"] = False
 
-    # ---- bloqueios ----
-    blockers = []
-    _, blk_rows = P.extract_table(progress_text, ["bloqueio", "status"])
-    for r in blk_rows:
-        st = r.get("status", "")
-        resolved = bool(re.search(r"\U0001F7E2|resolvid|sob controle|fechad", st, re.I))
-        desc = r.get("bloqueio", "")
-        if not P.clean_desc(desc):
-            continue
-        blockers.append({
-            "id": P.clean_desc(r.get("#", r.get("id", ""))),
-            "desc": P.clean_desc(desc),
-            "impact": P.clean_desc(r.get("impacto", "")),
-            "status": P.clean_desc(st),
-            "resolved": resolved,
-        })
-
-    # ---- debito tecnico ----
-    debt = []
-    _, dt_rows = P.extract_table(progress_text, ["id", "prioridade"])
-    for r in dt_rows:
-        did = P.clean_desc(r.get("id", ""))
-        if not re.match(r"DT[-_]", did, re.I):
-            continue
-        desc = r.get("descrição", r.get("descricao", ""))
-        closed = "~~" in desc or "✅" in desc or "fechad" in desc.lower()
-        debt.append({
-            "id": did,
-            "desc": P.clean_desc(desc),
-            "sprint": P.clean_desc(r.get("sprint", "")),
-            "prio": P.clean_desc(r.get("prioridade", "")).lower(),
-            "closed": closed,
-        })
-
     # ---- autoria (git, sem tocar nos .md) ----
-    for s in sprints.values():
-        s["author"] = sprint_author.get(s["key"])
-    proj_author = file_author(pdir, progress_file) if progress_file else None
+    for (feature, key), s in sprints.items():
+        s["author"] = sprint_author.get((feature, key))
+    proj_author = file_author(pdir, root_progress) if root_progress else None
     proj_contributors = contributors(pdir, plan_build)
 
     # ---- rollup de progresso ----
     sprint_list = sorted(sprints.values(), key=lambda s: s["order"])
+
+    # ---- indice de features (ordenado) para o render agrupar ----
+    features = []
+    for fk in feature_order:
+        f_sprints = [s for s in sprint_list if s["feature"] == fk]
+        f_tasks = [t for t in tasks if t.get("feature", "") == fk]
+        if f_tasks:
+            f_done = sum(1 for t in f_tasks if t["col"] == P.COL_DONE)
+            f_total = len(f_tasks)
+            f_level = "task"
+        else:
+            f_done = sum(1 for s in f_sprints if s["col"] == P.COL_DONE)
+            f_total = len(f_sprints)
+            f_level = "sprint"
+        features.append({
+            "key": fk, "label": fk or "Principal",
+            "sprint_keys": [s["key"] for s in f_sprints],
+            "done": f_done, "total": f_total,
+            "pct": round(f_done / f_total * 100) if f_total else 0,
+            "level": f_level,
+        })
     if tasks:
         total = len(tasks)
         done = sum(1 for t in tasks if t["col"] == P.COL_DONE)
@@ -356,7 +431,7 @@ def build_project(plan_build: Path, scan_roots):
         "id": pid,
         "path": str(pdir),
         "plan_dir": str(plan_build),
-        "progress_file": str(progress_file) if progress_file else "",
+        "progress_file": str(root_progress) if root_progress else "",
         "is_template": is_template,
         "has_docs": (pdir / "docs").is_dir(),
         "meta": meta,
@@ -365,6 +440,7 @@ def build_project(plan_build: Path, scan_roots):
         "current_sprint": meta.get("current_sprint", ""),
         "author": proj_author,
         "contributors": proj_contributors,
+        "features": features,
         "sprints": sprint_list,
         "tasks": tasks,
         "blockers": blockers,
@@ -421,7 +497,9 @@ def _newest_mtime(paths):
 
 
 def _pb_mtime(pb: Path):
-    return _newest_mtime(list(pb.glob("*.md")))
+    # rglob: a recencia precisa enxergar edicoes em subpastas segregadas
+    # (plan-build/calculo/Sprint-1.md), nao so os .md na raiz do plan-build.
+    return _newest_mtime(list(pb.rglob("*.md")))
 
 
 def _gsd_mtime(pl: Path):

@@ -7,6 +7,15 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Segmented plans are now tracked (features by subfolder).** Discovery descends the
+  whole `plan-build` tree instead of only its top level, so plans split across subfolders
+  (e.g. `plan-build/calculo/Sprint-1.md`, `plan-build/pricing/Sprint-2.md`) are no longer
+  invisible. Each first-level subfolder becomes a **feature group**: the project view shows
+  collapsible groups with per-feature progress, and kanban cards carry a feature tag. Sprint
+  keys that repeat across features (a `Sprint-1` in two folders) no longer overwrite each
+  other. Recency (live-panel trigger) also follows edits in subfolders. Read-only as always.
+
+### Added
 - **Executive (C-level) summary on the dashboard.** The portfolio view now opens with a
   structured exec block: health verdict (healthy / attention / at-risk), global progress,
   on-track vs at-risk counts, open blockers, today's activity, and the top priority —
