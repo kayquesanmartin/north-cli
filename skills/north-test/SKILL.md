@@ -26,6 +26,21 @@ Identifique a camada e adapte (use Read/Grep para entender o alvo):
 - **Unit/integração:** padrão **AAA** (Arrange-Act-Assert), o que vale testar (regra de
   negócio, bordas) vs o que não (getter trivial), onde mockar a fronteira.
 
+## Playbooks por ferramenta (guie o passo a passo — ele executa)
+Não faça por ele; oriente cada passo e mande consultar a doc oficial (cite a fonte).
+- **Postman / Insomnia (API):** criar a request → método + URL → aba Auth (Bearer/Basic) →
+  Headers (`Content-Type`) → Body (raw JSON). Salvar numa Collection; usar **environment
+  vars** (`{{baseUrl}}`, `{{token}}`) p/ não repetir. Em Postman, treinar 1–2 asserts na aba
+  **Tests** (`pm.test`: status 200, campo presente). Rodar caminho feliz **e** infelizes.
+- **curl / httpie (rápido/no CI):** montar a mesma chamada no terminal; `-i` p/ ver status+headers;
+  ensine a ler o código de status antes do corpo. Bom p/ reproduzir um bug em 1 linha.
+- **DBeaver / cliente SQL (banco):** conectar (host/porta/credencial em var, nunca no código);
+  rodar a query; pedir o **plano de execução** (EXPLAIN) e checar índices/scan; testar dentro
+  de transação e **dar ROLLBACK** p/ não sujar dados; conferir constraints/FKs no resultado.
+- **Playwright / Cypress (frontend/e2e):** primeiro o fluxo **na mão**; depois 1 teste do caminho
+  principal (navegar → agir → asserir o que o usuário vê); seletores por papel/texto acessível,
+  não por CSS frágil; cobrir estados de erro/vazio/carregando.
+
 ## O loop
 1. Defina **o que** validar e **qual o resultado esperado** (antes de rodar).
 2. A IA mostra **como** montar o teste/chamada e **por que** asseverar aquilo —

@@ -7,6 +7,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Mentor tracks expanded: `/north-codebase` and `/north-standup`.** Two new learning-first
+  behavior skills. `/north-codebase` guides you to understand a project yourself — map the
+  architecture, find where things live, read the DB schema and folder organization — you
+  explore, the AI asks the questions and anchors in official docs. `/north-standup` trains
+  daily/meeting conduct — what to report (done/doing/blocker/ask), when to speak, how to
+  surface risk and unblock early. `/north-learn` is now the junior→pleno→senior progression
+  hub that routes to the sibling tracks, and `/north-test` gained concrete tooling playbooks
+  (Postman/Insomnia, SQL client, Playwright/Cypress). All three runtimes, anchored in docs.
 - **Segmented plans are now tracked (features by subfolder).** Discovery descends the
   whole `plan-build` tree instead of only its top level, so plans split across subfolders
   (e.g. `plan-build/calculo/Sprint-1.md`, `plan-build/pricing/Sprint-2.md`) are no longer

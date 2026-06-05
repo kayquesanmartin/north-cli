@@ -55,6 +55,10 @@ CMDSPEC = [
      "desc": "north — trilha mentor de code review: te guia a revisar o seu próprio diff."},
     {"name": "test", "sub": "", "args": True, "aliases": [], "behavior": True,
      "desc": "north — trilha mentor de testes: validar de verdade (API/banco/front), você executa."},
+    {"name": "codebase", "sub": "", "args": True, "aliases": [], "behavior": True,
+     "desc": "north — trilha mentor para entender um projeto: arquitetura, onde as coisas vivem, banco, organização."},
+    {"name": "standup", "sub": "", "args": True, "aliases": [], "behavior": True,
+     "desc": "north — trilha mentor de conduta em daily/reuniões: reportar, destravar, alinhar."},
 ]
 
 
