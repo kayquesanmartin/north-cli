@@ -14,6 +14,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   collapsible groups with per-feature progress, and kanban cards carry a feature tag. Sprint
   keys that repeat across features (a `Sprint-1` in two folders) no longer overwrite each
   other. Recency (live-panel trigger) also follows edits in subfolders. Read-only as always.
+- **Nested plan-builds fold into the parent project.** A `plan-build` nested inside another
+  project (e.g. `projeto/feature-x/plan-build/`) is now absorbed as a **feature** of the
+  parent — one card with grouped features — instead of showing up as a separate project.
+  Folds into the top-most ancestor (handles deep chains); a nested dir that also has a GSD
+  `.planning` stays its own card, so legitimate sub-projects aren't swallowed.
 
 ### Added
 - **Executive (C-level) summary on the dashboard.** The portfolio view now opens with a

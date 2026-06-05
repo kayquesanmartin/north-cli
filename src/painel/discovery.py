@@ -267,18 +267,40 @@ def _build_feature_debt(ftext):
     return out
 
 
-def build_project(plan_build: Path, scan_roots):
+def build_project(plan_build: Path, scan_roots, extra_pbs=None):
+    """Monta o modelo de UM projeto a partir do seu plan-build.
+
+    extra_pbs: lista opcional de (feature_prefix, plan_build_aninhado) — usada
+    para FUNDIR plan-builds aninhados (projeto/feature-x/plan-build) como grupos
+    de feature deste mesmo projeto, em vez de cards separados."""
     pdir = project_dir_for(plan_build)
     pid = pdir.name
 
     # agrupa os .md por feature (subpasta de 1o nivel; raiz = ""), descendo a
-    # arvore inteira — resolve o caso "plan-build segregado por feature".
-    groups = group_md_by_feature(plan_build)
-    by_feat = dict(groups)
+    # arvore inteira — resolve o caso "plan-build segregado por feature". Os
+    # plan-builds aninhados (extra_pbs) entram com a feature prefixada pelo
+    # caminho relativo (feature-x, feature-x/sub, ...).
+    groups_map = {}
+
+    def _merge(feat, g):
+        slot = groups_map.setdefault(feat, {"progress": None, "sprints": []})
+        gp = g["progress"]
+        if gp is not None and (slot["progress"] is None
+                               or len(gp.name) < len(slot["progress"].name)):
+            slot["progress"] = gp
+        slot["sprints"].extend(g["sprints"])
+
+    for feat, g in group_md_by_feature(plan_build):
+        _merge(feat, g)
+    for prefix, npb in (extra_pbs or []):
+        for feat, g in group_md_by_feature(npb):
+            _merge(prefix if not feat else prefix + "/" + feat, g)
+
+    groups = sorted(groups_map.items(), key=lambda kv: (kv[0] != "", kv[0].lower()))
 
     # progress "principal" do projeto = o da raiz (meta/branch/sprint atual);
     # se nao houver raiz, usa o da primeira feature com progress (degrada).
-    root_progress = by_feat.get("", {}).get("progress")
+    root_progress = groups_map.get("", {}).get("progress")
     if root_progress is None:
         for _f, g in groups:
             if g["progress"] is not None:
@@ -517,13 +539,46 @@ ADAPTERS = [
 ]
 
 
+def _nested_planbuilds(by_dir):
+    """Reparenta plan-builds aninhados sob outro projeto plan-build.
+
+    Um plan-build em projeto/feature-x/plan-build vira FEATURE do projeto-pai
+    (ancestral mais ALTO com plan-build), em vez de um card separado. Devolve:
+      extra_by_root: pdir_raiz -> [(feature_prefix, plan_build_aninhado)]
+      absorbed:      set de pdirs aninhados que NAO viram card proprio
+    So absorve quando o pdir aninhado tem APENAS fonte plan-build (se tiver um
+    .planning GSD, permanece como card para nao engolir um projeto legitimo)."""
+    pb_root = {}   # pdir -> plan_build root (fonte plan-build)
+    for pdir, srcs in by_dir.items():
+        s = next((x for x in srcs if x["name"] == "plan-build"), None)
+        if s is not None:
+            pb_root[pdir] = s["root"]
+
+    extra_by_root, absorbed = {}, set()
+    for pdir in pb_root:
+        ancestors = [c for c in pdir.parents if c in pb_root]
+        if not ancestors:
+            continue   # e uma raiz de projeto — nao aninhado
+        if not all(x["name"] == "plan-build" for x in by_dir[pdir]):
+            continue   # tem outra fonte (ex.: GSD) — mantem como card proprio
+        root_parent = ancestors[-1]   # ancestral mais alto = raiz da arvore
+        try:
+            prefix = pdir.relative_to(root_parent).as_posix()
+        except ValueError:
+            prefix = pdir.name
+        extra_by_root.setdefault(root_parent, []).append((prefix, pb_root[pdir]))
+        absorbed.add(pdir)
+    return extra_by_root, absorbed
+
+
 def discover_projects(config):
     """Descobre + monta todos os projetos habilitados. Devolve (lista, novos_ids).
 
     Reconciliacao por diretorio: cada projeto e UM card, mesmo que tenha varias
     estruturas de planejamento. A fonte primaria e a mais recentemente ativa
     (mtime), ou a fixada em config (projects.<id>.source); as demais viram
-    secundarias (selo discreto)."""
+    secundarias (selo discreto). Plan-builds aninhados sob outro projeto sao
+    fundidos como features do projeto-pai (ver _nested_planbuilds)."""
     # 1. detecta todas as fontes, agrupadas por diretorio de projeto
     by_dir = {}   # Path resolvido -> [ {name,label,root,mtime,build} ]
     for ad in ADAPTERS:
@@ -537,10 +592,13 @@ def discover_projects(config):
                 "mtime": ad["mtime"](root), "build": ad["build"],
             })
 
+    extra_by_root, absorbed = _nested_planbuilds(by_dir)
     items = sorted(by_dir.items(), key=lambda kv: kv[0].name.lower())
 
     new_ids, projects = [], []
     for hint, (pdir, srcs) in enumerate(items):
+        if pdir in absorbed:
+            continue   # plan-build aninhado: ja entra como feature do projeto-pai
         pid = pdir.name
         if config.register_discovered(pid, hint):
             new_ids.append(pid)
@@ -550,11 +608,15 @@ def discover_projects(config):
         # ordem de tentativa: primaria fixada em config, depois por recencia (desc)
         pinned = config.project_cfg(pid).get("source")
         ordered = sorted(srcs, key=lambda s: (s["name"] != pinned, -s["mtime"]))
+        extra = extra_by_root.get(pdir)
 
         # constroi a primeira fonte com conteudo (fallback se a primaria vier vazia)
         proj = primary = None
         for s in ordered:
-            cand = s["build"](s["root"], config.scan_roots)
+            if s["name"] == "plan-build":
+                cand = build_project(s["root"], config.scan_roots, extra)
+            else:
+                cand = s["build"](s["root"], config.scan_roots)
             if cand.get("sprints") or cand.get("tasks"):
                 proj, primary = cand, s
                 break
