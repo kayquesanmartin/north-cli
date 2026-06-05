@@ -47,10 +47,16 @@ def build_data(projects, settings, inbox_items=None):
             "author": author_json(p.get("author")),
             "contributors": [c["name"] for c in p.get("contributors", [])],
             "rollup": p["rollup"],
+            "features": [
+                {"key": f["key"], "label": f["label"], "pct": f["pct"],
+                 "done": f["done"], "total": f["total"], "level": f["level"],
+                 "sprintKeys": f.get("sprint_keys", [])}
+                for f in p.get("features", [])
+            ],
             "sprints": [
                 {"key": s["key"], "name": s["name"], "pct": s["pct"] if s["pct"] is not None else 0,
                  "col": s["col"], "blocked": s["blocked"],
-                 "done": s["done"], "total": s["total"],
+                 "done": s["done"], "total": s["total"], "feature": s.get("feature", ""),
                  "author": author_json(s.get("author"))}
                 for s in p["sprints"]
             ],
@@ -58,7 +64,7 @@ def build_data(projects, settings, inbox_items=None):
                 {"id": t["id"], "sprint": t["sprint"], "desc": t["desc"],
                  "owner": (t["owner"] or "").replace("squad-", ""),
                  "col": t["col"], "blocked": t["blocked"], "commit": t["commit"][:7],
-                 "statusRaw": t["status_raw"]}
+                 "feature": t.get("feature", ""), "statusRaw": t["status_raw"]}
                 for t in p["tasks"]
             ],
             "blockers": [
@@ -365,6 +371,24 @@ _SHELL = r"""<!DOCTYPE html>
   .blocked-tag{font-size:9px;background:rgba(239,68,68,.18);color:#fca5a5;
     padding:1px 6px;border-radius:5px;font-weight:700}
 
+  /* ---- grupos de feature (planos segregados por subpasta) ---- */
+  .fgroup{border:1px solid var(--line);border-radius:12px;margin-bottom:14px;
+    overflow:hidden;background:var(--panel2)}
+  .fgroup>summary{list-style:none;cursor:pointer;padding:12px 15px;display:flex;
+    align-items:center;gap:10px;font-weight:700;font-size:13px;user-select:none}
+  .fgroup>summary::-webkit-details-marker{display:none}
+  .fgroup>summary::before{content:"\25B8";color:var(--muted);transition:transform .15s;
+    display:inline-block}
+  .fgroup[open]>summary::before{transform:rotate(90deg)}
+  .fgroup>summary:hover{background:var(--panel)}
+  .fgroup-name{color:var(--accent2)}
+  .fbadge{font-size:10px;padding:1px 8px;border-radius:20px;background:var(--card);
+    border:1px solid var(--line);color:var(--muted);font-weight:600}
+  .fgroup-pct{margin-left:auto;font-size:12px;color:var(--muted);font-weight:700}
+  .fgroup .sprints{padding:0 14px 14px}
+  .ftag{font-size:9px;padding:1px 6px;border-radius:5px;background:var(--bg2);
+    color:var(--muted);border:1px solid var(--line)}
+
   /* ---- toolbar kanban ---- */
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0 14px}
   .search{flex:1;min-width:200px;background:var(--panel);border:1px solid var(--line);
@@ -630,6 +654,42 @@ _SHELL = r"""<!DOCTYPE html>
       inboxSection()+footer();
   }
 
+  /* ---------- sprints (com agrupamento por feature) ---------- */
+  function sprintCardHtml(p,s){
+    const cur=p.currentSprint;
+    const gi=Math.max(0,p.sprints.findIndex(x=>x.key===s.key && x.feature===s.feature));
+    const col=SPRINT_PAL[gi%SPRINT_PAL.length];
+    const isCur=cur && (cur.indexOf(s.key.replace(/^S/,''))>=0 || cur.toUpperCase().indexOf(s.key)>=0);
+    const frac=(s.done!=null&&s.total!=null)?(s.done+'/'+s.total+' tasks'):(colLabel(s.col));
+    return '<div class="scard'+(isCur?' cur':'')+'">'+
+      '<div class="scard-h"><span class="skey" style="background:'+col+'">'+esc(s.key)+'</span>'+
+      (isCur?'<span class="snow">ATUAL</span>':'')+(s.blocked?'<span class="blocked-tag">BLOQ</span>':'')+'</div>'+
+      '<div class="sname">'+esc(s.name||'—')+'</div>'+
+      '<div class="bar"><i style="width:'+s.pct+'%;background:'+col+'"></i></div>'+
+      '<div class="scard-f"><b>'+s.pct+'%</b><span>'+esc(frac)+'</span></div>'+
+      (s.author?'<div class="scard-by">↻ '+esc(s.author.name.split(" ")[0])+' · '+esc(s.author.when)+'</div>':'')+
+      '</div>';
+  }
+  function sprintsSection(p){
+    if(!p.sprints.length)
+      return '<div class="sprints"><div class="empty">Sem sprints detectados neste projeto.</div></div>';
+    const feats=p.features||[];
+    // sem segregacao (0/1 feature): grade plana, como sempre
+    if(feats.length<=1)
+      return '<div class="sprints">'+p.sprints.map(s=>sprintCardHtml(p,s)).join("")+'</div>';
+    // segregado por subpasta: um grupo colapsavel por feature (raiz aberta)
+    return feats.map((f,idx)=>{
+      const ss=p.sprints.filter(s=>s.feature===f.key);
+      if(!ss.length) return "";
+      const lvl=f.level==="task"?"tasks":"sprints";
+      return '<details class="fgroup"'+(idx===0?' open':'')+'>'+
+        '<summary>📁 <span class="fgroup-name">'+esc(f.label)+'</span>'+
+        '<span class="fbadge">'+f.done+'/'+f.total+' '+lvl+'</span>'+
+        '<span class="fgroup-pct">'+f.pct+'%</span></summary>'+
+        '<div class="sprints">'+ss.map(s=>sprintCardHtml(p,s)).join("")+'</div></details>';
+    }).join("");
+  }
+
   /* ---------- projeto ---------- */
   function viewProject(){
     const p=DATA.projects.find(x=>x.id===state.project);
@@ -655,26 +715,14 @@ _SHELL = r"""<!DOCTYPE html>
       [p.debt.length?'warn':'', p.debt.length,'Débito técnico'],
     ].map(k=>'<div class="kpi '+k[0]+'"><div class="v">'+k[1]+'</div><div class="l">'+k[2]+'</div></div>').join("");
 
-    const cur=p.currentSprint;
-    const scards=p.sprints.map((s,i)=>{
-      const col=SPRINT_PAL[i%SPRINT_PAL.length];
-      const isCur=cur && (cur.indexOf(s.key.replace(/^S/,''))>=0 || cur.toUpperCase().indexOf(s.key)>=0);
-      const frac=(s.done!=null&&s.total!=null)?(s.done+'/'+s.total+' tasks'):(colLabel(s.col));
-      return '<div class="scard'+(isCur?' cur':'')+'">'+
-        '<div class="scard-h"><span class="skey" style="background:'+col+'">'+esc(s.key)+'</span>'+
-        (isCur?'<span class="snow">ATUAL</span>':'')+(s.blocked?'<span class="blocked-tag">BLOQ</span>':'')+'</div>'+
-        '<div class="sname">'+esc(s.name||'—')+'</div>'+
-        '<div class="bar"><i style="width:'+s.pct+'%;background:'+col+'"></i></div>'+
-        '<div class="scard-f"><b>'+s.pct+'%</b><span>'+esc(frac)+'</span></div>'+
-        (s.author?'<div class="scard-by">↻ '+esc(s.author.name.split(" ")[0])+' · '+esc(s.author.when)+'</div>':'')+
-        '</div>';
-    }).join("") || '<div class="empty">Sem sprints detectados neste projeto.</div>';
+    const multiFeat=(p.features||[]).length>1;
+    const secLabel=multiFeat?'Features &amp; Sprints':'Sprints';
 
     let body='<div class="top"><div><h1>'+esc(p.name)+srcTags(p)+' <small>— acompanhamento</small></h1>'+
       meta+'</div><div class="gen">Gerado '+esc(DATA.meta.generated)+'</div></div>'+
       '<div class="kpis">'+kpis+'</div>'+
-      '<div class="sec-h">Sprints <span class="ln"></span></div>'+
-      '<div class="sprints">'+scards+'</div>';
+      '<div class="sec-h">'+secLabel+' <span class="ln"></span></div>'+
+      sprintsSection(p);
 
     if(p.tasks.length){
       body+='<div class="sec-h">Quadro de Tarefas <span class="ln"></span></div>'+toolbar(p)+kanban(p);
@@ -695,14 +743,17 @@ _SHELL = r"""<!DOCTYPE html>
 
   function kanban(p){
     const q=state.q.toLowerCase();
+    const multiFeat=(p.features||[]).length>1;
     const cols=DATA.columns.map(c=>{
       let ts=p.tasks.filter(t=>t.col===c.key);
-      if(q) ts=ts.filter(t=>(t.id+" "+t.desc+" "+t.owner).toLowerCase().indexOf(q)>=0);
+      if(q) ts=ts.filter(t=>(t.id+" "+t.desc+" "+t.owner+" "+(t.feature||"")).toLowerCase().indexOf(q)>=0);
       const cards=ts.map(t=>{
-        const sc=SPRINT_PAL[Math.max(0,p.sprints.findIndex(s=>s.key===t.sprint))%SPRINT_PAL.length];
+        const sc=SPRINT_PAL[Math.max(0,p.sprints.findIndex(s=>s.key===t.sprint && s.feature===t.feature))%SPRINT_PAL.length];
+        const ftag=(multiFeat&&t.feature)?'<span class="ftag">'+esc(t.feature)+'</span>':'';
         return '<div class="card'+(t.blocked?' blk':'')+'" style="border-left-color:'+sc+'">'+
           '<div class="card-t"><span class="tid">'+esc(t.id)+'</span>'+
-          '<span class="stag" style="background:'+sc+'22;color:'+sc+'">'+esc(t.sprint)+'</span></div>'+
+          '<span style="display:flex;gap:5px;align-items:center">'+ftag+
+          '<span class="stag" style="background:'+sc+'22;color:'+sc+'">'+esc(t.sprint)+'</span></span></div>'+
           '<div class="cdesc">'+esc((t.desc||t.statusRaw||'').slice(0,150))+'</div>'+
           '<div class="card-f"><span class="owner">'+esc(t.owner||'')+(t.blocked?' · ⛔ bloqueada':'')+'</span>'+
           (t.commit?'<span class="commit">'+esc(t.commit)+'</span>':'')+'</div></div>';

@@ -7,6 +7,28 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Segmented plans are now tracked (features by subfolder).** Discovery descends the
+  whole `plan-build` tree instead of only its top level, so plans split across subfolders
+  (e.g. `plan-build/calculo/Sprint-1.md`, `plan-build/pricing/Sprint-2.md`) are no longer
+  invisible. Each first-level subfolder becomes a **feature group**: the project view shows
+  collapsible groups with per-feature progress, and kanban cards carry a feature tag. Sprint
+  keys that repeat across features (a `Sprint-1` in two folders) no longer overwrite each
+  other. Recency (live-panel trigger) also follows edits in subfolders. Read-only as always.
+- **Nested plan-builds fold into the parent project.** A `plan-build` nested inside another
+  project (e.g. `projeto/feature-x/plan-build/`) is now absorbed as a **feature** of the
+  parent — one card with grouped features — instead of showing up as a separate project.
+  Folds into the top-most ancestor (handles deep chains); a nested dir that also has a GSD
+  `.planning` stays its own card, so legitimate sub-projects aren't swallowed.
+
+### Fixed
+- **Deleted projects no longer linger (config self-heals on scan).** When a project's
+  folder/`plan-build` is gone, discovery now prunes its stale entry from `projects.json`
+  and reports it (`- N projeto(s) removido(s)…`), so `north status`/`config show` stop
+  showing ghosts. Guarded: if a scan finds nothing (e.g. a broken `scan_roots`), nothing
+  is pruned — your config is never wiped by a misconfiguration. The dashboard already
+  reflected reality on regen; this closes the gap in the persisted state.
+
+### Added
 - **Executive (C-level) summary on the dashboard.** The portfolio view now opens with a
   structured exec block: health verdict (healthy / attention / at-risk), global progress,
   on-track vs at-risk counts, open blockers, today's activity, and the top priority —
