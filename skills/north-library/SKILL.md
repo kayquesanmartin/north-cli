@@ -40,3 +40,13 @@ Antes de orientar, ensinar um conceito, gerar um doc ou revisar arquitetura:
 `north library add "<pasta>"` ingere `.md/.txt/.rst` (e indexa PDFs como ponteiro),
 preservando subpastas, e reconstrói o índice. Rode de novo quando adicionar material.
 Read-only sobre os planos do usuário; a biblioteca vive só em `~/.north/library/`.
+
+## Aprender da web / context7 e salvar (enriquecimento)
+Durante o desenvolvimento, se você buscar uma referência **atual** (WebSearch/WebFetch
+ou context7/microsoft-docs) que valha guardar — ex.: best-practice nova de um framework,
+um padrão atualizado — **ofereça salvar na biblioteca** para consultas futuras:
+1. Escreva um resumo **seu** (não cole texto de terceiros verbatim) num `.md` com a fonte
+   citada (URL/título), em `~/.north/library/<tema>.md`.
+2. Reindexe: `python3 ~/.north/run.py library reindex`.
+Assim o north "aprende" referências ao longo do tempo. Salve só com o aval do usuário e
+sempre com a fonte citada; mantenha curto e autoral (evita problema de copyright).

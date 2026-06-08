@@ -67,6 +67,10 @@ CMDSPEC = [
      "desc": "north — trilha mentor de conduta em daily/reuniões: reportar, destravar, alinhar."},
     {"name": "insight", "sub": "", "args": True, "aliases": [], "behavior": True,
      "desc": "north — insights passivos: enquanto a IA coda, te ensina por cima o que usou (sem repetir, ranqueado por dificuldade)."},
+    {"name": "dev", "sub": "", "args": True, "aliases": [], "behavior": True,
+     "desc": "north — codar com TDD-first: escreve os testes a partir dos critérios de aceite ANTES do código (red→green→refactor)."},
+    {"name": "task", "sub": "task", "args": True, "aliases": [],
+     "desc": "north — mostra o contrato de uma task (o que entregar + critérios de aceite)."},
 ]
 
 

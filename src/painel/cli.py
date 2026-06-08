@@ -558,6 +558,48 @@ def cmd_status(home: Path):
     return 0
 
 
+def cmd_task(home: Path, cfg, projects, args):
+    """Contrato de uma TASK (o quê + critérios de aceite) — insumo do /north-dev
+    (TDD-first). Uso: task <id> [--project <id>]."""
+    a = _ANSI
+    if not args:
+        print("uso: north task <id>   (ex.: north task TASK-01)")
+        return 1
+    tid_l = args[0].strip().lower()
+    proj_filter = args[args.index("--project") + 1] if "--project" in args and \
+        args.index("--project") + 1 < len(args) else None
+    matches = [(p, t) for p in projects if not (proj_filter and p["id"] != proj_filter)
+               for t in p["tasks"] if t["id"].lower() == tid_l]
+    if not matches:
+        print("Task '{}' não encontrada. Veja os ids no painel (north panel) ou no Sprint*.md.".format(args[0]))
+        return 1
+    for p, t in matches:
+        sp = next((s for s in p["sprints"] if s["key"] == t["sprint"]
+                   and s.get("feature", "") == t.get("feature", "")), None)
+        print("{}{}{}  ({} · sprint {})".format(a["north"], t["id"], a["reset"],
+                                                 p["name"], t["sprint"] or "—"))
+        print("  {}o que entregar:{} {}".format(a["dim"], a["reset"],
+              t.get("desc") or t.get("status_raw") or "—"))
+        if sp and (sp.get("brief") or {}).get("objetivo"):
+            print("  {}objetivo da sprint:{} {}".format(a["dim"], a["reset"], sp["brief"]["objetivo"]))
+        if t.get("entrega"):
+            print("\n  {}📦 entregáveis:{}".format(a["ok"], a["reset"]))
+            for item in t["entrega"].split("; "):
+                print("    - {}".format(item))
+        if t.get("aceite"):
+            print("\n  {}✅ critérios de aceite (escreva os testes PRIMEIRO a partir daqui):{}".format(
+                a["ok"], a["reset"]))
+            for item in t["aceite"].split("; "):
+                print("    - {}".format(item))
+        if not t.get("aceite") and not t.get("entrega"):
+            print("  {}(sem contrato no Sprint*.md — defina os critérios com PO/time antes de testar){}".format(
+                a["dim"], a["reset"]))
+        print("  {}coluna:{} {}  {}deps:{} {}".format(a["dim"], a["reset"], t["col"],
+              a["dim"], a["reset"], t.get("deps") or "—"))
+        print("")
+    return 0
+
+
 # Catálogo de comandos para o `north help` — fonte única no terminal.
 # (terminal, /skill na IA, descrição curta, exemplo)
 _HELP_GROUPS = [
@@ -581,8 +623,13 @@ _HELP_GROUPS = [
         ("—", "north-codebase", "entender um projeto: arquitetura, onde tudo vive", "/north-codebase"),
         ("—", "north-standup", "conduta em daily/reuniões: reportar, destravar", "/north-standup"),
     ]),
+    ("🧪 Desenvolvimento (TDD-first)", [
+        ("—", "north-dev", "codar com TDD: testes a partir dos critérios de aceite, depois o código", "/north-dev S3B-2"),
+        ("task <id>", "—", "contrato da task: o que entregar + critérios de aceite", "north task TASK-01"),
+    ]),
     ("💡 Insights (a IA ensina enquanto coda)", [
         ("insight check/record/log", "north-insight", "micro-aulas do que a IA usou, sem repetir, por dificuldade", "/north-insight"),
+        ("library find/add", "north-library", "biblioteca de referências (bundlada + sua) que a IA consulta", "north library find tdd"),
     ]),
     ("⚙️ Config & sistema", [
         ("status", "north-status", "o que está instalado, scan_roots, projetos", "north status"),
@@ -695,6 +742,8 @@ def main(argv, home: Path):
         cmd_fim_do_dia(home, cfg, projects)
     elif cmd in ("focus", "foco", "agora", "next"):
         cmd_foco(home, cfg, projects, argv[1:])
+    elif cmd in ("task", "tasks"):
+        return cmd_task(home, cfg, projects, argv[1:])
     else:
         print("Comando desconhecido: {}".format(cmd))
         print("Rode 'north help' para ver tudo. Principais: build | morning | wrap-up | "
