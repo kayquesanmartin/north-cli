@@ -14,7 +14,9 @@ para não depender de PATH nem do nome do python em cada SO.
 """
 
 import json
+import os
 import shutil
+import stat
 import sys
 from pathlib import Path
 
@@ -108,6 +110,178 @@ def migrate_legacy_config(tool_home: Path):
 def engine_cmd(pyexe: str, tool_home: Path) -> str:
     """Comando base (absoluto) para invocar o motor, assado no install."""
     return '"{}" "{}"'.format(_fwd(pyexe), _fwd(tool_home / "run.py"))
+
+
+# ---------------------------------------------------------------------------
+# Launcher de terminal (opcional) — cria o comando `north` fora da IA.
+#
+# Quando o north é instalado via `python install.py` (e não via shim global do
+# npm), não existe nenhum `north` no PATH. Aqui criamos um launcher em
+# `<tool_home>/bin` e, opcionalmente, anexamos esse dir ao PATH do usuário.
+# Tudo é opt-in e reversível (a desinstalação limpa o launcher e o PATH).
+# ---------------------------------------------------------------------------
+PATH_MARKER = "# north terminal launcher"
+
+
+def launcher_dir(tool_home: Path) -> Path:
+    return tool_home / "bin"
+
+
+def install_launcher(tool_home: Path, pyexe: str):
+    """Escreve o(s) launcher(s) `north` em <tool_home>/bin. No Windows cria
+    `north.cmd` (cmd/PowerShell) e `north` (Git Bash); em Unix, `north` (+x).
+    Devolve (bindir, [arquivos])."""
+    bindir = launcher_dir(tool_home)
+    bindir.mkdir(parents=True, exist_ok=True)
+    run_py = tool_home / "run.py"
+    written = []
+
+    # launcher POSIX (Unix shells e Git Bash no Windows) — LF puro (newline="\n",
+    # senao o text-mode do Windows quebraria o shebang com CR).
+    sh = ("#!/bin/sh\n" + PATH_MARKER + "\n"
+          'exec "{}" "{}" "$@"\n').format(_fwd(pyexe), _fwd(run_py))
+    shp = bindir / "north"
+    with shp.open("w", encoding="utf-8", newline="\n") as f:
+        f.write(sh)
+    try:
+        shp.chmod(shp.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+    except Exception:
+        pass
+    written.append("north")
+
+    if os.name == "nt":
+        # CRLF para o cmd.exe (newline="\r\n" converte os \n do conteudo)
+        cmd = ("@echo off\nrem " + PATH_MARKER + "\n"
+               '"{}" "{}" %*\n').format(str(pyexe), str(run_py))
+        cp = bindir / "north.cmd"
+        with cp.open("w", encoding="utf-8", newline="\r\n") as f:
+            f.write(cmd)
+        written.append("north.cmd")
+    return bindir, written
+
+
+def _path_norm(p):
+    return os.path.normcase(os.path.normpath(str(p)))
+
+
+def _on_path(bindir) -> bool:
+    nb = _path_norm(bindir)
+    return any(_path_norm(p) == nb for p in os.environ.get("PATH", "").split(os.pathsep) if p)
+
+
+def add_to_path(bindir):
+    """Anexa bindir ao PATH persistente do usuário (idempotente).
+    Devolve (status, detail): 'already' | 'added'(+rc/None) | 'manual'(+bindir)."""
+    bindir = str(bindir)
+    if _on_path(bindir):
+        return "already", None
+    return _win_path_add(bindir) if os.name == "nt" else _unix_path_add(bindir)
+
+
+def _win_path_add(bindir):
+    """Anexa ao PATH do usuário via registro (HKCU\\Environment) — sem o limite
+    de 1024 do `setx`, preservando as entradas existentes. Faz broadcast para
+    novas shells. Em qualquer falha, degrada para 'manual'."""
+    try:
+        import winreg
+    except Exception:
+        return "manual", bindir
+    key = None
+    try:
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0,
+                             winreg.KEY_READ | winreg.KEY_WRITE)
+        try:
+            cur, typ = winreg.QueryValueEx(key, "Path")
+        except FileNotFoundError:
+            cur, typ = "", winreg.REG_EXPAND_SZ
+        if typ not in (winreg.REG_EXPAND_SZ, winreg.REG_SZ):
+            typ = winreg.REG_EXPAND_SZ
+        parts = [p for p in (cur or "").split(";") if p]
+        nb = _path_norm(bindir)
+        if any(_path_norm(p) == nb for p in parts):
+            return "already", None
+        parts.append(bindir)
+        winreg.SetValueEx(key, "Path", 0, typ, ";".join(parts))
+    except Exception:
+        return "manual", bindir
+    finally:
+        if key is not None:
+            try:
+                winreg.CloseKey(key)
+            except Exception:
+                pass
+    try:
+        import ctypes
+        ctypes.windll.user32.SendMessageTimeoutW(
+            0xFFFF, 0x1A, 0, "Environment", 0, 5000, ctypes.byref(ctypes.c_ulong()))
+    except Exception:
+        pass
+    return "added", None
+
+
+def _unix_rc_file() -> Path:
+    shell = os.environ.get("SHELL", "")
+    home = Path.home()
+    if "zsh" in shell:
+        return home / ".zshrc"
+    if "bash" in shell:
+        return home / ".bashrc"
+    return home / ".profile"
+
+
+def _unix_path_add(bindir):
+    rc = _unix_rc_file()
+    block = "\n{}\nexport PATH=\"{}:$PATH\"\n".format(PATH_MARKER, bindir)
+    try:
+        existing = rc.read_text(encoding="utf-8") if rc.exists() else ""
+        if PATH_MARKER in existing or bindir in existing:
+            return "already", None
+        with rc.open("a", encoding="utf-8") as f:
+            f.write(block)
+        return "added", str(rc)
+    except Exception:
+        return "manual", bindir
+
+
+def remove_from_path(bindir):
+    """Remove a entrada de PATH criada pelo north (uninstall). Best-effort."""
+    bindir = str(bindir)
+    if os.name == "nt":
+        try:
+            import winreg
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0,
+                                 winreg.KEY_READ | winreg.KEY_WRITE)
+            try:
+                cur, typ = winreg.QueryValueEx(key, "Path")
+            except FileNotFoundError:
+                cur, typ = "", winreg.REG_EXPAND_SZ
+            nb = _path_norm(bindir)
+            parts = [p for p in (cur or "").split(";") if p and _path_norm(p) != nb]
+            winreg.SetValueEx(key, "Path", 0,
+                              typ if typ in (winreg.REG_EXPAND_SZ, winreg.REG_SZ) else winreg.REG_EXPAND_SZ,
+                              ";".join(parts))
+            winreg.CloseKey(key)
+        except Exception:
+            pass
+        return
+    # Unix: remove o bloco marcado do rc
+    rc = _unix_rc_file()
+    try:
+        if not rc.exists():
+            return
+        lines = rc.read_text(encoding="utf-8").splitlines(keepends=True)
+        out, skip = [], 0
+        for ln in lines:
+            if PATH_MARKER in ln:
+                skip = 1            # pula o marcador e a proxima (export)
+                continue
+            if skip:
+                skip = 0
+                continue
+            out.append(ln)
+        rc.write_text("".join(out), encoding="utf-8")
+    except Exception:
+        pass
 
 
 # ---------------------------------------------------------------------------
@@ -370,10 +544,17 @@ def uninstall_runtime(rt_key):
 
 
 def uninstall_engine(tool_home, purge=False):
-    """Remove o motor (~/.north). Preserva config/output/resumos salvo purge=True."""
+    """Remove o motor (~/.north). Preserva config/output/resumos salvo purge=True.
+    Sempre remove o launcher de terminal e a entrada de PATH que ele criou."""
     removed = []
     if not tool_home.exists():
         return removed
+    # launcher de terminal + entrada de PATH (independe de purge)
+    bindir = launcher_dir(tool_home)
+    if bindir.exists():
+        remove_from_path(bindir)
+        shutil.rmtree(bindir, ignore_errors=True)
+        removed.append("bin/ (launcher + PATH)")
     if purge:
         shutil.rmtree(tool_home, ignore_errors=True)
         return [str(tool_home) + " (tudo, inclusive dados)"]
