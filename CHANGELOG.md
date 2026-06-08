@@ -7,6 +7,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **`north help` / `/north-help` — the guided tour.** A single command that explains
+  everything north offers, grouped by intent (direction & rituals, panel, capture, mentor
+  tracks, passive insights, config/system), showing both the terminal form (`north <cmd>`)
+  and the in-AI form (`/north-<cmd>`), plus a "primeiros passos". The `/north-help` skill
+  runs it and teaches by intent (and can deep-dive a specific command). Parity across runtimes.
+
+### Added
 - **Passive insights while the AI codes (`/north-insight`, teach-on-write).** Distinct from
   `/north-learn` (there *you* code): here the AI codes and teaches what it used — short
   micro-lessons on the **hardest/most-important** concept of each change (nullable operators,
