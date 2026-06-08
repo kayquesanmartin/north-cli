@@ -670,6 +670,11 @@ def main(argv, home: Path):
         from . import insights
         return insights.cmd_insight(home, argv[1:])
 
+    # --- biblioteca de referências: LEVE, sem discovery (índice local) ---
+    if cmd in ("library", "lib", "ref", "refs"):
+        from . import library
+        return library.cmd_library(home, argv[1:])
+
     cfg, projects, new_ids, removed_ids = _load_and_discover(home)
     if new_ids:
         print("  + {} novo(s) projeto(s) descoberto(s): {}".format(

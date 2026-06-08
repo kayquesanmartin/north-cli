@@ -34,8 +34,10 @@ cooldown vencido), para você **nunca repetir** dentro do período.
    O north devolve só os **devidos** (novos ou com cooldown vencido), **ranqueados por
    dificuldade** (sr > pl > jr). Se vier "nada a ensinar", **não ensine** — siga o trabalho.
 3. **Ensine o TOPO** (1 por mudança por padrão — `insight_max_per_change`): uma micro-aula
-   de 2–4 linhas — **o que é, por que você usou ali, o trade-off**. Ancore em doc oficial
-   quando útil (plugin microsoft-docs p/ .NET; senão WebSearch e cite). Use o formato:
+   de 2–4 linhas — **o que é, por que você usou ali, o trade-off**. **Ancore primeiro na
+   biblioteca local** (`python3 ~/.north/run.py library find "<conceito>"`) e cite a
+   referência se houver; senão use doc oficial (microsoft-docs p/ .NET; ou WebSearch e cite).
+   Use o formato:
 
    > 💡 **Insight — `<conceito>` (`<dificuldade>`)**: <explicação curta e prática, no contexto do que você acabou de escrever>.
 
