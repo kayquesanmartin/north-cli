@@ -132,15 +132,59 @@ Um **ledger de aprendizado por projeto** em `~/.north/learnings/<projeto>.jsonl`
 
 ---
 
+## Pilar E — Insights passivos (teach-on-write) com repetição espaçada
+
+**Diferente do `/north-learn`:** lá VOCÊ coda e a IA orienta; aqui **a IA coda e te
+ensina por cima** o que usou — micro-aulas, sem repetir o que já foi ensinado.
+
+### Comportamento
+Depois de escrever código numa sessão, a IA:
+1. **Identifica os conceitos** usados (ela escreveu — sabe): nullable operators, LINQ,
+   `if/else`, arrays, async/await, pattern matching, generics, etc.
+2. **Ranqueia por dificuldade/senioridade + categoria** (catálogo do Pilar C + julgamento)
+   e escolhe **o mais difícil/importante** daquele trecho — não ensina o trivial.
+3. **Consulta o north** (ledger) p/ decidir se ensina: **ensina se** (conceito novo) **OU**
+   (cooldown vencido **E** reusado nesta sessão). Nunca repete dentro do cooldown.
+4. **Ensina** um insight curto (2–4 linhas): o que é, por que usou ali, o trade-off.
+5. **Registra** no ledger (lang/categoria/dificuldade + timestamps + contagens).
+
+### Arquitetura (quem faz o quê)
+- **IA do runtime:** detecta conceitos, ranqueia, redige o insight. (O motor stdlib não
+  faz parse semântico de toda linguagem — essa é a inteligência da IA.)
+- **Engine north (read-only sobre seu código; escreve só em `~/.north`):** é a **memória +
+  o agendador**. Comandos:
+  - `north insight check <lang> "<conceitos csv>"` → devolve quais estão **devidos**
+    (novos, ou cooldown vencido) já **ranqueados** (merge com o catálogo).
+  - `north insight record <lang> <conceito>` → atualiza o ledger.
+  - `north insight log <lang>` → mostra o que já foi ensinado.
+- **Ledger (.md, como pedido):** `~/.north/learnings/taught/<lang>.md` — tabela Markdown
+  (lida/escrita com o `extract_table` que já temos): `conceito | categoria | dificuldade |
+  vezes_usado | vezes_ensinado | ultimo_ensino`.
+- **Catálogo de conceitos (Pilar C):** `references/concepts/<lang>.md` — conceito →
+  dificuldade (jr/pl/sr) + categoria (null-safety, coleções, controle-de-fluxo, async,
+  LINQ, generics, patterns…). Conceito fora do catálogo → dificuldade julgada pela IA.
+
+### Config
+- `north config set insight_cooldown_days 7` (padrão), `insight_max_per_change 1` (anti-ruído),
+  `insight_min_level pleno` (não ensina abaixo de X), liga/desliga por sessão (`/north-insight`).
+
+### Limites honestos
+- "Automático ao escrever" = **comportamento de sessão** que você habilita (`/north-insight`),
+  não um hook nas edições do runtime (o north não intercepta o editor da IA).
+- Detecção/ranqueamento é da IA; o north garante **não-repetição + persistência + ordem**.
+
+---
+
 ## Sequenciamento proposto (incremental, cada fatia entrega valor sozinha)
 
 | Fase | Entrega | Risco | Depende |
 |---|---|---|---|
 | **1** | A-fatia-segura: detectar+linkar docs existentes no painel | baixo | — |
-| **2** | C: `references/` com princípios (SOLID/CleanArch/TDD/OWASP) | baixo | — |
+| **2** | C: `references/` com princípios (SOLID/CleanArch/TDD/OWASP) + catálogo de conceitos | baixo | — |
 | **3** | B: `/north-dev` TDD-first (gate + testes a partir do aceite) | médio | C |
 | **4** | A-gerador: `/north-doc` (começa por SPEC, TDD, ADR) | médio | C |
 | **5** | D: ledger de aprendizado (captura no wrap-up/note + devolve no morning) | médio | — |
+| **6** | E: insights passivos (`/north-insight` + `north insight check/record/log` + ledger .md) | médio | C, D |
 
 Tudo respeita: engine read-only, stdlib-only/3.8, paridade 3 runtimes, sem copyright.
 
