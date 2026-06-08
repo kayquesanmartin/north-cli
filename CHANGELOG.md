@@ -7,6 +7,15 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Reference library north can consult (`north library` / `/north-library`).** Bring your
+  own curated engineering references (Clean Code, SOLID, DDD, TDD, CQRS, security…) with
+  `north library add "<folder>"`; north indexes them locally in `~/.north/library/` and the
+  mentor/insight tracks consult them (`library find "<topic>"`) to anchor what they teach and
+  **cite the source**. Keyword index + search, stdlib-only. "Ship the librarian, not the
+  library": the mechanism is in the package; your content stays local (never published, so
+  no copyright issue) and survives reinstalls. The mentor/insight skills now consult it first.
+
+### Added
 - **`north help` / `/north-help` — the guided tour.** A single command that explains
   everything north offers, grouped by intent (direction & rituals, panel, capture, mentor
   tracks, passive insights, config/system), showing both the terminal form (`north <cmd>`)
