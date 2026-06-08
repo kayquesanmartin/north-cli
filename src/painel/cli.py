@@ -158,6 +158,21 @@ def _focus_banner(fp):
     print("📌 Foco do dia: {}  (north focus --all para o portfolio completo)".format(fp))
 
 
+def _print_learnings_reminder(home: Path, projects):
+    """Devolve aprendizados recentes dos projetos ATIVOS (sinal git) — não repita o erro."""
+    from . import learnings as L
+    active = [p for p in projects if (p.get("mine", {}) or {}).get("active")] or projects[:1]
+    blocks = []
+    for p in active:
+        rec = L.recent(home, p["id"], limit=3)
+        if rec:
+            lines = "\n".join("    • " + L._fmt(e) for e in rec)
+            blocks.append("  {}:\n{}".format(p["name"], lines))
+    if blocks:
+        print("\n  💡 APRENDIZADOS RECENTES (não repita o erro):")
+        print("\n".join(blocks))
+
+
 def cmd_bom_dia(home: Path, cfg, projects):
     out_file = cmd_build(home, cfg, projects, quiet=True)
     projs, fp = _focus_subset(cfg, projects)
@@ -165,6 +180,7 @@ def cmd_bom_dia(home: Path, cfg, projects):
         _focus_banner(fp)
     txt = rituals.build_bom_dia(projs, cfg.settings.get("owner_name", "dev"))
     print(txt)
+    _print_learnings_reminder(home, projects)
     reminder = _inbox_reminder_block(
         home, "LEMBRETE — ideias/notas capturadas que ainda pedem decisão:")
     if reminder:
@@ -678,9 +694,10 @@ _HELP_GROUPS = [
         ("—", "north-doc", "gera PRD/SPEC/SDD/TDD/ADR/SECURITY ancorado no projeto + biblioteca", "/north-doc adr \"banco\""),
         ("doc [list|template]", "—", "gaps de docs por projeto + esqueletos dos templates", "north doc list"),
     ]),
-    ("💡 Insights (a IA ensina enquanto coda)", [
+    ("💡 Conhecimento & aprendizado", [
         ("insight check/record/log", "north-insight", "micro-aulas do que a IA usou, sem repetir, por dificuldade", "/north-insight"),
         ("library find/add", "north-library", "biblioteca de referências (bundlada + sua) que a IA consulta", "north library find tdd"),
+        ("learnings add/list/find", "—", "ledger do projeto: decisões, bugs, padrões, gotchas (volta no bom-dia)", "north learnings list <proj>"),
     ]),
     ("⚙️ Config & sistema", [
         ("status", "north-status", "o que está instalado, scan_roots, projetos", "north status"),
@@ -772,6 +789,11 @@ def main(argv, home: Path):
     if cmd in ("library", "lib", "ref", "refs"):
         from . import library
         return library.cmd_library(home, argv[1:])
+
+    # --- ledger de aprendizado: LEVE, sem discovery ---
+    if cmd in ("learnings", "learning", "ledger"):
+        from . import learnings
+        return learnings.cmd_learnings(home, argv[1:])
 
     cfg, projects, new_ids, removed_ids = _load_and_discover(home)
     if new_ids:
