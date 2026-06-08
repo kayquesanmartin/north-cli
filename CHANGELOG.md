@@ -7,13 +7,19 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
-- **Reference library north can consult (`north library` / `/north-library`).** Bring your
-  own curated engineering references (Clean Code, SOLID, DDD, TDD, CQRS, security…) with
-  `north library add "<folder>"`; north indexes them locally in `~/.north/library/` and the
-  mentor/insight tracks consult them (`library find "<topic>"`) to anchor what they teach and
-  **cite the source**. Keyword index + search, stdlib-only. "Ship the librarian, not the
-  library": the mechanism is in the package; your content stays local (never published, so
-  no copyright issue) and survives reinstalls. The mentor/insight skills now consult it first.
+- **Reference library north consults (`north library` / `/north-library`).** A curated
+  engineering compendium ships **bundled** in `references/compendium/` (architecture, DDD,
+  microservices, event-driven/CQRS, Clean Code & SOLID, design patterns, TDD, databases,
+  API design, security, spec-driven dev, diagramming, frontend…) and lands in `~/.north`
+  on install. You can also **bring your own** with `north library add "<folder>"` (indexed
+  locally in `~/.north/library/`). `library find "<topic>"` does a keyword search across
+  both (stdlib-only) and the mentor/insight tracks consult it first to anchor what they
+  teach and **cite the source**. Hybrid: shipped core + bring-your-own; bundled entries
+  flagged `[bundlado]`, large binaries (PDFs) stay local as pointers.
+
+### Fixed
+- **`references/` is now published in the npm package.** It was missing from `files`, so the
+  concept catalog and bundled compendium wouldn't reach users; added it.
 
 ### Added
 - **`north help` / `/north-help` — the guided tour.** A single command that explains
