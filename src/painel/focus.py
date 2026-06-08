@@ -87,6 +87,12 @@ def compute_focus(projects, wip_limit=WIP_LIMIT):
     wip_alerts = []
     for p in projects:
         cur_keys = _current_sprint_keys(p)
+        # peso de pertencimento: ranqueia o que VOCE esta tocando primeiro (soft —
+        # nunca esconde nada). 0 quando nao ha sinal seu -> comporta como leitura pura.
+        mine = p.get("mine", {}) or {}
+        mine_boost = mine.get("score", 0) or 0
+        mine_active = bool(mine.get("active"))
+        mine_reason = ("seu foco ativo: " + "; ".join(mine.get("signals", []))) if mine_active else ""
         in_progress = [t for t in p["tasks"] if t["col"] == P.COL_ANDAMENTO and not t["blocked"]]
         if len(in_progress) > wip_limit:
             wip_alerts.append({
@@ -99,6 +105,9 @@ def compute_focus(projects, wip_limit=WIP_LIMIT):
             if sc is None:
                 continue
             score, reasons = sc
+            score += mine_boost
+            if mine_reason:
+                reasons = reasons + [mine_reason]
             scored.append({
                 "score": score,
                 "reasons": reasons,
@@ -108,6 +117,7 @@ def compute_focus(projects, wip_limit=WIP_LIMIT):
                 "task": t,
                 "squad": suggest_squad(t["desc"] + " " + t.get("status_raw", "")),
                 "actionable": not t["blocked"],
+                "mine": mine_active,
             })
 
     scored.sort(key=lambda x: (-x["score"], x["project"], x["task"]["id"]))
