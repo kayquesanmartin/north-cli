@@ -602,6 +602,11 @@ def main(argv, home: Path):
         cmd_inbox_resolve(home, argv[1], "done" if cmd == "inbox-done" else "dismissed")
         return 0
 
+    # --- insights passivos: LEVE, sem discovery (só ledger + catálogo) ---
+    if cmd in ("insight", "insights"):
+        from . import insights
+        return insights.cmd_insight(home, argv[1:])
+
     cfg, projects, new_ids, removed_ids = _load_and_discover(home)
     if new_ids:
         print("  + {} novo(s) projeto(s) descoberto(s): {}".format(
