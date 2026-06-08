@@ -309,6 +309,58 @@ def _build_feature_debt(ftext):
     return out
 
 
+# ----------------------------------------------------------------------------
+# Documentos de SDLC dentro do plan-build (PRD/SDD/TDD/SPEC/SECURITY/UML/ADR).
+# Read-only: o painel apenas DETECTA e LINKA — nunca edita. (Fase 1 do AI-SDLC.)
+# ----------------------------------------------------------------------------
+DOC_TYPES = [
+    ("PRD", re.compile(r"\bPRD\b|product[-_ ]?requirement", re.I)),
+    ("SDD", re.compile(r"\bSDD\b|software[-_ ]?design|design[-_ ]?doc", re.I)),
+    ("TDD", re.compile(r"\bTDD\b|test[-_ ]?design|test[-_ ]?plan", re.I)),
+    ("SPEC", re.compile(r"\bspec(?:ification)?\b", re.I)),
+    ("SECURITY", re.compile(r"\bsecurity\b|seguran[cç]a|threat[-_ ]?model|owasp", re.I)),
+    ("ADR", re.compile(r"\bADR\b|architecture[-_ ]?decision", re.I)),
+    ("UML", re.compile(r"\bUML\b|\bC4\b|diagram|sequence[-_ ]?diagram", re.I)),
+]
+
+
+def classify_doc(stem: str):
+    """Tipo de doc a partir do nome do arquivo (sem extensão). None se não é doc."""
+    if re.match(r"^(progress|sprint)", stem, re.I):
+        return None          # tracking, não documento
+    for typ, rx in DOC_TYPES:
+        if rx.search(stem):
+            return typ
+    return None
+
+
+def collect_docs(plan_build: Path, extra_pbs=None):
+    """Lista os documentos de SDLC sob o plan-build (e plan-builds aninhados),
+    tipados. Read-only. Devolve [{type, name, path, feature}] ordenado por tipo."""
+    seen, out = set(), []
+    roots = [("", plan_build)] + [(pre, npb) for pre, npb in (extra_pbs or [])]
+    for prefix, root in roots:
+        for md in sorted(root.rglob("*.md")):
+            try:
+                rel = md.relative_to(root).parts
+            except ValueError:
+                continue
+            if any("archive" in p.lower() for p in rel):
+                continue
+            typ = classify_doc(md.stem)
+            if not typ:
+                continue
+            key = str(md.resolve()).lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            feature = prefix or (rel[0] if len(rel) > 1 else "")
+            out.append({"type": typ, "name": md.name, "path": str(md), "feature": feature})
+    order = {t: i for i, (t, _) in enumerate(DOC_TYPES)}
+    out.sort(key=lambda d: (order.get(d["type"], 99), d["name"].lower()))
+    return out
+
+
 def build_project(plan_build: Path, scan_roots, extra_pbs=None):
     """Monta o modelo de UM projeto a partir do seu plan-build.
 
@@ -507,6 +559,7 @@ def build_project(plan_build: Path, scan_roots, extra_pbs=None):
         "progress_file": str(root_progress) if root_progress else "",
         "is_template": is_template,
         "has_docs": (pdir / "docs").is_dir(),
+        "docs": collect_docs(plan_build, extra_pbs),
         "meta": meta,
         "git": git,
         "branch": git["branch"] or meta.get("branch_doc", ""),

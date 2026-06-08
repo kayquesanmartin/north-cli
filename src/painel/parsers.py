@@ -412,8 +412,15 @@ def sprint_brief(text, max_chars=360):
                   r"princ[ií]pios?\s+obrigat[oó]rios?[^*]*", max_chars=420)
     aceite = aceite[:420]
 
+    # pré-leitura / docs de referência citados pela sprint
+    prereq = ""
+    qm = re.search(r"(?:\*\*\s*)?(?:pr[eé]-?leitura|pre-?reqs?|refer[eê]ncias?|"
+                   r"pr[eé]-?condi[cç][oõ]es?)[^:\n]*:?\s*\*?\*?\s*(.+)", text, re.I)
+    if qm:
+        prereq = clean_desc(qm.group(1))[:300]
+
     return {"title": title, "objetivo": objetivo, "porque": porque,
-            "fora": fora, "aceite": aceite}
+            "fora": fora, "aceite": aceite, "prereq": prereq}
 
 
 # ----------------------------------------------------------------------------
