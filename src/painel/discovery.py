@@ -405,6 +405,10 @@ def build_project(plan_build: Path, scan_roots, extra_pbs=None):
                 sprint_brief_map[(feature, key)] = br
             t1 = P.tasks_from_tables(text, sprint_default=key)
             t2 = P.tasks_from_codeblocks(text, sprint_default=key) if not t1 else []
+            for t in (t1 + t2):
+                detail = P.task_brief(text, t["id"])   # contrato: entrega + aceite
+                if detail:
+                    t.update(detail)
             feat_tasks.extend(t1 + t2)
         # tabelas de task no proprio progress (formato C): sprint_default vazio
         # -> deriva o sprint pelo id da task (S3B-1 -> S3B)
