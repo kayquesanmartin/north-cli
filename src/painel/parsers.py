@@ -196,6 +196,109 @@ def sprint_name(cell: str):
 
 
 # ----------------------------------------------------------------------------
+# Briefing de sprint — resumo NARRATIVO (o quê / como / por quê) a partir do
+# Sprint*.md. Alimenta o "resumo C-level" do painel; degrada com elegância.
+# ----------------------------------------------------------------------------
+def _md_section(text, name_rx):
+    """Corpo de uma seção markdown cujo título (## .. ####) casa name_rx,
+    até o próximo header de nível igual ou superior. '' se não achar."""
+    lines = text.splitlines()
+    head = re.compile(r"^(#{2,4})\s*(?:" + name_rx + r")\s*$", re.I)
+    for i, ln in enumerate(lines):
+        m = head.match(ln.strip())
+        if not m:
+            continue
+        level = len(m.group(1))
+        body = []
+        for j in range(i + 1, len(lines)):
+            hm = re.match(r"^(#{1,6})\s", lines[j])
+            if hm and len(hm.group(1)) <= level:
+                break
+            body.append(lines[j])
+        return "\n".join(body).strip()
+    return ""
+
+
+def _first_paragraph(body):
+    """Primeiro parágrafo de prosa (ignora blockquote, listas, tabelas, headers)."""
+    buf = []
+    for ln in body.splitlines():
+        s = ln.strip()
+        if not s:
+            if buf:
+                break
+            continue
+        if s[0] in "#>|" or re.match(r"^[-*+]\s|^\d+[.)]\s", s):
+            if buf:
+                break
+            continue
+        buf.append(s)
+    return clean_desc(" ".join(buf))
+
+
+def _labeled(body, label_rx, limit=320):
+    """Valor de um '**Label:** ...' (linha + itens de lista logo abaixo)."""
+    lines = body.splitlines()
+    rx = re.compile(r"\*\*\s*(?:" + label_rx + r")\s*:??\s*\*\*\s*:?\s*(.*)", re.I)
+    for i, ln in enumerate(lines):
+        m = rx.search(ln)
+        if not m:
+            continue
+        parts = [clean_desc(m.group(1))] if clean_desc(m.group(1)) else []
+        for j in range(i + 1, len(lines)):
+            s = lines[j].strip()
+            lm = re.match(r"^(?:[-*+]|\d+[.)])\s+(.*)", s)
+            if lm:
+                parts.append(clean_desc(lm.group(1)))
+            elif not s:
+                continue
+            else:
+                break
+        out = "; ".join(p for p in parts if p)
+        return out[:limit]
+    return ""
+
+
+def sprint_brief(text, max_chars=360):
+    """Resumo narrativo de um Sprint*.md. Devolve dict com:
+      title   — subtítulo do H1 (parte após '—')
+      objetivo— o QUE/COMO (Meta/Objetivo/Entregável); degrada p/ 1º parágrafo
+      porque  — a justificativa ('Por que este sprint agora')
+      fora    — o que NÃO entra no escopo
+    Campos ausentes voltam ''. Tudo limpo de markdown e limitado em tamanho."""
+    text = text or ""
+    title = ""
+    hm = re.search(r"^#\s+(.+)$", text, re.M)
+    if hm:
+        h = clean_desc(hm.group(1))
+        h = re.sub(r"^Sprint[-\w.]*\s*[—\-:]\s*", "", h)   # tira "Sprint-CC4.md — "
+        title = h[:90]
+
+    meta = _md_section(text, r"meta(?:\s+do\s+sprint)?|objetivo(?:\s+do\s+sprint)?|"
+                              r"resumo|escopo(?:\s+do\s+sprint)?|goal|vis[aã]o\s+geral")
+    objetivo = ""
+    if meta:
+        objetivo = _labeled(meta, r"entreg[aá]vel|objetivo|meta|escopo") or _first_paragraph(meta)
+    if not objetivo:
+        # degrada: subtítulo do blockquote logo após o H1
+        bm = re.search(r"^>\s*(?:objetivo\s*:?\s*)?(.+)$", text, re.M | re.I)
+        if bm:
+            objetivo = clean_desc(bm.group(1))
+    objetivo = objetivo[:max_chars]
+
+    porque = ""
+    pm = re.search(r"\*\*\s*por\s*qu[eê][^*:]*:?\s*\*\*\s*:?\s*(.+)", text, re.I)
+    if pm:
+        porque = clean_desc(pm.group(1))[:max_chars]
+
+    fora = _labeled(
+        _md_section(text, r"(?:o\s+que\s+)?n[aã]o\s+(?:entra|est[aá]).*") or text,
+        r"(?:o\s+que\s+)?n[aã]o\s+(?:entra|est[aá])[^*]*", limit=240)
+
+    return {"title": title, "objetivo": objetivo, "porque": porque, "fora": fora}
+
+
+# ----------------------------------------------------------------------------
 # TASK id heuristico
 # ----------------------------------------------------------------------------
 # Aceita: TASK-01 | S_CC4-2 | S3B-1 | S4A-9 | T7T-6 | S8P-4 | DT-CC-10 ...
