@@ -7,6 +7,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **SDLC documents detected and linked on the dashboard (read-only).** north now finds the
+  PRD / SDD / TDD / SPEC / SECURITY / ADR / UML files inside `plan-build/` and shows them as
+  a "📚 Documentos do projeto" section (color-coded by type, click to open the file) plus a
+  doc count on the portfolio card; sprint modals surface the sprint's "pré-leitura /
+  referências". First slice of the AI-SDLC direction (`docs/north-ai-sdlc-SPEC.md`) — pure
+  detection, the engine never writes.
+
+### Added
 - **Real sprint/task summary in the executive view (not just done/pending).** The detail
   modal and the project executive summary now read the narrative from `Sprint*.md` — the
   **objective ("what will be done")**, the **rationale ("why now")**, and **out-of-scope** —
