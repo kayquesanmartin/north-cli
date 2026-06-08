@@ -49,6 +49,8 @@ CMDSPEC = [
      "desc": "north — tria as ideias capturadas com /note."},
     {"name": "status", "sub": "status", "args": False, "aliases": [],
      "desc": "north — o que está instalado, scan_roots e projetos rastreados."},
+    {"name": "help", "sub": "help", "args": False, "aliases": ["ajuda"],
+     "desc": "north — guia: tudo que a ferramenta oferece e como usar (terminal + IA)."},
     {"name": "config", "sub": "config", "args": True, "aliases": [],
      "desc": "north — ajusta a configuração (scan_roots, settings, projetos) sem reinstalar."},
     {"name": "learn", "sub": "", "args": True, "aliases": [], "behavior": True,

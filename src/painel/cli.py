@@ -558,6 +558,67 @@ def cmd_status(home: Path):
     return 0
 
 
+# Catálogo de comandos para o `north help` — fonte única no terminal.
+# (terminal, /skill na IA, descrição curta, exemplo)
+_HELP_GROUPS = [
+    ("🧭 Direção & rituais", [
+        ("focus", "north-focus", "a próxima ação de maior valor (respeita seu foco real via git)", "north focus"),
+        ("morning", "north-morning", "início do dia: foco consolidado + abre o painel", "north morning"),
+        ("wrap-up", "north-wrap-up", "fim do dia: resumo por projeto (seus commits vs time)", "north wrap-up"),
+    ]),
+    ("📊 Painel", [
+        ("panel", "north-panel", "regenera/abre a Central de Produtividade (dashboard)", "north panel"),
+        ("open", "—", "só abre o dashboard já gerado", "north open"),
+    ]),
+    ("🗒️ Captura", [
+        ("note <ideia>", "north-note", "captura rápida na inbox sem quebrar o fluxo", "north note \"checar cache\""),
+        ("inbox", "north-inbox", "tria as ideias capturadas", "north inbox"),
+    ]),
+    ("🎓 Mentor (você implementa, a IA orienta)", [
+        ("—", "north-learn", "modo mentor: entender o código, não só copiar", "/north-learn"),
+        ("—", "north-review", "revisar o seu próprio diff antes do PR", "/north-review"),
+        ("—", "north-test", "validar de verdade (API/banco/front)", "/north-test"),
+        ("—", "north-codebase", "entender um projeto: arquitetura, onde tudo vive", "/north-codebase"),
+        ("—", "north-standup", "conduta em daily/reuniões: reportar, destravar", "/north-standup"),
+    ]),
+    ("💡 Insights (a IA ensina enquanto coda)", [
+        ("insight check/record/log", "north-insight", "micro-aulas do que a IA usou, sem repetir, por dificuldade", "/north-insight"),
+    ]),
+    ("⚙️ Config & sistema", [
+        ("status", "north-status", "o que está instalado, scan_roots, projetos", "north status"),
+        ("config", "north-config", "ajusta scan_roots/preferências/projetos", "north config add-root \"<pasta>\""),
+        ("help", "north-help", "esta ajuda", "north help"),
+        ("uninstall", "north-uninstall", "remove o north (preserva seus dados)", "north uninstall"),
+    ]),
+]
+
+
+def cmd_help(home: Path):
+    """Explica tudo que o north oferece e como usar — terminal e dentro da IA."""
+    a = _ANSI
+    print("{}\U0001f9ed north{} — copiloto de produtividade multi-projeto para IAs\n".format(
+        a["north"], a["reset"]))
+    print("  {}Dois caminhos para o MESMO comando:{}".format(a["dim"], a["reset"]))
+    print("    • Terminal:  {}north <cmd>{}".format(a["squad"], a["reset"]))
+    print("    • Na IA:     {}/north-<cmd>{}  {}(Gemini: /north:<cmd>){}\n".format(
+        a["squad"], a["reset"], a["dim"], a["reset"]))
+    for title, items in _HELP_GROUPS:
+        print("  {}{}{}".format(a["north"], title, a["reset"]))
+        for term, skill, desc, _ex in items:
+            left = term if term != "—" else "(só na IA)"
+            sk = ("/" + skill) if skill not in ("—", "") else "(terminal)"
+            print("    {}{:<26}{} {}{:<15}{} {}".format(
+                a["ok"], left, a["reset"], a["squad"], sk, a["reset"], desc))
+        print("")
+    print("  {}Primeiros passos:{}".format(a["north"], a["reset"]))
+    print("    1) {}north morning{}  — vê o foco do dia e abre o painel".format(a["squad"], a["reset"]))
+    print("    2) {}north focus{}    — a próxima ação concreta".format(a["squad"], a["reset"]))
+    print("    3) {}/north-insight{} — ligue e a IA te ensina enquanto coda".format(a["squad"], a["reset"]))
+    print("\n  {}north é READ-ONLY sobre seus planos — só lê, nunca edita.{}".format(a["dim"], a["reset"]))
+    print("  {}Config: {}{}".format(a["dim"], _config_path(home), a["reset"]))
+    return 0
+
+
 def cmd_open(home: Path):
     out_file = home / "output" / "dashboard.html"
     if not out_file.exists():
@@ -583,6 +644,8 @@ def main(argv, home: Path):
         return cmd_config(home, argv[1:])
     if cmd in ("status", "where", "info"):
         return cmd_status(home)
+    if cmd in ("help", "ajuda", "-h", "--help", "h"):
+        return cmd_help(home)
 
     # --- comandos de inbox: LEVES, sem discovery (captura instantanea) ---
     if cmd in ("inbox-add", "note", "btw", "capturar"):
@@ -629,7 +692,7 @@ def main(argv, home: Path):
         cmd_foco(home, cfg, projects, argv[1:])
     else:
         print("Comando desconhecido: {}".format(cmd))
-        print("Use: build | morning | wrap-up | focus [--only <id>|--all] | note <ideia> | inbox | "
-              "config | status | statusline | open")
+        print("Rode 'north help' para ver tudo. Principais: build | morning | wrap-up | "
+              "focus | note | inbox | insight | config | status | open")
         return 2
     return 0
