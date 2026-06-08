@@ -558,6 +558,53 @@ def cmd_status(home: Path):
     return 0
 
 
+_DOC_CORE = ["PRD", "SPEC", "SDD", "TDD", "ADR", "SECURITY"]
+
+
+def _doc_template_path(home: Path, tipo: str):
+    rel = Path("references") / "doc-templates" / (tipo.lower() + ".md")
+    for base in (home, Path(__file__).resolve().parent.parent.parent):
+        p = base / rel
+        if p.exists():
+            return p
+    return None
+
+
+def cmd_doc(home: Path, cfg, projects, args):
+    """Apoio ao /north-doc (read-only): gaps de docs por projeto + esqueletos.
+    Uso: doc [list [<project>]] | template <tipo> | types."""
+    a = _ANSI
+    sub = (args[0].lower() if args else "list")
+    if sub in ("template", "tpl"):
+        if len(args) < 2:
+            print("uso: north doc template <prd|spec|sdd|tdd|adr|security>")
+            return 1
+        p = _doc_template_path(home, args[1])
+        if not p:
+            print("template '{}' não existe. Tipos: {}".format(
+                args[1], ", ".join(t.lower() for t in _DOC_CORE)))
+            return 1
+        print(p.read_text(encoding="utf-8"))
+        return 0
+    if sub in ("types", "templates"):
+        print("tipos: {}".format(", ".join(t.lower() for t in _DOC_CORE)))
+        print("gere com /north-doc <tipo> [alvo]  ·  esqueleto: north doc template <tipo>")
+        return 0
+    proj_filter = args[1] if len(args) > 1 else None
+    print("{}📚 Documentos de SDLC por projeto{}  (detectados vs faltando)".format(
+        a["north"], a["reset"]))
+    for p in projects:
+        if proj_filter and p["id"] != proj_filter:
+            continue
+        have = sorted({d["type"] for d in p.get("docs", [])})
+        missing = [t for t in _DOC_CORE if t not in have]
+        print("\n  {}{}{}".format(a["north"], p["name"], a["reset"]))
+        print("    {}tem:{}      {}".format(a["ok"], a["reset"], ", ".join(have) or "—"))
+        print("    {}faltando:{} {}".format(a["warn"], a["reset"], ", ".join(missing) or "—"))
+    print("\n  gerar:  /north-doc <tipo> [alvo]   (ex.: /north-doc adr \"escolha do banco\")")
+    return 0
+
+
 def cmd_task(home: Path, cfg, projects, args):
     """Contrato de uma TASK (o quê + critérios de aceite) — insumo do /north-dev
     (TDD-first). Uso: task <id> [--project <id>]."""
@@ -626,6 +673,10 @@ _HELP_GROUPS = [
     ("🧪 Desenvolvimento (TDD-first)", [
         ("—", "north-dev", "codar com TDD: testes a partir dos critérios de aceite, depois o código", "/north-dev S3B-2"),
         ("task <id>", "—", "contrato da task: o que entregar + critérios de aceite", "north task TASK-01"),
+    ]),
+    ("📄 Documentos (SDLC)", [
+        ("—", "north-doc", "gera PRD/SPEC/SDD/TDD/ADR/SECURITY ancorado no projeto + biblioteca", "/north-doc adr \"banco\""),
+        ("doc [list|template]", "—", "gaps de docs por projeto + esqueletos dos templates", "north doc list"),
     ]),
     ("💡 Insights (a IA ensina enquanto coda)", [
         ("insight check/record/log", "north-insight", "micro-aulas do que a IA usou, sem repetir, por dificuldade", "/north-insight"),
@@ -744,6 +795,8 @@ def main(argv, home: Path):
         cmd_foco(home, cfg, projects, argv[1:])
     elif cmd in ("task", "tasks"):
         return cmd_task(home, cfg, projects, argv[1:])
+    elif cmd in ("doc", "docs"):
+        return cmd_doc(home, cfg, projects, argv[1:])
     else:
         print("Comando desconhecido: {}".format(cmd))
         print("Rode 'north help' para ver tudo. Principais: build | morning | wrap-up | "
