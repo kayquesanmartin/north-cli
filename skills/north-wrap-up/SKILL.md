@@ -48,6 +48,19 @@ não commitados, bloqueios, próximos passos).
 5. Se houver linhas `[PREENCHER]` que exigem decisão humana (ex.: próxima TASK
    quando não há planejadas), liste-as como itens que precisam do input do usuário.
 
+5b. **Aprendizados do dia (ledger — captura com triagem).** A partir do que aconteceu hoje
+   (commits, bloqueios resolvidos, decisões, bugs e suas causas, pegadinhas descobertas),
+   **proponha 1–3 aprendizados** curtos por projeto e **pergunte se salva** — nada entra sem
+   o aval do usuário (evita ruído). Ao confirmar, grave cada um:
+
+   ```bash
+   python3 ~/.north/run.py learnings add <project> <decisao|bug|padrao|gotcha> "<texto curto>"
+   # Windows: python "%USERPROFILE%\.north\run.py" learnings add ...
+   ```
+
+   Eles voltam no próximo `/north-morning` ("não repita o erro"). Capture o **porquê** de
+   decisões e a **causa+fix** de bugs — é o que evita repetir. Não invente; só o que de fato ocorreu.
+
 6. **Versionamento antes de encerrar (boas práticas git):** se algum resumo trouxer
    "⚠ ANTES DE PUSHAR" (branch atrás do remoto/base) ou commits locais não pushados,
    oriente o fechamento seguro — **sem executar sozinho, apenas guiando**:

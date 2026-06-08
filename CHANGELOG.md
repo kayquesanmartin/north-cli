@@ -7,6 +7,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Learning ledger (`north learnings` + wrap-up capture → morning recall).** north now
+  remembers what you learn as you build — **decisions, bugs+fixes, patterns, gotchas** — in a
+  per-project ledger (`~/.north/learnings/ledger/<project>.jsonl`). `/north-wrap-up` proposes
+  1–3 learnings to save (you confirm — capture with triage, no noise), and `/north-morning`
+  recalls the recent ones for your active projects so you don't repeat the mistake.
+  `north learnings add/list/find <project>`. Read-only over your code; stdlib JSONL.
 - **Document factory (`/north-doc` + `north doc`).** Generate the SDLC artifacts — PRD,
   SPEC, SDD, TDD, ADR, SECURITY — anchored in the real project context and the reference
   library, following bundled templates (`references/doc-templates/`). The AI drafts under
