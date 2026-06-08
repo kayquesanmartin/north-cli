@@ -17,6 +17,7 @@ from pathlib import Path
 from . import parsers as P
 from . import health as H
 from . import gsd as G
+from . import fsutil
 
 
 def read(path: Path) -> str:
@@ -30,27 +31,20 @@ def read(path: Path) -> str:
 # Descoberta de diretorios de projeto
 # ----------------------------------------------------------------------------
 def discover_plan_dirs(scan_roots, max_depth=6):
-    """Acha todas as pastas 'plan-build' sob os scan_roots (profundidade limitada)."""
-    found = []
-    seen = set()
-    for root in scan_roots:
-        root = Path(root)
-        if not root.exists():
+    """Acha todas as pastas 'plan-build' sob os scan_roots (profundidade limitada).
+
+    Poda VCS/deps/caches e os worktrees do Claude Code (`.claude/worktrees`),
+    que sao espelhos do mesmo repo e gerariam projetos-fantasma duplicados
+    (ver fsutil)."""
+    found, seen = [], set()
+    for pb in fsutil.find_dirs_named(scan_roots, "plan-build", max_depth):
+        if not pb.is_dir():
             continue
-        for pb in root.rglob("plan-build"):
-            if not pb.is_dir():
-                continue
-            try:
-                rel_depth = len(pb.relative_to(root).parts)
-            except ValueError:
-                rel_depth = 0
-            if rel_depth > max_depth:
-                continue
-            key = str(pb.resolve()).lower()
-            if key in seen:
-                continue
-            seen.add(key)
-            found.append(pb)
+        key = str(pb.resolve()).lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        found.append(pb)
     return found
 
 
@@ -186,6 +180,54 @@ def _git_sync(cwd: Path, branch: str):
     return s
 
 
+# Branches "compartilhadas" — estar nelas NAO indica trabalho pessoal ativo.
+DEFAULT_BRANCHES = {"main", "master", "develop", "dev", "trunk", "head", ""}
+
+
+def _my_today_count(project_dir: Path, identity):
+    """Quantos commits de HOJE sao seus (filtra o log pela sua identidade git).
+    Usa o nome (mais estavel que o e-mail entre maquinas); 0 se sem identidade."""
+    who = (identity or {}).get("name") or (identity or {}).get("email") or ""
+    if not who:
+        return 0
+    out = _git(["log", "--since=midnight", "--author=" + who, "--pretty=format:%h"],
+               project_dir)
+    return len([l for l in out.splitlines() if l.strip()]) if out else 0
+
+
+def _is_me(author, identity):
+    """True se a autoria (name/email) bate com a sua identidade."""
+    if not author or not identity:
+        return False
+    ae, an = (author.get("email") or "").lower(), (author.get("name") or "").lower()
+    ie, iname = (identity.get("email") or "").lower(), (identity.get("name") or "").lower()
+    return bool((ie and ae and ie == ae) or (iname and an and iname == an))
+
+
+def personal_signal(proj, identity):
+    """Sinal de PERTENCIMENTO: o quanto ESTE projeto e o que VOCE esta tocando
+    agora, derivado do git (zero input extra). working tree sujo e o sinal mais
+    forte (e a sua copia, por definicao). Devolve {score, signals[], active}."""
+    git = proj.get("git", {}) or {}
+    dirty = git.get("dirty", 0) or 0
+    my_today = git.get("my_today", 0) or 0
+    branch = (proj.get("branch") or "").strip()
+    score, signals = 0, []
+    if dirty:
+        score += 50
+        signals.append("{} arquivo(s) nao commitado(s)".format(dirty))
+    if my_today:
+        score += 40
+        signals.append("{} commit(s) seu(s) hoje".format(my_today))
+    if branch and branch.lower() not in DEFAULT_BRANCHES:
+        score += 20
+        signals.append("branch {}".format(branch))
+    if _is_me(proj.get("author"), identity):
+        score += 15
+        signals.append("ultima edicao sua")
+    return {"score": score, "signals": signals, "active": score > 0}
+
+
 def git_info(project_dir: Path):
     branch = _git(["rev-parse", "--abbrev-ref", "HEAD"], project_dir)
     dirty = 0
@@ -267,6 +309,58 @@ def _build_feature_debt(ftext):
     return out
 
 
+# ----------------------------------------------------------------------------
+# Documentos de SDLC dentro do plan-build (PRD/SDD/TDD/SPEC/SECURITY/UML/ADR).
+# Read-only: o painel apenas DETECTA e LINKA — nunca edita. (Fase 1 do AI-SDLC.)
+# ----------------------------------------------------------------------------
+DOC_TYPES = [
+    ("PRD", re.compile(r"\bPRD\b|product[-_ ]?requirement", re.I)),
+    ("SDD", re.compile(r"\bSDD\b|software[-_ ]?design|design[-_ ]?doc", re.I)),
+    ("TDD", re.compile(r"\bTDD\b|test[-_ ]?design|test[-_ ]?plan", re.I)),
+    ("SPEC", re.compile(r"\bspec(?:ification)?\b", re.I)),
+    ("SECURITY", re.compile(r"\bsecurity\b|seguran[cç]a|threat[-_ ]?model|owasp", re.I)),
+    ("ADR", re.compile(r"\bADR\b|architecture[-_ ]?decision", re.I)),
+    ("UML", re.compile(r"\bUML\b|\bC4\b|diagram|sequence[-_ ]?diagram", re.I)),
+]
+
+
+def classify_doc(stem: str):
+    """Tipo de doc a partir do nome do arquivo (sem extensão). None se não é doc."""
+    if re.match(r"^(progress|sprint)", stem, re.I):
+        return None          # tracking, não documento
+    for typ, rx in DOC_TYPES:
+        if rx.search(stem):
+            return typ
+    return None
+
+
+def collect_docs(plan_build: Path, extra_pbs=None):
+    """Lista os documentos de SDLC sob o plan-build (e plan-builds aninhados),
+    tipados. Read-only. Devolve [{type, name, path, feature}] ordenado por tipo."""
+    seen, out = set(), []
+    roots = [("", plan_build)] + [(pre, npb) for pre, npb in (extra_pbs or [])]
+    for prefix, root in roots:
+        for md in sorted(root.rglob("*.md")):
+            try:
+                rel = md.relative_to(root).parts
+            except ValueError:
+                continue
+            if any("archive" in p.lower() for p in rel):
+                continue
+            typ = classify_doc(md.stem)
+            if not typ:
+                continue
+            key = str(md.resolve()).lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            feature = prefix or (rel[0] if len(rel) > 1 else "")
+            out.append({"type": typ, "name": md.name, "path": str(md), "feature": feature})
+    order = {t: i for i, (t, _) in enumerate(DOC_TYPES)}
+    out.sort(key=lambda d: (order.get(d["type"], 99), d["name"].lower()))
+    return out
+
+
 def build_project(plan_build: Path, scan_roots, extra_pbs=None):
     """Monta o modelo de UM projeto a partir do seu plan-build.
 
@@ -320,6 +414,7 @@ def build_project(plan_build: Path, scan_roots, extra_pbs=None):
     # ---- por feature: sprints (overview) + tasks + bloqueios + debito ----
     sprints = {}             # (feature, key) -> sprint dict
     sprint_author = {}       # (feature, key) -> autoria via git
+    sprint_brief_map = {}    # (feature, key) -> resumo narrativo (Sprint*.md)
     tasks = []
     blockers = []
     debt = []
@@ -357,8 +452,15 @@ def build_project(plan_build: Path, scan_roots, extra_pbs=None):
             key = P.sprint_key(sp.name) or sp.stem
             sprint_author[(feature, key)] = file_author(pdir, sp)
             text = read(sp)
+            br = P.sprint_brief(text)
+            if any(br.values()):
+                sprint_brief_map[(feature, key)] = br
             t1 = P.tasks_from_tables(text, sprint_default=key)
             t2 = P.tasks_from_codeblocks(text, sprint_default=key) if not t1 else []
+            for t in (t1 + t2):
+                detail = P.task_brief(text, t["id"])   # contrato: entrega + aceite
+                if detail:
+                    t.update(detail)
             feat_tasks.extend(t1 + t2)
         # tabelas de task no proprio progress (formato C): sprint_default vazio
         # -> deriva o sprint pelo id da task (S3B-1 -> S3B)
@@ -404,6 +506,7 @@ def build_project(plan_build: Path, scan_roots, extra_pbs=None):
     # ---- autoria (git, sem tocar nos .md) ----
     for (feature, key), s in sprints.items():
         s["author"] = sprint_author.get((feature, key))
+        s["brief"] = sprint_brief_map.get((feature, key))
     proj_author = file_author(pdir, root_progress) if root_progress else None
     proj_contributors = contributors(pdir, plan_build)
 
@@ -456,6 +559,7 @@ def build_project(plan_build: Path, scan_roots, extra_pbs=None):
         "progress_file": str(root_progress) if root_progress else "",
         "is_template": is_template,
         "has_docs": (pdir / "docs").is_dir(),
+        "docs": collect_docs(plan_build, extra_pbs),
         "meta": meta,
         "git": git,
         "branch": git["branch"] or meta.get("branch_doc", ""),
@@ -611,6 +715,7 @@ def discover_projects(config):
 
     items = sorted(by_dir.items(), key=lambda kv: kv[0].name.lower())
 
+    identity = config.settings.get("identity") or {}
     new_ids, projects = [], []
     for hint, (pdir, srcs) in enumerate(items):
         if pdir in absorbed:
@@ -650,6 +755,8 @@ def discover_projects(config):
         proj["sources"] = [s["name"] for s in srcs]
         proj["secondary"] = [s["label"] for s in srcs if s["name"] != primary["name"]]
         proj["alerts"] = H.compute_alerts(proj, config.settings)
+        proj["git"]["my_today"] = _my_today_count(pdir, identity)
+        proj["mine"] = personal_signal(proj, identity)
         projects.append(proj)
 
     projects.sort(key=lambda p: (p["order"], p["name"].lower()))

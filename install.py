@@ -26,6 +26,8 @@ Opcional:
   python install.py --no-build                              # nao gera o painel agora
   python install.py --statusline                            # FORCA a statusline do north (substitui a atual)
   python install.py --no-statusline                         # nao configura a statusline
+  python install.py --add-to-path                           # cria o comando `north` no terminal (+PATH)
+  python install.py --no-path                               # nao mexe no PATH (sem prompt)
 """
 
 import json
@@ -557,6 +559,39 @@ def main():
 
     ensure_gh(install_gh)
 
+    # ---- launcher de terminal (opcional, opt-in) — comando `north` fora da IA ----
+    # Precedencia: flags explicitas > prompt interativo (global) > nao instala.
+    if "--add-to-path" in args:
+        want_path = True
+    elif "--no-path" in args:
+        want_path = False
+    elif scope == "global" and sys.stdin.isatty():
+        print("")
+        print("  Quer usar o comando 'north' direto no terminal (fora da IA)?")
+        print("  Isso cria um launcher em {} e o adiciona ao seu PATH.".format(tool_home / "bin"))
+        try:
+            ans = input("  Habilitar 'north' no terminal? [s/N]: ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            ans = ""
+        want_path = ans in ("s", "sim", "y", "yes")
+    else:
+        want_path = False
+
+    if want_path and scope == "global":
+        bindir, _w = RT.install_launcher(tool_home, pyexe)
+        st, detail = RT.add_to_path(bindir)
+        if st == "already":
+            print("  terminal       -> 'north' pronto ({} ja no PATH)".format(bindir))
+        elif st == "added":
+            print("  terminal       -> 'north' instalado; PATH atualizado{}".format(
+                " (" + detail + ")" if detail else ""))
+            print("                    Abra um NOVO terminal para o 'north' funcionar.")
+        else:  # manual
+            print("  terminal       -> launcher criado em {}".format(bindir))
+            print("                    Adicione esse diretorio ao PATH para usar 'north'.")
+    elif want_path and scope == "local":
+        print("  terminal       -> PATH so e configurado no escopo global (pulei no local)")
+
     if do_build:
         sys.path.insert(0, str(tool_home))
         try:
@@ -582,7 +617,11 @@ def main():
     print("  Comandos: focus · morning · wrap-up · panel · note · inbox · status · config · learn · review · test · uninstall")
     print("            (todos viram /north-<cmd> na sua IA; /north:<cmd> no Gemini)")
     print("")
-    print("  Terminal (opcional): north status · north config add-root \"<pasta>\"")
+    if want_path and scope == "global":
+        print("  Terminal: north status · north config add-root \"<pasta>\"  (novo terminal)")
+    else:
+        print("  Terminal (opcional): habilite com  python install.py --add-to-path")
+        print("            depois: north status · north panel · north config add-root \"<pasta>\"")
     print("  Config: {}".format(cfg_path))
     if sl_status in ("set", "forced", "updated"):
         print("  ↻ Reinicie o Claude Code para a statusline aparecer.")

@@ -42,25 +42,20 @@ def _read(path: Path) -> str:
 
 
 def discover_planning_dirs(scan_roots, max_depth=6):
-    """Acha todas as pastas '.planning' (com STATE.md) sob os scan_roots."""
+    """Acha todas as pastas '.planning' (com STATE.md) sob os scan_roots.
+
+    Poda VCS/deps/caches e os worktrees do Claude Code (`.claude/worktrees`),
+    espelhos do mesmo repo que gerariam projetos-fantasma (ver fsutil)."""
+    from . import fsutil
     found, seen = [], set()
-    for root in scan_roots:
-        root = Path(root)
-        if not root.exists():
+    for pl in fsutil.find_dirs_named(scan_roots, ".planning", max_depth):
+        if not pl.is_dir() or not (pl / "STATE.md").exists():
             continue
-        for pl in root.rglob(".planning"):
-            if not pl.is_dir() or not (pl / "STATE.md").exists():
-                continue
-            try:
-                if len(pl.relative_to(root).parts) > max_depth:
-                    continue
-            except ValueError:
-                pass
-            key = str(pl.resolve()).lower()
-            if key in seen:
-                continue
-            seen.add(key)
-            found.append(pl)
+        key = str(pl.resolve()).lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        found.append(pl)
     return found
 
 

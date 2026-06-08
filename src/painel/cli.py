@@ -558,6 +558,114 @@ def cmd_status(home: Path):
     return 0
 
 
+def cmd_task(home: Path, cfg, projects, args):
+    """Contrato de uma TASK (o quê + critérios de aceite) — insumo do /north-dev
+    (TDD-first). Uso: task <id> [--project <id>]."""
+    a = _ANSI
+    if not args:
+        print("uso: north task <id>   (ex.: north task TASK-01)")
+        return 1
+    tid_l = args[0].strip().lower()
+    proj_filter = args[args.index("--project") + 1] if "--project" in args and \
+        args.index("--project") + 1 < len(args) else None
+    matches = [(p, t) for p in projects if not (proj_filter and p["id"] != proj_filter)
+               for t in p["tasks"] if t["id"].lower() == tid_l]
+    if not matches:
+        print("Task '{}' não encontrada. Veja os ids no painel (north panel) ou no Sprint*.md.".format(args[0]))
+        return 1
+    for p, t in matches:
+        sp = next((s for s in p["sprints"] if s["key"] == t["sprint"]
+                   and s.get("feature", "") == t.get("feature", "")), None)
+        print("{}{}{}  ({} · sprint {})".format(a["north"], t["id"], a["reset"],
+                                                 p["name"], t["sprint"] or "—"))
+        print("  {}o que entregar:{} {}".format(a["dim"], a["reset"],
+              t.get("desc") or t.get("status_raw") or "—"))
+        if sp and (sp.get("brief") or {}).get("objetivo"):
+            print("  {}objetivo da sprint:{} {}".format(a["dim"], a["reset"], sp["brief"]["objetivo"]))
+        if t.get("entrega"):
+            print("\n  {}📦 entregáveis:{}".format(a["ok"], a["reset"]))
+            for item in t["entrega"].split("; "):
+                print("    - {}".format(item))
+        if t.get("aceite"):
+            print("\n  {}✅ critérios de aceite (escreva os testes PRIMEIRO a partir daqui):{}".format(
+                a["ok"], a["reset"]))
+            for item in t["aceite"].split("; "):
+                print("    - {}".format(item))
+        if not t.get("aceite") and not t.get("entrega"):
+            print("  {}(sem contrato no Sprint*.md — defina os critérios com PO/time antes de testar){}".format(
+                a["dim"], a["reset"]))
+        print("  {}coluna:{} {}  {}deps:{} {}".format(a["dim"], a["reset"], t["col"],
+              a["dim"], a["reset"], t.get("deps") or "—"))
+        print("")
+    return 0
+
+
+# Catálogo de comandos para o `north help` — fonte única no terminal.
+# (terminal, /skill na IA, descrição curta, exemplo)
+_HELP_GROUPS = [
+    ("🧭 Direção & rituais", [
+        ("focus", "north-focus", "a próxima ação de maior valor (respeita seu foco real via git)", "north focus"),
+        ("morning", "north-morning", "início do dia: foco consolidado + abre o painel", "north morning"),
+        ("wrap-up", "north-wrap-up", "fim do dia: resumo por projeto (seus commits vs time)", "north wrap-up"),
+    ]),
+    ("📊 Painel", [
+        ("panel", "north-panel", "regenera/abre a Central de Produtividade (dashboard)", "north panel"),
+        ("open", "—", "só abre o dashboard já gerado", "north open"),
+    ]),
+    ("🗒️ Captura", [
+        ("note <ideia>", "north-note", "captura rápida na inbox sem quebrar o fluxo", "north note \"checar cache\""),
+        ("inbox", "north-inbox", "tria as ideias capturadas", "north inbox"),
+    ]),
+    ("🎓 Mentor (você implementa, a IA orienta)", [
+        ("—", "north-learn", "modo mentor: entender o código, não só copiar", "/north-learn"),
+        ("—", "north-review", "revisar o seu próprio diff antes do PR", "/north-review"),
+        ("—", "north-test", "validar de verdade (API/banco/front)", "/north-test"),
+        ("—", "north-codebase", "entender um projeto: arquitetura, onde tudo vive", "/north-codebase"),
+        ("—", "north-standup", "conduta em daily/reuniões: reportar, destravar", "/north-standup"),
+    ]),
+    ("🧪 Desenvolvimento (TDD-first)", [
+        ("—", "north-dev", "codar com TDD: testes a partir dos critérios de aceite, depois o código", "/north-dev S3B-2"),
+        ("task <id>", "—", "contrato da task: o que entregar + critérios de aceite", "north task TASK-01"),
+    ]),
+    ("💡 Insights (a IA ensina enquanto coda)", [
+        ("insight check/record/log", "north-insight", "micro-aulas do que a IA usou, sem repetir, por dificuldade", "/north-insight"),
+        ("library find/add", "north-library", "biblioteca de referências (bundlada + sua) que a IA consulta", "north library find tdd"),
+    ]),
+    ("⚙️ Config & sistema", [
+        ("status", "north-status", "o que está instalado, scan_roots, projetos", "north status"),
+        ("config", "north-config", "ajusta scan_roots/preferências/projetos", "north config add-root \"<pasta>\""),
+        ("help", "north-help", "esta ajuda", "north help"),
+        ("uninstall", "north-uninstall", "remove o north (preserva seus dados)", "north uninstall"),
+    ]),
+]
+
+
+def cmd_help(home: Path):
+    """Explica tudo que o north oferece e como usar — terminal e dentro da IA."""
+    a = _ANSI
+    print("{}\U0001f9ed north{} — copiloto de produtividade multi-projeto para IAs\n".format(
+        a["north"], a["reset"]))
+    print("  {}Dois caminhos para o MESMO comando:{}".format(a["dim"], a["reset"]))
+    print("    • Terminal:  {}north <cmd>{}".format(a["squad"], a["reset"]))
+    print("    • Na IA:     {}/north-<cmd>{}  {}(Gemini: /north:<cmd>){}\n".format(
+        a["squad"], a["reset"], a["dim"], a["reset"]))
+    for title, items in _HELP_GROUPS:
+        print("  {}{}{}".format(a["north"], title, a["reset"]))
+        for term, skill, desc, _ex in items:
+            left = term if term != "—" else "(só na IA)"
+            sk = ("/" + skill) if skill not in ("—", "") else "(terminal)"
+            print("    {}{:<26}{} {}{:<15}{} {}".format(
+                a["ok"], left, a["reset"], a["squad"], sk, a["reset"], desc))
+        print("")
+    print("  {}Primeiros passos:{}".format(a["north"], a["reset"]))
+    print("    1) {}north morning{}  — vê o foco do dia e abre o painel".format(a["squad"], a["reset"]))
+    print("    2) {}north focus{}    — a próxima ação concreta".format(a["squad"], a["reset"]))
+    print("    3) {}/north-insight{} — ligue e a IA te ensina enquanto coda".format(a["squad"], a["reset"]))
+    print("\n  {}north é READ-ONLY sobre seus planos — só lê, nunca edita.{}".format(a["dim"], a["reset"]))
+    print("  {}Config: {}{}".format(a["dim"], _config_path(home), a["reset"]))
+    return 0
+
+
 def cmd_open(home: Path):
     out_file = home / "output" / "dashboard.html"
     if not out_file.exists():
@@ -583,6 +691,8 @@ def main(argv, home: Path):
         return cmd_config(home, argv[1:])
     if cmd in ("status", "where", "info"):
         return cmd_status(home)
+    if cmd in ("help", "ajuda", "-h", "--help", "h"):
+        return cmd_help(home)
 
     # --- comandos de inbox: LEVES, sem discovery (captura instantanea) ---
     if cmd in ("inbox-add", "note", "btw", "capturar"):
@@ -601,6 +711,16 @@ def main(argv, home: Path):
             return 1
         cmd_inbox_resolve(home, argv[1], "done" if cmd == "inbox-done" else "dismissed")
         return 0
+
+    # --- insights passivos: LEVE, sem discovery (só ledger + catálogo) ---
+    if cmd in ("insight", "insights"):
+        from . import insights
+        return insights.cmd_insight(home, argv[1:])
+
+    # --- biblioteca de referências: LEVE, sem discovery (índice local) ---
+    if cmd in ("library", "lib", "ref", "refs"):
+        from . import library
+        return library.cmd_library(home, argv[1:])
 
     cfg, projects, new_ids, removed_ids = _load_and_discover(home)
     if new_ids:
@@ -622,9 +742,11 @@ def main(argv, home: Path):
         cmd_fim_do_dia(home, cfg, projects)
     elif cmd in ("focus", "foco", "agora", "next"):
         cmd_foco(home, cfg, projects, argv[1:])
+    elif cmd in ("task", "tasks"):
+        return cmd_task(home, cfg, projects, argv[1:])
     else:
         print("Comando desconhecido: {}".format(cmd))
-        print("Use: build | morning | wrap-up | focus [--only <id>|--all] | note <ideia> | inbox | "
-              "config | status | statusline | open")
+        print("Rode 'north help' para ver tudo. Principais: build | morning | wrap-up | "
+              "focus | note | inbox | insight | config | status | open")
         return 2
     return 0

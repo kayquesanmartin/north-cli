@@ -40,6 +40,8 @@ def build_data(projects, settings, inbox_items=None):
             "secondary": p.get("secondary", []),
             "branch": p["branch"] or "—",
             "currentSprint": p["current_sprint"] or "—",
+            "docs": [{"type": d["type"], "name": d["name"], "path": d["path"],
+                      "feature": d.get("feature", "")} for d in p.get("docs", [])],
             "dirty": p["git"]["dirty"],
             "idleDays": p["git"].get("idle_days"),
             "alerts": p.get("alerts", []),
@@ -57,14 +59,16 @@ def build_data(projects, settings, inbox_items=None):
                 {"key": s["key"], "name": s["name"], "pct": s["pct"] if s["pct"] is not None else 0,
                  "col": s["col"], "blocked": s["blocked"],
                  "done": s["done"], "total": s["total"], "feature": s.get("feature", ""),
-                 "author": author_json(s.get("author"))}
+                 "author": author_json(s.get("author")), "brief": s.get("brief")}
                 for s in p["sprints"]
             ],
             "tasks": [
                 {"id": t["id"], "sprint": t["sprint"], "desc": t["desc"],
                  "owner": (t["owner"] or "").replace("squad-", ""),
                  "col": t["col"], "blocked": t["blocked"], "commit": t["commit"][:7],
-                 "feature": t.get("feature", ""), "statusRaw": t["status_raw"]}
+                 "feature": t.get("feature", ""), "statusRaw": t["status_raw"],
+                 "deps": t.get("deps", ""),
+                 "entrega": t.get("entrega", ""), "aceite": t.get("aceite", "")}
                 for t in p["tasks"]
             ],
             "blockers": [
@@ -109,7 +113,7 @@ def build_data(projects, settings, inbox_items=None):
             "title": settings.get("title", "north"),
             "owner": settings.get("owner_name", ""),
             "generated": datetime.now().strftime("%d/%m/%Y %H:%M"),
-            "theme": settings.get("theme", "dark"),
+            "theme": settings.get("theme", "light"),
             "identity": settings.get("identity", {}),
         },
         "totals": {
@@ -157,19 +161,27 @@ _SHELL = r"""<!DOCTYPE html>
     --accent:#f97316; --accent2:#fb923c;
     --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --info:#38bdf8;
     --radius:14px; --shadow:0 10px 30px -12px rgba(0,0,0,.55);
-    --mono:ui-monospace,"Cascadia Code","SF Mono",Consolas,monospace;
-    --sans:"Segoe UI",-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    --glow:rgba(249,115,22,.10);
+    --mono:ui-monospace,"Cascadia Code","JetBrains Mono","SF Mono",Consolas,monospace;
+    --sans:"Inter","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
   }
+  /* light theme — paleta empresarial (cinzas frios, contraste alto, sombras suaves) */
   html[data-theme="light"]{
-    --bg:#eef2f7; --bg2:#e7edf5; --panel:#ffffff; --panel2:#f5f8fc;
-    --card:#ffffff; --line:#dbe3ee; --line2:#e8eef6;
-    --text:#16233c; --muted:#5b6b85; --dim:#94a3b8;
-    --shadow:0 10px 28px -16px rgba(15,23,42,.35);
+    --bg:#f3f5f9; --bg2:#eaeef4; --panel:#ffffff; --panel2:#f7f9fc;
+    --card:#ffffff; --line:#e3e8f0; --line2:#eef2f7;
+    --text:#0f1e34; --muted:#56657f; --dim:#9aa7bd;
+    --accent:#ea6a16; --accent2:#c2540a;
+    --ok:#15a34a; --warn:#c2710c; --bad:#dc2626; --info:#0284c7;
+    --shadow:0 8px 26px -16px rgba(15,23,42,.20);
+    --glow:rgba(37,99,235,.045);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--sans);background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(249,115,22,.10), transparent 60%),
-    var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
+    radial-gradient(1200px 600px at 80% -10%, var(--glow), transparent 60%),
+    var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+  h1,.kpi .v,.donut span,.nav-pct,.focus-id,.scard-f b,.exec-v{font-variant-numeric:tabular-nums}
+  h1{letter-spacing:-.2px}
   ::-webkit-scrollbar{width:9px;height:9px}
   ::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
   ::-webkit-scrollbar-track{background:transparent}
@@ -283,6 +295,9 @@ _SHELL = r"""<!DOCTYPE html>
   .exec-row{display:flex;flex-direction:column;gap:3px}
   .exec-k{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
   .exec-v{font-size:15px;font-weight:700}
+  .exec-goal{margin:6px 0 14px;padding:12px 14px;background:var(--card);border:1px solid var(--line);
+    border-radius:10px;font-size:13.5px;line-height:1.5;color:var(--text)}
+  .exec-goal b{color:var(--accent2)}
   .exec-attn{margin-top:13px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;cursor:pointer}
   .exec-attn:hover{color:var(--accent)}
 
@@ -355,7 +370,9 @@ _SHELL = r"""<!DOCTYPE html>
   /* ---- detalhe projeto ---- */
   .pmeta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
   .sprints{display:grid;grid-template-columns:repeat(auto-fill,minmax(218px,1fr));gap:14px}
-  .scard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px}
+  .scard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px;
+    cursor:pointer;transition:transform .15s,border-color .15s}
+  .scard:hover{transform:translateY(-2px);border-color:var(--accent)}
   .scard.cur{box-shadow:0 0 0 1px var(--accent),0 0 22px -8px var(--accent)}
   .scard-h{display:flex;align-items:center;gap:8px;margin-bottom:9px}
   .skey{font-size:11px;font-weight:800;color:#fff;padding:2px 9px;border-radius:6px}
@@ -389,6 +406,28 @@ _SHELL = r"""<!DOCTYPE html>
   .ftag{font-size:9px;padding:1px 6px;border-radius:5px;background:var(--bg2);
     color:var(--muted);border:1px solid var(--line)}
 
+  /* ---- seletor de quadro (por pasta/feature) ---- */
+  .btabs{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 14px}
+  .btab{font-size:12px;padding:7px 13px;border-radius:9px;cursor:pointer;border:1px solid var(--line);
+    background:var(--panel);color:var(--muted);font-weight:600;user-select:none;transition:.15s;
+    display:inline-flex;align-items:center;gap:7px}
+  .btab:hover{color:var(--text);border-color:var(--accent)}
+  .btab.on{background:var(--accent);color:#fff;border-color:transparent}
+  .btab-c{font-size:10.5px;background:rgba(0,0,0,.16);padding:1px 7px;border-radius:10px;font-weight:700}
+  .btab.on .btab-c{background:rgba(255,255,255,.28)}
+
+  /* ---- documentos de SDLC ---- */
+  .docs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+  .doc-chip{display:flex;align-items:center;gap:10px;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:11px 13px;transition:.15s;
+    color:var(--text)}
+  .doc-chip:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .doc-badge{font-size:10px;font-weight:800;letter-spacing:.5px;padding:3px 8px;
+    border-radius:6px;border:1px solid transparent;flex:0 0 auto}
+  .doc-name{font-size:12.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .doc-ft{font-size:9.5px;color:var(--dim);background:var(--card);border:1px solid var(--line);
+    padding:1px 6px;border-radius:20px;flex:0 0 auto}
+
   /* ---- toolbar kanban ---- */
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0 14px}
   .search{flex:1;min-width:200px;background:var(--panel);border:1px solid var(--line);
@@ -410,8 +449,8 @@ _SHELL = r"""<!DOCTYPE html>
   .kcol-b{padding:12px;display:flex;flex-direction:column;gap:10px;min-height:60px;
     max-height:640px;overflow-y:auto}
   .card{background:var(--card);border-radius:9px;border-left:4px solid var(--accent);
-    padding:11px 13px;transition:.15s}
-  .card:hover{transform:translateX(2px)}
+    padding:11px 13px;transition:.15s;cursor:pointer}
+  .card:hover{transform:translateX(2px);border-color:var(--accent)}
   .card.blk{box-shadow:inset 0 0 0 1px rgba(239,68,68,.4)}
   .card-t{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px}
   .tid{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text)}
@@ -438,6 +477,76 @@ _SHELL = r"""<!DOCTYPE html>
   .prio-alta{background:rgba(239,68,68,.16);color:#fca5a5}
   .prio-média,.prio-media{background:rgba(245,158,11,.16);color:#fcd34d}
   .prio-baixa{background:var(--card);color:var(--muted)}
+
+  /* ---- modal de detalhe (task / sprint) — centralizado ---- */
+  .drawer-ov{position:fixed;inset:0;background:rgba(10,16,30,.58);backdrop-filter:blur(3px);
+    opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+  .drawer-ov.open{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:50%;left:50%;width:min(580px,94vw);max-height:88vh;z-index:41;
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 40px 90px -24px rgba(0,0,0,.55);
+    transform:translate(-50%,-50%) scale(.96);opacity:0;pointer-events:none;
+    transition:opacity .18s ease, transform .18s cubic-bezier(.4,0,.2,1);
+    display:flex;flex-direction:column;overflow:hidden}
+  .drawer.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
+  .drawer-h{padding:22px 24px 17px;border-bottom:1px solid var(--line);display:flex;
+    align-items:flex-start;gap:12px;background:linear-gradient(180deg,var(--panel2),var(--panel))}
+  .dh-main{flex:1;min-width:0}
+  .drawer-kind{font-size:10px;text-transform:uppercase;letter-spacing:1.6px;font-weight:800}
+  .drawer-title{font-size:18px;font-weight:800;margin-top:6px;line-height:1.3;word-break:break-word}
+  .drawer-sub{font-size:12px;color:var(--muted);margin-top:7px}
+  .drawer-x{background:var(--card);border:1px solid var(--line);color:var(--muted);
+    width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:15px;flex:0 0 auto;
+    transition:.15s;line-height:1}
+  .drawer-x:hover{border-color:var(--accent);color:var(--text)}
+  .drawer-b{padding:20px 24px 48px;overflow-y:auto;flex:1}
+  .dsec{margin-bottom:24px}
+  .dsec-h{font-size:10.5px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim);
+    font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+  .dsec-h::after{content:"";flex:1;height:1px;background:var(--line)}
+  .dverdict{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--dim);
+    border-radius:10px;padding:13px 15px;font-size:14px;line-height:1.5;color:var(--text)}
+  .dverdict.bad{border-left-color:var(--bad)} .dverdict.ok{border-left-color:var(--ok)}
+  .dverdict.warn{border-left-color:var(--warn)} .dverdict.acc{border-left-color:var(--accent)}
+  .dbrief{margin-bottom:13px}
+  .dbrief:last-child{margin-bottom:0}
+  .dbrief-k{display:block;font-size:11px;font-weight:800;color:var(--accent2);margin-bottom:5px;
+    letter-spacing:.2px}
+  .dbrief-v{font-size:13.5px;line-height:1.55;color:var(--text);margin:0}
+  .dkv{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line2);font-size:13px}
+  .dkv:last-child{border-bottom:0}
+  .dkv .dk{color:var(--muted);flex:0 0 132px}
+  .dkv .dv{color:var(--text);flex:1;font-weight:600;word-break:break-word}
+  .dgrp{font-size:11px;font-weight:800;color:var(--muted);margin:14px 0 8px;letter-spacing:.2px}
+  .dgrp:first-child{margin-top:0}
+  .dtasklist{display:flex;flex-direction:column;gap:7px}
+  .dtask{display:flex;align-items:center;gap:10px;background:var(--card);
+    border:1px solid var(--line2);border-radius:9px;padding:10px 12px;font-size:12.5px;
+    cursor:pointer;transition:.15s}
+  .dtask:hover{border-color:var(--accent);transform:translateX(2px)}
+  .dt-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+  .dt-id{font-family:var(--mono);font-weight:700;flex:0 0 auto;color:var(--text)}
+  .dt-desc{color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* ---- ajustes de contraste no light theme (chips pastel sao p/ fundo escuro) ---- */
+  html[data-theme="light"] .bg-bad,
+  html[data-theme="light"] .sev-risk,
+  html[data-theme="light"] .vrow.sev-risk .vtitle,
+  html[data-theme="light"] .prio-alta{color:#b91c1c}
+  html[data-theme="light"] .bg-warn,
+  html[data-theme="light"] .sev-warn,
+  html[data-theme="light"] .vrow.sev-warn .vtitle,
+  html[data-theme="light"] .prio-média,
+  html[data-theme="light"] .prio-media,
+  html[data-theme="light"] .focus-wip{color:#b45309}
+  html[data-theme="light"] .sev-risk{background:rgba(220,38,38,.09);border-color:rgba(220,38,38,.28)}
+  html[data-theme="light"] .sev-warn{background:rgba(217,119,6,.09);border-color:rgba(217,119,6,.28)}
+  html[data-theme="light"] .bg-bad{background:rgba(220,38,38,.11)}
+  html[data-theme="light"] .bg-warn{background:rgba(217,119,6,.13)}
+  html[data-theme="light"] .prio-alta{background:rgba(220,38,38,.09)}
+  html[data-theme="light"] .prio-média,
+  html[data-theme="light"] .prio-media{background:rgba(217,119,6,.11)}
+  html[data-theme="light"] .focus-squad{color:var(--accent2)}
 
   footer{margin-top:40px;text-align:center;color:var(--dim);font-size:11px}
   .hidden{display:none!important}
@@ -471,6 +580,9 @@ _SHELL = r"""<!DOCTYPE html>
   <main class="main" id="main"></main>
 </div>
 
+<div class="drawer-ov" id="drawerOv"></div>
+<aside class="drawer" id="drawer" aria-hidden="true"></aside>
+
 <script id="painel-data" type="application/json">/*__DATA__*/</script>
 <script>
 (function(){
@@ -479,7 +591,7 @@ _SHELL = r"""<!DOCTYPE html>
   const SPRINT_PAL = ["#0ea5e9","#8b5cf6","#ec4899","#14b8a6","#eab308","#f97316","#22c55e","#a78bfa"];
   const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const colColor = k => (DATA.columns.find(c=>c.key===k)||{}).color || "#64748b";
-  let state = {view:"overview", project:null, filter:new Set(), q:""};
+  let state = {view:"overview", project:null, filter:new Set(), q:"", feature:null};
 
   /* ---------- sidebar ---------- */
   function renderNav(){
@@ -507,7 +619,7 @@ _SHELL = r"""<!DOCTYPE html>
   function bindNav(){
     document.getElementById("navOverview").onclick=()=>{state.view="overview";render();};
     document.querySelectorAll("[data-pid]").forEach(b=>b.onclick=()=>{
-      state.view="project";state.project=b.dataset.pid;state.filter.clear();state.q="";render();});
+      state.view="project";state.project=b.dataset.pid;state.filter.clear();state.q="";state.feature=null;render();});
   }
   function highlightNav(){
     document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
@@ -607,6 +719,79 @@ _SHELL = r"""<!DOCTYPE html>
       '<div class="exec-grid">'+rows+'</div>'+attn+'</div>';
   }
 
+  /* ---------- documentos de SDLC do projeto (detecta + linka; read-only) ---------- */
+  const DOC_META={PRD:"#8b5cf6",SDD:"#0ea5e9",TDD:"#22c55e",SPEC:"#f97316",
+    SECURITY:"#ef4444",ADR:"#eab308",UML:"#14b8a6"};
+  function fileHref(path){return "file:///"+String(path||"").replace(/\\/g,"/").replace(/^\/+/,"");}
+  function docsSection(p){
+    const ds=p.docs||[];
+    if(!ds.length) return "";
+    const chips=ds.map(d=>{
+      const c=DOC_META[d.type]||"#64748b";
+      const ft=d.feature?('<span class="doc-ft">'+esc(d.feature)+'</span>'):'';
+      return '<a class="doc-chip" href="'+esc(fileHref(d.path))+'" target="_blank" rel="noopener" '+
+        'title="'+esc(d.path)+'"><span class="doc-badge" style="background:'+c+'1f;color:'+c+
+        ';border-color:'+c+'55">'+esc(d.type)+'</span><span class="doc-name">'+esc(d.name)+'</span>'+ft+'</a>';
+    }).join("");
+    return '<div class="sec-h">📚 Documentos do projeto <span class="ln"></span>'+
+      '<span style="font-size:11px;color:var(--dim)">'+ds.length+' detectado(s) · clique p/ abrir</span></div>'+
+      '<div class="docs-grid">'+chips+'</div>';
+  }
+
+  /* ---------- resumo executivo de UM projeto (C-level na visao de projeto) ---------- */
+  function projExec(p){
+    const r=p.rollup, al=p.alerts||[];
+    const risk=al.filter(a=>a.severity==="risk"), warn=al.filter(a=>a.severity==="warn");
+    let verdict,vcls;
+    if(risk.length){verdict=risk.length+" sinal(is) de risco — ação necessária";vcls="bad";}
+    else if(warn.length){verdict=warn.length+" ponto(s) de atenção";vcls="warn";}
+    else if(r.pct>=100){verdict="Concluído — 100% entregue";vcls="ok";}
+    else{verdict="No prazo — sem riscos abertos";vcls="ok";}
+    const lvl=r.level==="task"?"tasks":(p.source==="gsd"?"fases":"sprints");
+    const act=(p.todayCommits.length?(p.todayCommits.length+" commit(s) hoje"):"sem commit hoje")+
+      (p.dirty?(" · "+p.dirty+" não commitado(s)"):"");
+    const rows=[
+      ["Progresso", r.pct+"% · "+r.done+"/"+r.total+" "+lvl],
+      ["Sprint atual", esc(p.currentSprint||"—").slice(0,52)],
+      ["Bloqueios / Débito", p.blockers.length+" bloqueio(s) · "+p.debt.length+" débito"],
+      ["Atividade", act],
+    ].map(r=>'<div class="exec-row"><span class="exec-k">'+r[0]+'</span><span class="exec-v">'+r[1]+'</span></div>').join("");
+    // objetivo narrativo da sprint atual (o "resumo de verdade", não só status)
+    let goal="";
+    const curS=(p.sprints||[]).find(s=>s.brief&&s.brief.objetivo&&p.currentSprint&&
+      (p.currentSprint.toUpperCase().indexOf(s.key)>=0 || p.currentSprint.indexOf(s.key.replace(/^S/,''))>=0));
+    const anyBrief=curS||(p.sprints||[]).find(s=>s.brief&&s.brief.objetivo&&s.col!=="Concluido");
+    if(anyBrief) goal='<div class="exec-goal">🎯 <b>'+esc(anyBrief.key)+
+      (anyBrief.brief.title?(" — "+esc(anyBrief.brief.title)):"")+':</b> '+esc(anyBrief.brief.objetivo)+'</div>';
+    const top=risk[0]||warn[0];
+    const attn=top?('<div class="exec-attn">▸ Atenção: <b>'+esc(top.title)+'</b> — '+esc(top.detail)+'</div>'):"";
+    return '<div class="exec '+vcls+'"><div class="exec-h">📊 Resumo executivo'+
+      '<span class="exec-verdict">'+esc(verdict)+'</span></div>'+
+      goal+
+      '<div class="exec-grid">'+rows+'</div>'+attn+'</div>';
+  }
+
+  /* ---------- cor estavel por feature/pasta ---------- */
+  function featColor(p,key){
+    const i=(p.features||[]).findIndex(f=>f.key===(key||""));
+    return SPRINT_PAL[Math.max(0,i)%SPRINT_PAL.length];
+  }
+  /* ---------- seletor de quadro: um board por pasta/feature ("Todas" = *) ---------- */
+  function boardTabs(p){
+    const feats=p.features||[];
+    if(feats.length<=1) return "";
+    const tab=(featKey,label,count,active,color)=>'<span class="btab'+(active?" on":"")+'" data-feat="'+
+      esc(featKey)+'"'+(color&&!active?' style="box-shadow:inset 3px 0 0 '+color+'"':'')+'>'+
+      (color?'📁 ':'▦ ')+esc(label)+' <span class="btab-c">'+count+'</span></span>';
+    let html=tab("*","Todas",p.tasks.length,state.feature==null,null);
+    feats.forEach(f=>{
+      const n=p.tasks.filter(t=>(t.feature||"")===f.key).length;
+      if(!n) return;
+      html+=tab(f.key,f.label,n,state.feature===f.key,featColor(p,f.key));
+    });
+    return '<div class="btabs">'+html+'</div>';
+  }
+
   /* ---------- overview ---------- */
   function viewOverview(){
     const t=DATA.totals;
@@ -624,7 +809,8 @@ _SHELL = r"""<!DOCTYPE html>
       const r=p.rollup;
       const stats=[];
       stats.push('<span class="pill"><b>'+p.sprints.length+'</b> sprints</span>');
-      if(p.blockers.length) stats.push('<span class="pill" style="border-color:var(--bad);color:#fca5a5"><b>'+p.blockers.length+'</b> bloqueios</span>');
+      if((p.docs||[]).length) stats.push('<span class="pill">📚 <b>'+p.docs.length+'</b> docs</span>');
+      if(p.blockers.length) stats.push('<span class="pill" style="border-color:var(--bad);color:var(--bad)"><b>'+p.blockers.length+'</b> bloqueios</span>');
       if(p.debt.length) stats.push('<span class="pill"><b>'+p.debt.length+'</b> débito</span>');
       const foot=p.author?('↻ '+esc(p.author.name.split(" ")[0])+' · '+esc(p.author.when)):
         (p.todayCommits.length?('● '+p.todayCommits.length+' commit(s) hoje'):
@@ -661,7 +847,7 @@ _SHELL = r"""<!DOCTYPE html>
     const col=SPRINT_PAL[gi%SPRINT_PAL.length];
     const isCur=cur && (cur.indexOf(s.key.replace(/^S/,''))>=0 || cur.toUpperCase().indexOf(s.key)>=0);
     const frac=(s.done!=null&&s.total!=null)?(s.done+'/'+s.total+' tasks'):(colLabel(s.col));
-    return '<div class="scard'+(isCur?' cur':'')+'">'+
+    return '<div class="scard'+(isCur?' cur':'')+'" data-skey="'+esc(s.key)+'" data-sft="'+esc(s.feature||"")+'">'+
       '<div class="scard-h"><span class="skey" style="background:'+col+'">'+esc(s.key)+'</span>'+
       (isCur?'<span class="snow">ATUAL</span>':'')+(s.blocked?'<span class="blocked-tag">BLOQ</span>':'')+'</div>'+
       '<div class="sname">'+esc(s.name||'—')+'</div>'+
@@ -720,12 +906,15 @@ _SHELL = r"""<!DOCTYPE html>
 
     let body='<div class="top"><div><h1>'+esc(p.name)+srcTags(p)+' <small>— acompanhamento</small></h1>'+
       meta+'</div><div class="gen">Gerado '+esc(DATA.meta.generated)+'</div></div>'+
+      projExec(p)+
       '<div class="kpis">'+kpis+'</div>'+
       '<div class="sec-h">'+secLabel+' <span class="ln"></span></div>'+
-      sprintsSection(p);
+      sprintsSection(p)+
+      docsSection(p);
 
     if(p.tasks.length){
-      body+='<div class="sec-h">Quadro de Tarefas <span class="ln"></span></div>'+toolbar(p)+kanban(p);
+      body+='<div class="sec-h">Quadro de Tarefas <span class="ln"></span></div>'+
+        boardTabs(p)+toolbar(p)+kanban(p);
     }
     body+='<div class="panels">'+blockersPanel(p)+debtPanel(p)+'</div>'+footer();
     return body;
@@ -744,13 +933,19 @@ _SHELL = r"""<!DOCTYPE html>
   function kanban(p){
     const q=state.q.toLowerCase();
     const multiFeat=(p.features||[]).length>1;
+    // base do quadro: filtra pela pasta/feature ativa (null = todas)
+    const base=(state.feature==null)?p.tasks:p.tasks.filter(t=>(t.feature||"")===state.feature);
     const cols=DATA.columns.map(c=>{
-      let ts=p.tasks.filter(t=>t.col===c.key);
+      let ts=base.filter(t=>t.col===c.key);
       if(q) ts=ts.filter(t=>(t.id+" "+t.desc+" "+t.owner+" "+(t.feature||"")).toLowerCase().indexOf(q)>=0);
       const cards=ts.map(t=>{
         const sc=SPRINT_PAL[Math.max(0,p.sprints.findIndex(s=>s.key===t.sprint && s.feature===t.feature))%SPRINT_PAL.length];
-        const ftag=(multiFeat&&t.feature)?'<span class="ftag">'+esc(t.feature)+'</span>':'';
-        return '<div class="card'+(t.blocked?' blk':'')+'" style="border-left-color:'+sc+'">'+
+        // tag de pasta so quando vendo "Todas" (no board filtrado a pasta ja e o titulo)
+        const fc=featColor(p,t.feature);
+        const ftag=(multiFeat&&t.feature&&state.feature==null)?
+          '<span class="ftag" style="background:'+fc+'1f;color:'+fc+';border-color:'+fc+'55">📁 '+esc(t.feature)+'</span>':'';
+        return '<div class="card'+(t.blocked?' blk':'')+'" style="border-left-color:'+sc+'"'+
+          ' data-tid="'+esc(t.id)+'" data-tsp="'+esc(t.sprint)+'" data-tft="'+esc(t.feature||"")+'">'+
           '<div class="card-t"><span class="tid">'+esc(t.id)+'</span>'+
           '<span style="display:flex;gap:5px;align-items:center">'+ftag+
           '<span class="stag" style="background:'+sc+'22;color:'+sc+'">'+esc(t.sprint)+'</span></span></div>'+
@@ -787,6 +982,145 @@ _SHELL = r"""<!DOCTYPE html>
       'nenhum dado é editado, apenas lido · '+esc(DATA.meta.generated)+'</footer>';
   }
 
+  /* ---------- drawer de detalhe (task / sprint) ---------- */
+  // veredito de negocio (C-level) a partir da coluna kanban da task
+  const COL_VERDICT={
+    "Concluido":{t:"Entregue",c:"ok",e:"✅"},
+    "Codigo Completo":{t:"Código pronto — em validação",c:"acc",e:"🟢"},
+    "Em Andamento":{t:"Em desenvolvimento",c:"warn",e:"⚡"},
+    "Planejado":{t:"Planejada — ainda não iniciada",c:"",e:"📋"}
+  };
+  function curProj(){return DATA.projects.find(x=>x.id===state.project);}
+  function kvRows(rows){return rows.map(r=>'<div class="dkv"><span class="dk">'+r[0]+
+    '</span><span class="dv">'+r[1]+'</span></div>').join("");}
+  function drawerShell(kind,title,sub,color,body){
+    return '<div class="drawer-h"><div class="dh-main">'+
+      '<div class="drawer-kind" style="color:'+color+'">'+esc(kind)+'</div>'+
+      '<div class="drawer-title">'+title+'</div>'+
+      '<div class="drawer-sub">'+sub+'</div></div>'+
+      '<button class="drawer-x" id="drawerX" title="Fechar (Esc)">✕</button></div>'+
+      '<div class="drawer-b">'+body+'</div>';
+  }
+  function taskVerdict(t){
+    if(t.blocked) return {t:"Bloqueada — risco ao andamento",c:"bad",e:"⛔"};
+    return COL_VERDICT[t.col]||{t:t.col,c:"",e:"•"};
+  }
+  function sprintVerdict(s){
+    if(s.blocked) return {t:"Bloqueado — atenção",c:"bad",e:"⛔"};
+    if(s.pct>=100||s.col==="Concluido") return {t:"Concluído",c:"ok",e:"✅"};
+    if(s.col==="Codigo Completo") return {t:"Código pronto — em validação",c:"acc",e:"🟢"};
+    if(s.pct>0||s.col==="Em Andamento") return {t:"Em andamento",c:"warn",e:"⚡"};
+    return {t:"Planejado",c:"",e:"📋"};
+  }
+  // bloco de resumo narrativo (o quê / por quê / fora de escopo)
+  function briefHtml(b){
+    if(!b) return "";
+    var h="";
+    if(b.objetivo) h+='<div class="dbrief"><span class="dbrief-k">🎯 O que será feito</span><p class="dbrief-v">'+esc(b.objetivo)+'</p></div>';
+    if(b.porque)   h+='<div class="dbrief"><span class="dbrief-k">💡 Por que agora</span><p class="dbrief-v">'+esc(b.porque)+'</p></div>';
+    if(b.aceite)   h+='<div class="dbrief"><span class="dbrief-k">✅ Critérios de aceite / DoD</span><p class="dbrief-v">'+esc(b.aceite)+'</p></div>';
+    if(b.fora)     h+='<div class="dbrief"><span class="dbrief-k">🚫 Fora do escopo</span><p class="dbrief-v">'+esc(b.fora)+'</p></div>';
+    if(b.prereq)   h+='<div class="dbrief"><span class="dbrief-k">📎 Pré-leitura / referências</span><p class="dbrief-v">'+esc(b.prereq)+'</p></div>';
+    return h;
+  }
+  function taskDrawerHtml(p,t){
+    const v=taskVerdict(t);
+    const sp=p.sprints.find(s=>s.key===t.sprint && (s.feature||"")===(t.feature||""));
+    const spName=sp?(sp.name||t.sprint):(t.sprint||"—");
+    const cl=[["O que entregar",esc(t.desc||t.statusRaw||"—")],
+      ["Sprint / Onda",esc(spName)],
+      ["Responsável",t.owner?("/"+esc(t.owner)):"—"]];
+    // contrato da task: o que entregar (atividades) + critérios de aceite
+    const contrato=(t.entrega||t.aceite)?
+      '<div class="dsec"><div class="dsec-h">📦 Atividades & critérios de aceite</div>'+
+        (t.entrega?'<div class="dbrief"><span class="dbrief-k">🔨 O que entregar (atividades)</span>'+
+          '<p class="dbrief-v">'+esc(t.entrega)+'</p></div>':"")+
+        (t.aceite?'<div class="dbrief"><span class="dbrief-k">✅ Critérios de aceite</span>'+
+          '<p class="dbrief-v">'+esc(t.aceite)+'</p></div>':"")+
+      '</div>':"";
+    // contexto: objetivo da sprint a que a task pertence
+    const ctx=(sp&&sp.brief&&sp.brief.objetivo)?
+      '<div class="dsec"><div class="dsec-h">📄 Contexto da sprint</div>'+
+        '<div class="dbrief"><span class="dbrief-k">🎯 Objetivo da sprint '+esc(t.sprint||"")+'</span>'+
+        '<p class="dbrief-v">'+esc(sp.brief.objetivo)+'</p></div></div>':"";
+    const tech=[["ID",'<span class="mono">'+esc(t.id)+'</span>'],
+      ["Sprint (chave)",'<span class="mono">'+esc(t.sprint||"—")+'</span>']];
+    if((p.features||[]).length>1) tech.push(["Feature",esc(t.feature||"Principal")]);
+    tech.push(["Coluna kanban",esc(t.col)]);
+    tech.push(["Status no .md",esc(t.statusRaw||"—")]);
+    tech.push(["Dependências",t.deps?esc(t.deps):"—"]);
+    tech.push(["Commit",t.commit?('<span class="mono">'+esc(t.commit)+'</span>'):"—"]);
+    return drawerShell("Tarefa",esc(t.id),esc(p.name)+" · "+esc(spName),p.color,
+      '<div class="dsec"><div class="dsec-h">📊 Resumo executivo</div>'+
+        '<div class="dverdict '+v.c+'">'+v.e+' <b>'+esc(v.t)+'</b></div>'+
+        '<div style="margin-top:11px">'+kvRows(cl)+'</div></div>'+
+      contrato+ctx+
+      '<div class="dsec"><div class="dsec-h">🔧 Detalhe técnico</div>'+kvRows(tech)+'</div>');
+  }
+  function sprintDrawerHtml(p,s){
+    const v=sprintVerdict(s);
+    const b=s.brief||null;
+    const isCur=p.currentSprint && (p.currentSprint.toUpperCase().indexOf(s.key)>=0 ||
+      p.currentSprint.indexOf(s.key.replace(/^S/,''))>=0);
+    const ts=p.tasks.filter(t=>t.sprint===s.key && (t.feature||"")===(s.feature||""));
+    // resumo narrativo (o quê/por quê/escopo) — o "C-level" de verdade
+    const summary=b?briefHtml(b):
+      '<div class="empty" style="text-align:left">Sem descrição narrativa no Sprint*.md desta sprint — '+
+      'mostrando só o andamento abaixo.</div>';
+    // andamento (verdict + barra + métricas)
+    const done=(ts.filter(t=>t.col==="Concluido").length);
+    const cl=[["Conclusão",s.pct+"%"+((s.done!=null&&s.total!=null)?(" · "+s.done+"/"+s.total+" tasks"):"")],
+      ["Status",esc(colLabel(s.col))],
+      ["Sprint atual?",isCur?"Sim — foco do momento":"Não"]];
+    if(ts.length) cl.push(["Tarefas",done+" concluída(s) de "+ts.length]);
+    if(s.author) cl.push(["Última atualização",esc(s.author.name.split(" ")[0])+" · "+esc(s.author.when)]);
+    const taskRow=t=>'<div class="dtask" data-tid="'+esc(t.id)+'" data-tsp="'+esc(t.sprint)+'" data-tft="'+esc(t.feature||"")+'">'+
+      '<span class="dt-dot" style="background:'+colColor(t.col)+'"></span>'+
+      '<span class="dt-id">'+esc(t.id)+'</span>'+
+      '<span class="dt-desc">'+esc(t.desc||t.statusRaw||"")+'</span></div>';
+    let tasksHtml;
+    if(ts.length){
+      // separa atividades executadas (concluídas) das pendentes
+      const exec=ts.filter(t=>t.col==="Concluido"), pend=ts.filter(t=>t.col!=="Concluido");
+      tasksHtml="";
+      if(exec.length) tasksHtml+='<div class="dgrp">✅ Atividades executadas ('+exec.length+')</div>'+
+        '<div class="dtasklist">'+exec.map(taskRow).join("")+'</div>';
+      if(pend.length) tasksHtml+='<div class="dgrp">⏳ Pendentes ('+pend.length+')</div>'+
+        '<div class="dtasklist">'+pend.map(taskRow).join("")+'</div>';
+    } else {
+      tasksHtml='<div class="empty" style="text-align:left">Sem tasks detalhadas — sprint rastreado só em nível de overview.</div>';
+    }
+    const titleTxt=(b&&b.title)?(esc(s.key)+" — "+esc(b.title)):esc(s.name||s.key);
+    return drawerShell("Sprint",titleTxt,esc(p.name)+" · "+esc(s.key),p.color,
+      '<div class="dsec"><div class="dsec-h">📄 Resumo da sprint</div>'+summary+'</div>'+
+      '<div class="dsec"><div class="dsec-h">📊 Andamento</div>'+
+        '<div class="dverdict '+v.c+'">'+v.e+' <b>'+esc(v.t)+'</b></div>'+
+        '<div class="bar" style="margin:13px 0 4px"><i style="width:'+s.pct+'%;background:'+p.color+'"></i></div>'+
+        '<div style="margin-top:11px">'+kvRows(cl)+'</div></div>'+
+      '<div class="dsec"><div class="dsec-h">🔧 Tarefas do sprint ('+ts.length+')</div>'+tasksHtml+'</div>');
+  }
+  function fillDrawer(html){
+    const d=document.getElementById("drawer");
+    d.innerHTML=html; d.classList.add("open"); d.setAttribute("aria-hidden","false");
+    document.getElementById("drawerOv").classList.add("open");
+    const x=document.getElementById("drawerX"); if(x) x.onclick=closeDrawer;
+  }
+  function closeDrawer(){
+    const d=document.getElementById("drawer");
+    d.classList.remove("open"); d.setAttribute("aria-hidden","true");
+    document.getElementById("drawerOv").classList.remove("open");
+  }
+  function openTaskDrawer(tid,sp,ft){
+    const p=curProj(); if(!p) return;
+    const t=p.tasks.find(x=>x.id===tid && x.sprint===(sp||"") && (x.feature||"")===(ft||""));
+    if(t) fillDrawer(taskDrawerHtml(p,t));
+  }
+  function openSprintDrawer(key,ft){
+    const p=curProj(); if(!p) return;
+    const s=p.sprints.find(x=>x.key===key && (x.feature||"")===(ft||""));
+    if(s) fillDrawer(sprintDrawerHtml(p,s));
+  }
+
   /* ---------- render + binds ---------- */
   function render(){
     const m=document.getElementById("main");
@@ -794,15 +1128,17 @@ _SHELL = r"""<!DOCTYPE html>
     highlightNav();
     // binds intra-main
     m.querySelectorAll(".pcard[data-pid]").forEach(c=>c.onclick=()=>{
-      state.view="project";state.project=c.dataset.pid;state.filter.clear();state.q="";render();});
+      state.view="project";state.project=c.dataset.pid;state.filter.clear();state.q="";state.feature=null;render();});
     m.querySelectorAll("[data-go]").forEach(el=>{
       if(el.dataset.go==="overview") return;
       el.style.cursor="pointer";
-      el.onclick=()=>{state.view="project";state.project=el.dataset.go;state.filter.clear();state.q="";render();};});
+      el.onclick=()=>{state.view="project";state.project=el.dataset.go;state.filter.clear();state.q="";state.feature=null;render();};});
     const s=document.getElementById("search");
     if(s) s.oninput=e=>{state.q=e.target.value; rerenderKanban();};
     m.querySelectorAll(".chip[data-col]").forEach(ch=>ch.onclick=()=>{
       const k=ch.dataset.col; state.filter.has(k)?state.filter.delete(k):state.filter.add(k); render();});
+    m.querySelectorAll(".btab[data-feat]").forEach(b=>b.onclick=()=>{
+      const f=b.dataset.feat; state.feature=(f==="*")?null:f; render();});
   }
   function rerenderKanban(){
     // re-render so o kanban, preservando foco no input
@@ -815,6 +1151,20 @@ _SHELL = r"""<!DOCTYPE html>
     const h=document.documentElement;
     h.dataset.theme = h.dataset.theme==="dark" ? "light":"dark";
   };
+
+  /* delegacao de clique -> drawer (sobrevive a re-render do main/kanban) */
+  document.getElementById("main").addEventListener("click",e=>{
+    const tc=e.target.closest(".card[data-tid]");
+    if(tc){openTaskDrawer(tc.dataset.tid,tc.dataset.tsp,tc.dataset.tft);return;}
+    const sc=e.target.closest(".scard[data-skey]");
+    if(sc){openSprintDrawer(sc.dataset.skey,sc.dataset.sft);return;}
+  });
+  document.getElementById("drawer").addEventListener("click",e=>{
+    const dt=e.target.closest(".dtask[data-tid]");
+    if(dt) openTaskDrawer(dt.dataset.tid,dt.dataset.tsp,dt.dataset.tft);
+  });
+  document.getElementById("drawerOv").onclick=closeDrawer;
+  document.addEventListener("keydown",e=>{if(e.key==="Escape") closeDrawer();});
 
   renderNav();
   render();

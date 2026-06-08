@@ -42,13 +42,22 @@ consolida o progresso e mostra onde focar.
    Apenas confirme ao usuário que o painel foi atualizado — não tente abrir
    manualmente.
 
-4. Com base no FOCO DO DIA, sugira **qual squad** acionar primeiro hoje
+4. **CONFIRME o foco real (não crave pela leitura).** O script detecta pelo git o
+   que VOCÊ está tocando e imprime, quando há sinal, um bloco
+   **"🎯 SEU FOCO PROVÁVEL (detectado pelo git)"** com os sinais (working tree sujo,
+   commits seus hoje, sua branch). A regra:
+   - **Se houver bloco 🎯:** pergunte de forma curta se é nele mesmo que ele vai
+     trabalhar hoje (ex.: *"Detectei que você está em `backoffice-backend` (3 arquivos
+     sujos, branch feat/x). É o foco de hoje?"*). **Se SIM**, fixe: `north focus --only <id>`.
+     **Se NÃO**, pergunte qual projeto e fixe o escolhido (ou `north focus --all`).
+   - **Se NÃO houver bloco 🎯** (nenhum sinal seu — início do dia, pós-clone):
+     **pergunte** em qual projeto ele vai focar antes de sugerir, em vez de cravar
+     pelo que foi lido. Aí fixe com `north focus --only <id>`.
+   Nunca assuma silenciosamente um projeto que o git não aponta como seu.
+
+5. Com base no foco confirmado, sugira **qual squad** acionar primeiro hoje
    (Backend, Frontend, QA, Arquitetura, Security, DevOps…). Use as ferramentas
    já recomendadas pelo script como pista. Seja breve — uma linha por sugestão.
-
-5. Se houver vários projetos e o usuário sinalizar que hoje só vai mexer em um,
-   **ofereça fixar o foco do dia** (`north focus --only <id>`) — assim o `/north-morning`
-   e o `/north-wrap-up` mostram só esse projeto. `north focus --all` volta ao portfólio.
 
 6. **Se aparecer o bloco "⚠ VERSIONAMENTO"** (branch atrás do remoto/base),
    destaque-o e oriente o usuário a sincronizar **antes** de novos commits:

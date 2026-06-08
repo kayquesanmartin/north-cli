@@ -10,6 +10,7 @@
     "src/",
     "skills/",
     "templates/",
+    "references/",
     "install.py",
     "runtimes.py",
     "README.md",
