@@ -14,6 +14,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   parent sprint's objective as context; the project view surfaces the current sprint's goal.
   Parsed from `## Meta/Objetivo do Sprint` + `**Entregável**` and degrades gracefully when a
   plan has no prose. Read-only.
+- **Acceptance criteria & executed activities in the detail view.** The task modal now shows
+  its contract — **🔨 what to deliver (activities)** and **✅ acceptance criteria** — parsed
+  from the `**Builder entrega:** / **Evaluator valida:**` (or DoD / "Critério de aceite")
+  sections of `Sprint*.md`, fence-aware so `# comments` inside ```` ``` ```` code blocks aren't
+  mistaken for headers. The sprint modal surfaces the sprint-level DoD and splits its tasks
+  into **executed (done)** vs **pending**.
 
 ### Changed
 - **Dashboard typography tuned for a modern dev-platform feel.** Inter-first font stack,
