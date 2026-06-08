@@ -40,6 +40,8 @@ def build_data(projects, settings, inbox_items=None):
             "secondary": p.get("secondary", []),
             "branch": p["branch"] or "—",
             "currentSprint": p["current_sprint"] or "—",
+            "docs": [{"type": d["type"], "name": d["name"], "path": d["path"],
+                      "feature": d.get("feature", "")} for d in p.get("docs", [])],
             "dirty": p["git"]["dirty"],
             "idleDays": p["git"].get("idle_days"),
             "alerts": p.get("alerts", []),
@@ -414,6 +416,18 @@ _SHELL = r"""<!DOCTYPE html>
   .btab-c{font-size:10.5px;background:rgba(0,0,0,.16);padding:1px 7px;border-radius:10px;font-weight:700}
   .btab.on .btab-c{background:rgba(255,255,255,.28)}
 
+  /* ---- documentos de SDLC ---- */
+  .docs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+  .doc-chip{display:flex;align-items:center;gap:10px;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:11px 13px;transition:.15s;
+    color:var(--text)}
+  .doc-chip:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .doc-badge{font-size:10px;font-weight:800;letter-spacing:.5px;padding:3px 8px;
+    border-radius:6px;border:1px solid transparent;flex:0 0 auto}
+  .doc-name{font-size:12.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .doc-ft{font-size:9.5px;color:var(--dim);background:var(--card);border:1px solid var(--line);
+    padding:1px 6px;border-radius:20px;flex:0 0 auto}
+
   /* ---- toolbar kanban ---- */
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0 14px}
   .search{flex:1;min-width:200px;background:var(--panel);border:1px solid var(--line);
@@ -705,6 +719,25 @@ _SHELL = r"""<!DOCTYPE html>
       '<div class="exec-grid">'+rows+'</div>'+attn+'</div>';
   }
 
+  /* ---------- documentos de SDLC do projeto (detecta + linka; read-only) ---------- */
+  const DOC_META={PRD:"#8b5cf6",SDD:"#0ea5e9",TDD:"#22c55e",SPEC:"#f97316",
+    SECURITY:"#ef4444",ADR:"#eab308",UML:"#14b8a6"};
+  function fileHref(path){return "file:///"+String(path||"").replace(/\\/g,"/").replace(/^\/+/,"");}
+  function docsSection(p){
+    const ds=p.docs||[];
+    if(!ds.length) return "";
+    const chips=ds.map(d=>{
+      const c=DOC_META[d.type]||"#64748b";
+      const ft=d.feature?('<span class="doc-ft">'+esc(d.feature)+'</span>'):'';
+      return '<a class="doc-chip" href="'+esc(fileHref(d.path))+'" target="_blank" rel="noopener" '+
+        'title="'+esc(d.path)+'"><span class="doc-badge" style="background:'+c+'1f;color:'+c+
+        ';border-color:'+c+'55">'+esc(d.type)+'</span><span class="doc-name">'+esc(d.name)+'</span>'+ft+'</a>';
+    }).join("");
+    return '<div class="sec-h">📚 Documentos do projeto <span class="ln"></span>'+
+      '<span style="font-size:11px;color:var(--dim)">'+ds.length+' detectado(s) · clique p/ abrir</span></div>'+
+      '<div class="docs-grid">'+chips+'</div>';
+  }
+
   /* ---------- resumo executivo de UM projeto (C-level na visao de projeto) ---------- */
   function projExec(p){
     const r=p.rollup, al=p.alerts||[];
@@ -776,6 +809,7 @@ _SHELL = r"""<!DOCTYPE html>
       const r=p.rollup;
       const stats=[];
       stats.push('<span class="pill"><b>'+p.sprints.length+'</b> sprints</span>');
+      if((p.docs||[]).length) stats.push('<span class="pill">📚 <b>'+p.docs.length+'</b> docs</span>');
       if(p.blockers.length) stats.push('<span class="pill" style="border-color:var(--bad);color:var(--bad)"><b>'+p.blockers.length+'</b> bloqueios</span>');
       if(p.debt.length) stats.push('<span class="pill"><b>'+p.debt.length+'</b> débito</span>');
       const foot=p.author?('↻ '+esc(p.author.name.split(" ")[0])+' · '+esc(p.author.when)):
@@ -875,7 +909,8 @@ _SHELL = r"""<!DOCTYPE html>
       projExec(p)+
       '<div class="kpis">'+kpis+'</div>'+
       '<div class="sec-h">'+secLabel+' <span class="ln"></span></div>'+
-      sprintsSection(p);
+      sprintsSection(p)+
+      docsSection(p);
 
     if(p.tasks.length){
       body+='<div class="sec-h">Quadro de Tarefas <span class="ln"></span></div>'+
@@ -985,6 +1020,7 @@ _SHELL = r"""<!DOCTYPE html>
     if(b.porque)   h+='<div class="dbrief"><span class="dbrief-k">💡 Por que agora</span><p class="dbrief-v">'+esc(b.porque)+'</p></div>';
     if(b.aceite)   h+='<div class="dbrief"><span class="dbrief-k">✅ Critérios de aceite / DoD</span><p class="dbrief-v">'+esc(b.aceite)+'</p></div>';
     if(b.fora)     h+='<div class="dbrief"><span class="dbrief-k">🚫 Fora do escopo</span><p class="dbrief-v">'+esc(b.fora)+'</p></div>';
+    if(b.prereq)   h+='<div class="dbrief"><span class="dbrief-k">📎 Pré-leitura / referências</span><p class="dbrief-v">'+esc(b.prereq)+'</p></div>';
     return h;
   }
   function taskDrawerHtml(p,t){
