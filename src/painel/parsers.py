@@ -209,11 +209,15 @@ def _md_section(text, name_rx):
         if not m:
             continue
         level = len(m.group(1))
-        body = []
+        body, infence = [], False
         for j in range(i + 1, len(lines)):
+            if lines[j].lstrip().startswith("```"):
+                infence = not infence
+                body.append(lines[j])
+                continue
             hm = re.match(r"^(#{1,6})\s", lines[j])
-            if hm and len(hm.group(1)) <= level:
-                break
+            if hm and not infence and len(hm.group(1)) <= level:
+                break          # header de verdade (fora de code-block)
             body.append(lines[j])
         return "\n".join(body).strip()
     return ""
@@ -259,6 +263,107 @@ def _labeled(body, label_rx, limit=320):
     return ""
 
 
+def _list_items(body, limit=8):
+    """Itens de lista (- , * , 1. , - [ ] ) de um corpo, limpos. Lista de strings."""
+    out = []
+    for ln in (body or "").splitlines():
+        s = ln.strip()
+        m = re.match(r"^(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?(.+)", s)
+        if m:
+            v = clean_desc(m.group(1))
+            if v:
+                out.append(v)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def _block_after_label(text, label_rx, max_chars=420):
+    """Conteúdo após '**Label:**' até a próxima linha em branco dupla, header,
+    ou outro '**...:**'. Inclui itens de lista e linhas de code-block (úteis como
+    critério: comandos + '# esperado'). Devolve string limpa multi-linha."""
+    lines = text.splitlines()
+    rx = re.compile(r"\*\*\s*(?:" + label_rx + r")\s*:?\s*\*\*", re.I)
+    for i, ln in enumerate(lines):
+        if not rx.search(ln):
+            continue
+        out, infence = [], False
+        for j in range(i + 1, len(lines)):
+            s = lines[j].strip()
+            if s.startswith("```"):
+                infence = not infence
+                continue
+            if not infence:
+                if re.match(r"^#{1,6}\s", lines[j]):
+                    break
+                if re.match(r"^\*\*[^*]+\*\*\s*:?\s*$", s) and out:
+                    break
+                if s in ("---", "***"):
+                    break
+            if s.startswith("#"):           # comentário de code-block = critério legível
+                s = s.lstrip("# ").strip()
+            lm = re.match(r"^(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?(.+)", s)
+            if lm:
+                s = lm.group(1)
+            cv = clean_desc(s)
+            if cv:
+                out.append(cv)
+            if sum(len(x) for x in out) > max_chars:
+                break
+        if out:
+            return "; ".join(out)[:max_chars]
+    return ""
+
+
+def task_brief(text, task_id, max_chars=420):
+    """Contrato de UMA task dentro do Sprint*.md: o que entregar (Builder entrega
+    / Entregável) e o critério de aceite (Evaluator valida / DoD / Critério de
+    aceite). Localiza a seção da task pelo id no header/negrito. {} se não achar."""
+    if not text or not task_id:
+        return {}
+    tid = re.escape(task_id)
+    lines = text.splitlines()
+    start = None
+    head_rx = re.compile(r"^(#{2,6})\s.*\b" + tid + r"\b", re.I)
+    bold_rx = re.compile(r"^\*\*\s*" + tid + r"\b", re.I)
+    level = None
+    for i, ln in enumerate(lines):
+        m = head_rx.match(ln)
+        if m:
+            start, level = i, len(m.group(1))
+            break
+        if bold_rx.match(ln.strip()):
+            start, level = i, None
+            break
+    if start is None:
+        return {}
+    end, infence = len(lines), False
+    for j in range(start + 1, len(lines)):
+        if lines[j].lstrip().startswith("```"):
+            infence = not infence
+            continue
+        if infence:
+            continue          # '#' dentro de code-block não é header
+        hm = re.match(r"^(#{1,6})\s", lines[j])
+        if hm and (level is None or len(hm.group(1)) <= level):
+            end = j
+            break
+        if level is None and re.match(r"^\*\*\s*(?:TASK|S[\w-]*\d)[-_ ]", lines[j].strip(), re.I):
+            end = j
+            break
+    section = "\n".join(lines[start:end])
+    entrega = _block_after_label(section, r"builder\s+entrega|entreg[aá]vel|entrega|o\s+que\s+fazer", max_chars)
+    aceite = _block_after_label(
+        section, r"evaluator\s+valida|crit[eé]rios?\s+de\s+aceit[ae]|defini[cç][aã]o\s+de\s+pronto|"
+                 r"definition\s+of\s+done|\bDoD\b|aceite|valida[cç][aã]o", max_chars)
+    out = {}
+    if entrega:
+        out["entrega"] = entrega
+    if aceite:
+        out["aceite"] = aceite
+    return out
+
+
 def sprint_brief(text, max_chars=360):
     """Resumo narrativo de um Sprint*.md. Devolve dict com:
       title   — subtítulo do H1 (parte após '—')
@@ -295,7 +400,20 @@ def sprint_brief(text, max_chars=360):
         _md_section(text, r"(?:o\s+que\s+)?n[aã]o\s+(?:entra|est[aá]).*") or text,
         r"(?:o\s+que\s+)?n[aã]o\s+(?:entra|est[aá])[^*]*", limit=240)
 
-    return {"title": title, "objetivo": objetivo, "porque": porque, "fora": fora}
+    # critérios de aceite / DoD no nível da sprint (seção dedicada ou label)
+    dod_sec = _md_section(text, r"crit[eé]rios?\s+de\s+aceit[ae]|defini[cç][aã]o\s+de\s+pronto|"
+                                r"definition\s+of\s+done|\bDoD\b|princ[ií]pios?\s+obrigat[oó]rios?")
+    aceite = ""
+    if dod_sec:
+        aceite = "; ".join(_list_items(dod_sec, limit=8)) or _first_paragraph(dod_sec)
+    if not aceite:
+        aceite = _block_after_label(
+            text, r"\bDoD\b|defini[cç][aã]o\s+de\s+pronto|crit[eé]rios?\s+de\s+aceit[ae]|"
+                  r"princ[ií]pios?\s+obrigat[oó]rios?[^*]*", max_chars=420)
+    aceite = aceite[:420]
+
+    return {"title": title, "objetivo": objetivo, "porque": porque,
+            "fora": fora, "aceite": aceite}
 
 
 # ----------------------------------------------------------------------------
