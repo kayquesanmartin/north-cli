@@ -7,6 +7,17 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Passive insights while the AI codes (`/north-insight`, teach-on-write).** Distinct from
+  `/north-learn` (there *you* code): here the AI codes and teaches what it used — short
+  micro-lessons on the **hardest/most-important** concept of each change (nullable operators,
+  LINQ, pattern matching…), **never repeating** within a cooldown unless the concept comes
+  back. The AI detects and ranks the concepts; the north engine is the **memory + scheduler**:
+  `north insight check/record/log <lang>`, a per-language ledger at
+  `~/.north/learnings/taught/<lang>.md` (markdown table), and a concept catalog at
+  `references/concepts/<lang>.md` (C# shipped). Configurable cooldown and minimum level.
+  Read-only over your code — the engine only writes its own home. Parity across all runtimes.
+
+### Added
 - **SDLC documents detected and linked on the dashboard (read-only).** north now finds the
   PRD / SDD / TDD / SPEC / SECURITY / ADR / UML files inside `plan-build/` and shows them as
   a "📚 Documentos do projeto" section (color-coded by type, click to open the file) plus a
