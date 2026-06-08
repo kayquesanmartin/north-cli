@@ -6,6 +6,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **Document factory (`/north-doc` + `north doc`).** Generate the SDLC artifacts — PRD,
+  SPEC, SDD, TDD, ADR, SECURITY — anchored in the real project context and the reference
+  library, following bundled templates (`references/doc-templates/`). The AI drafts under
+  your direction and writes where you confirm (idempotent, cross-linked); the engine stays
+  read-only: `north doc list` shows, per project, which doc types exist vs are missing, and
+  `north doc template <type>` prints the skeleton. Parity across runtimes.
+
 ## [0.8.0] - 2026-06-08
 
 ### Added

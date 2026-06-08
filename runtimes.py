@@ -71,6 +71,8 @@ CMDSPEC = [
      "desc": "north — codar com TDD-first: escreve os testes a partir dos critérios de aceite ANTES do código (red→green→refactor)."},
     {"name": "task", "sub": "task", "args": True, "aliases": [],
      "desc": "north — mostra o contrato de uma task (o que entregar + critérios de aceite)."},
+    {"name": "doc", "sub": "", "args": True, "aliases": [], "behavior": True,
+     "desc": "north — gera docs de SDLC (PRD/SPEC/SDD/TDD/ADR/SECURITY) ancorado no projeto + biblioteca; a IA redige, o motor é read-only."},
 ]
 
 
