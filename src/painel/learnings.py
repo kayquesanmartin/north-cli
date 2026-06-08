@@ -16,6 +16,8 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+from . import style as S
+
 KINDS = {
     "decisao": "📌 decisão", "decisão": "📌 decisão",
     "bug": "🐛 bug/fix", "fix": "🐛 bug/fix",
@@ -125,7 +127,8 @@ def cmd_learnings(home: Path, args):
     if not items:
         print("sem aprendizados em {} ainda. (capture com: learnings add ...)".format(args[1]))
         return 0
-    print("📚 Aprendizados — {} ({}):".format(args[1], len(items)))
+    print(S.header("aprendizados", "{} · {} registro(s)".format(args[1], len(items))))
+    print("")
     for e in items[:30]:
         print("  • " + _fmt(e))
     return 0

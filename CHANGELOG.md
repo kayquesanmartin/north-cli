@@ -6,6 +6,15 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+- **Premium UX pass (dashboard + CLI) — "real platform" feel.** The dashboard was re-tuned to
+  a calm, dev-platform aesthetic (Linear/Height): a redesigned token system (cooler neutral
+  grays in both themes — light default now near-white with subtle borders; dark shifted from
+  navy to neutral charcoal), tighter radii (10px), softer layered shadows, restrained accent
+  (the focus banner is now a subtle panel with an accent bar instead of a loud gradient),
+  calmer KPIs, and consistent hover/transitions. CLI output is now consistent across commands
+  via a shared style module — every command leads with a uniform `🧭 north · <cmd>` header.
+
 ## [0.9.0] - 2026-06-08
 
 ### Added

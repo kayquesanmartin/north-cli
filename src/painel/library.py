@@ -15,6 +15,8 @@ import re
 import shutil
 from pathlib import Path
 
+from . import style as S
+
 TEXT_EXT = {".md", ".markdown", ".txt", ".rst", ".adoc"}
 OTHER_EXT = {".pdf", ".html", ".htm"}          # indexados como ponteiro (abrir manual)
 _STOP = set("a o e de da do das dos para por com sem the of and to in on for is are "
@@ -203,8 +205,9 @@ def cmd_library(home: Path, args):
         print("local: {}".format(lib))
         return 0
     nb = sum(1 for e in idx["entries"] if e.get("scope") == "bundled")
-    print("📚 Biblioteca de referências ({} itens · {} bundlado(s) + {} seu(s))".format(
-        idx["count"], nb, idx["count"] - nb))
+    print(S.header("biblioteca", "{} itens · {} bundlado(s) + {} seu(s)".format(
+        idx["count"], nb, idx["count"] - nb)))
+    print("")
     for e in idx["entries"]:
         tag = " [PDF]" if e.get("pointer") else (" [bundlado]" if e.get("scope") == "bundled" else "")
         print("  • {}{}".format(e["title"], tag))

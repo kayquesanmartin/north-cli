@@ -154,26 +154,29 @@ _SHELL = r"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Central de Produtividade</title>
 <style>
+  /* ===== design tokens (Linear/Height: neutros frios, acento pontual) ===== */
   :root{
-    --bg:#0b1120; --bg2:#0f172a; --panel:#111c30; --panel2:#16233c;
-    --card:#1e293b; --line:#243349; --line2:#1e293b;
-    --text:#e8eef7; --muted:#93a4bd; --dim:#5b6b85;
+    /* dark — charcoal neutro (não navy) */
+    --bg:#0e1013; --bg2:#131619; --panel:#16191e; --panel2:#1b1f25;
+    --card:#181c22; --line:#262b33; --line2:#1f242b;
+    --text:#e7e9ec; --muted:#9aa1ad; --dim:#6b727d;
     --accent:#f97316; --accent2:#fb923c;
-    --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --info:#38bdf8;
-    --radius:14px; --shadow:0 10px 30px -12px rgba(0,0,0,.55);
-    --glow:rgba(249,115,22,.10);
+    --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --info:#60a5fa;
+    --radius:10px; --radius-sm:8px;
+    --shadow:0 1px 2px rgba(0,0,0,.30), 0 8px 24px -12px rgba(0,0,0,.55);
+    --glow:rgba(249,115,22,.07);
     --mono:ui-monospace,"Cascadia Code","JetBrains Mono","SF Mono",Consolas,monospace;
     --sans:"Inter","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
   }
-  /* light theme — paleta empresarial (cinzas frios, contraste alto, sombras suaves) */
+  /* light — quase branco, bordas sutis, texto quase preto (feel de ferramenta dev) */
   html[data-theme="light"]{
-    --bg:#f3f5f9; --bg2:#eaeef4; --panel:#ffffff; --panel2:#f7f9fc;
-    --card:#ffffff; --line:#e3e8f0; --line2:#eef2f7;
-    --text:#0f1e34; --muted:#56657f; --dim:#9aa7bd;
-    --accent:#ea6a16; --accent2:#c2540a;
-    --ok:#15a34a; --warn:#c2710c; --bad:#dc2626; --info:#0284c7;
-    --shadow:0 8px 26px -16px rgba(15,23,42,.20);
-    --glow:rgba(37,99,235,.045);
+    --bg:#fbfbfc; --bg2:#f4f5f7; --panel:#ffffff; --panel2:#fafbfc;
+    --card:#ffffff; --line:#e7e9ee; --line2:#f0f1f4;
+    --text:#15181d; --muted:#5c636e; --dim:#9aa0ab;
+    --accent:#e8590c; --accent2:#c2410c;
+    --ok:#15803d; --warn:#b45309; --bad:#c0362c; --info:#0b6bcb;
+    --shadow:0 1px 2px rgba(16,24,40,.04), 0 4px 12px -4px rgba(16,24,40,.08);
+    --glow:transparent;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--sans);background:
@@ -189,30 +192,29 @@ _SHELL = r"""<!DOCTYPE html>
   .mono{font-family:var(--mono)}
 
   /* ---- layout ---- */
-  .app{display:grid;grid-template-columns:288px 1fr;min-height:100vh}
-  .side{background:linear-gradient(180deg,var(--bg2),var(--bg));
-    border-right:1px solid var(--line);padding:20px 16px;position:sticky;top:0;
-    height:100vh;overflow-y:auto}
-  .main{padding:24px 30px 60px;max-width:1640px}
+  .app{display:grid;grid-template-columns:272px 1fr;min-height:100vh}
+  .side{background:var(--bg2);border-right:1px solid var(--line);padding:18px 14px;
+    position:sticky;top:0;height:100vh;overflow-y:auto}
+  .main{padding:26px 34px 64px;max-width:1600px}
 
   /* ---- brand ---- */
-  .brand{display:flex;align-items:center;gap:11px;margin-bottom:22px}
-  .brand .logo{width:38px;height:38px;border-radius:11px;flex:0 0 auto;
-    background:linear-gradient(135deg,var(--accent),#c2410c);
-    display:grid;place-items:center;font-weight:800;color:#fff;font-size:18px;
-    box-shadow:0 6px 16px -6px rgba(249,115,22,.7)}
-  .brand .bt{font-weight:700;font-size:15px;letter-spacing:.2px;line-height:1.15}
-  .brand .bs{font-size:11px;color:var(--muted)}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:2px 4px}
+  .brand .logo{width:30px;height:30px;border-radius:8px;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:grid;place-items:center;font-weight:800;color:#fff;font-size:15px}
+  .brand .bt{font-weight:650;font-size:14px;letter-spacing:-.1px;line-height:1.15}
+  .brand .bs{font-size:10.5px;color:var(--dim)}
 
   /* ---- nav projetos ---- */
   .nav-h{font-size:10.5px;text-transform:uppercase;letter-spacing:1.4px;
     color:var(--dim);margin:18px 6px 10px;font-weight:700}
   .nav-item{display:block;width:100%;text-align:left;border:1px solid transparent;
-    background:transparent;color:var(--text);padding:11px 12px;border-radius:11px;
-    cursor:pointer;margin-bottom:6px;transition:.15s;font-family:inherit;font-size:13px}
-  .nav-item:hover{background:var(--panel);border-color:var(--line)}
+    background:transparent;color:var(--text);padding:9px 11px;border-radius:var(--radius-sm);
+    cursor:pointer;margin-bottom:3px;transition:background .12s,border-color .12s;
+    font-family:inherit;font-size:13px}
+  .nav-item:hover{background:var(--panel)}
   .nav-item.active{background:var(--panel);border-color:var(--line);
-    box-shadow:inset 3px 0 0 var(--ni,—)}
+    box-shadow:inset 2px 0 0 var(--ni,var(--accent))}
   .nav-top{display:flex;align-items:center;gap:9px;margin-bottom:7px}
   .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
   .nav-name{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -228,24 +230,24 @@ _SHELL = r"""<!DOCTYPE html>
   .side-foot{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);
     font-size:11px;color:var(--dim);line-height:1.7}
   .theme-btn{margin-top:12px;width:100%;border:1px solid var(--line);
-    background:var(--panel);color:var(--text);padding:9px;border-radius:10px;
-    cursor:pointer;font-family:inherit;font-size:12px}
-  .theme-btn:hover{border-color:var(--accent)}
+    background:var(--panel);color:var(--muted);padding:8px;border-radius:var(--radius-sm);
+    cursor:pointer;font-family:inherit;font-size:12px;transition:.12s}
+  .theme-btn:hover{border-color:var(--line2);color:var(--text)}
 
   /* ---- header main ---- */
   .top{display:flex;align-items:flex-end;justify-content:space-between;
-    gap:16px;flex-wrap:wrap;margin-bottom:22px}
-  .top h1{font-size:22px;font-weight:800;letter-spacing:.2px}
-  .top h1 small{font-weight:500;color:var(--muted);font-size:14px}
+    gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .top h1{font-size:20px;font-weight:700;letter-spacing:-.3px}
+  .top h1 small{font-weight:500;color:var(--muted);font-size:13.5px;letter-spacing:0}
   .top .gen{font-size:11.5px;color:var(--dim)}
 
-  /* ---- foco (direcao) ---- */
-  .focus{background:linear-gradient(135deg,rgba(249,115,22,.16),var(--panel));
-    border:1px solid var(--accent);border-radius:var(--radius);padding:18px 20px;
-    margin-bottom:22px;box-shadow:var(--shadow);position:relative;overflow:hidden}
-  .focus::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--accent)}
-  .focus-h{display:flex;align-items:center;gap:9px;font-size:11px;text-transform:uppercase;
-    letter-spacing:1.4px;color:var(--accent2);font-weight:800;margin-bottom:9px}
+  /* ---- foco (direcao) — discreto: painel neutro + barra de acento ---- */
+  .focus{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:17px 20px 17px 22px;margin-bottom:18px;box-shadow:var(--shadow);
+    position:relative;overflow:hidden}
+  .focus::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--accent)}
+  .focus-h{display:flex;align-items:center;gap:9px;font-size:10.5px;text-transform:uppercase;
+    letter-spacing:1.2px;color:var(--accent2);font-weight:800;margin-bottom:9px}
   .focus-task{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
   .focus-id{font-family:var(--mono);font-size:17px;font-weight:800;color:var(--text)}
   .focus-proj{font-size:11px;padding:2px 9px;border-radius:6px;font-weight:700;color:#fff}
@@ -274,18 +276,19 @@ _SHELL = r"""<!DOCTYPE html>
   .ib-date{font-size:11px;color:var(--dim);flex:0 0 auto}
 
   /* ---- kpis ---- */
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-    gap:14px;margin-bottom:26px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));
+    gap:12px;margin-bottom:24px}
   .kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
-    padding:16px 18px;box-shadow:var(--shadow)}
-  .kpi .v{font-size:30px;font-weight:800;line-height:1}
-  .kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;
-    letter-spacing:.6px;margin-top:7px}
+    padding:15px 16px;box-shadow:var(--shadow);transition:border-color .12s}
+  .kpi:hover{border-color:var(--line2)}
+  .kpi .v{font-size:25px;font-weight:750;line-height:1;letter-spacing:-.5px}
+  .kpi .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.5px;margin-top:8px;font-weight:600}
   .kpi.ok .v{color:var(--ok)} .kpi.warn .v{color:var(--warn)}
   .kpi.bad .v{color:var(--bad)} .kpi.acc .v{color:var(--accent)}
   /* ---- resumo executivo (C-level) ---- */
-  .exec{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);
-    border-radius:var(--radius);padding:16px 18px;margin-bottom:18px}
+  .exec{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;box-shadow:var(--shadow)}
   .exec.ok{border-left-color:var(--ok)} .exec.warn{border-left-color:var(--warn)} .exec.bad{border-left-color:var(--bad)}
   .exec-h{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;
     display:flex;align-items:center;gap:10px;margin-bottom:13px}
@@ -302,18 +305,19 @@ _SHELL = r"""<!DOCTYPE html>
   .exec-attn:hover{color:var(--accent)}
 
   /* ---- secao ---- */
-  .sec-h{font-size:12px;text-transform:uppercase;letter-spacing:1.4px;
-    color:var(--muted);margin:26px 0 14px;font-weight:700;
+  .sec-h{font-size:11px;text-transform:uppercase;letter-spacing:1px;
+    color:var(--muted);margin:24px 0 13px;font-weight:700;
     display:flex;align-items:center;gap:10px}
   .sec-h .ln{flex:1;height:1px;background:var(--line)}
 
   /* ---- portfolio cards ---- */
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
   .pcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
-    padding:20px;box-shadow:var(--shadow);cursor:pointer;transition:.18s;position:relative;
-    overflow:hidden}
-  .pcard:hover{transform:translateY(-3px);border-color:var(--pc)}
-  .pcard::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--pc)}
+    padding:18px;box-shadow:var(--shadow);cursor:pointer;
+    transition:border-color .12s, box-shadow .12s, transform .12s;position:relative;overflow:hidden}
+  .pcard:hover{transform:translateY(-1px);border-color:var(--line2);
+    box-shadow:0 2px 4px rgba(16,24,40,.06),0 12px 28px -10px rgba(16,24,40,.16)}
+  .pcard::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--pc)}
   .pcard-h{display:flex;align-items:center;gap:13px;margin-bottom:16px}
   .donut{width:64px;height:64px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
     background:conic-gradient(var(--pc) calc(var(--p)*1%), var(--line) 0)}
