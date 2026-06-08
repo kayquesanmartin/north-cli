@@ -7,6 +7,69 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Real sprint/task summary in the executive view (not just done/pending).** The detail
+  modal and the project executive summary now read the narrative from `Sprint*.md` — the
+  **objective ("what will be done")**, the **rationale ("why now")**, and **out-of-scope** —
+  instead of only status counters. The sprint modal leads with this brief; a task shows its
+  parent sprint's objective as context; the project view surfaces the current sprint's goal.
+  Parsed from `## Meta/Objetivo do Sprint` + `**Entregável**` and degrades gracefully when a
+  plan has no prose. Read-only.
+
+### Changed
+- **Dashboard typography tuned for a modern dev-platform feel.** Inter-first font stack,
+  antialiasing, tabular numerals on metrics/percentages, and tighter heading tracking.
+
+### Added
+- **Focus follows what *you* are actually touching (not just what it read).** In a shared
+  repo, the day's focus used to rank purely by plan-reading, so it could point you at another
+  dev's work. north now derives a personal signal from git — your uncommitted working tree
+  (strongest), your commits today, your feature branch, and files you last authored — and
+  soft-ranks your active project first (nothing is ever hidden; others still show under
+  "outros / time"). With no personal signal (fresh clone, start of day) it falls back to the
+  old read-only ranking. `/north-morning` now prints a "🎯 SEU FOCO PROVÁVEL (detectado pelo
+  git)" block and the skill **confirms it with you** before pinning (`north focus --only`),
+  asking which project when git shows no signal. `/north-wrap-up` distinguishes "N commits
+  seus" from the team's total. Read-only as always.
+- **Optional `north` terminal command (PATH setup at install).** Installing via
+  `python install.py` set up the engine and the in-AI skills but never created a `north`
+  command on your PATH, so `north …` failed in a plain terminal (only the npm global shim
+  provided it). The installer now offers — opt-in — to create a cross-platform launcher in
+  `~/.north/bin` (`north` + `north.cmd`) and add that dir to your user PATH (Windows via the
+  registry, no `setx` truncation; Unix via your shell rc). Prompted interactively, or drive
+  it non-interactively with `--add-to-path` / `--no-path`. Uninstall removes the launcher and
+  the PATH entry. Open a new terminal after enabling.
+- **Clickable detail modal on the dashboard (C-level + technical).** Clicking any kanban
+  task or sprint card opens a centered modal with two reads of the same item: an
+  **executive view** (business verdict — delivered / in dev / code-ready / blocked-risk —
+  plus the deliverable, sprint/wave, and owner) and a **technical view** (id, sprint key,
+  feature, kanban column, raw status from the `.md`, dependencies, commit). The sprint
+  modal lists its tasks; clicking one drills straight into the task. Close with the ✕,
+  the backdrop, or `Esc`. Read-only as always — it only surfaces what the plans already say.
+- **Per-folder task boards (board switcher).** On projects whose plans are split across
+  subfolders, the task board no longer mixes everything together. A segmented switcher
+  (`📁 Todas · folder-a · folder-b…`) sits above the kanban — pick a folder to see only
+  its tasks; each card also carries a color-coded folder tag in the "Todas" view, so you
+  always know which `plan-build` subfolder a task came from.
+- **Executive (C-level) summary on the project view too.** The per-project page now opens
+  with the same executive read the portfolio has — verdict, progress, current sprint,
+  blockers/debt, and today's activity — not just raw KPIs.
+
+### Changed
+- **Light theme is now the default, with an enterprise-grade palette.** Cooler neutral grays,
+  higher-contrast text, softer shadows, and a theme-aware background glow. Status chips
+  (risk/attention/priority) were re-tuned for readable contrast on light backgrounds. The
+  ◐ toggle still switches to dark.
+
+### Fixed
+- **Git worktrees no longer show up as phantom projects.** Discovery walked into
+  `.claude/worktrees/`, and since every worktree is a checkout of the same repo, each one
+  surfaced as a separate "project" rendering identical sprints/tasks. Discovery now prunes
+  `.claude` (worktrees), VCS dirs (`.git`/`.hg`/`.svn`), dependency/cache dirs
+  (`node_modules`, virtualenvs, caches) and `archive/` for both `plan-build` and GSD
+  `.planning` scans — so only real projects appear, and the scan is much faster on large
+  trees. Stale phantom entries self-heal out of `projects.json` on the next scan.
+
+### Added
 - **Mentor tracks expanded: `/north-codebase` and `/north-standup`.** Two new learning-first
   behavior skills. `/north-codebase` guides you to understand a project yourself — map the
   architecture, find where things live, read the DB schema and folder organization — you
