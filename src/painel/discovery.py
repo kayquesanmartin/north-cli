@@ -17,6 +17,7 @@ from pathlib import Path
 from . import parsers as P
 from . import health as H
 from . import gsd as G
+from . import fsutil
 
 
 def read(path: Path) -> str:
@@ -30,27 +31,20 @@ def read(path: Path) -> str:
 # Descoberta de diretorios de projeto
 # ----------------------------------------------------------------------------
 def discover_plan_dirs(scan_roots, max_depth=6):
-    """Acha todas as pastas 'plan-build' sob os scan_roots (profundidade limitada)."""
-    found = []
-    seen = set()
-    for root in scan_roots:
-        root = Path(root)
-        if not root.exists():
+    """Acha todas as pastas 'plan-build' sob os scan_roots (profundidade limitada).
+
+    Poda VCS/deps/caches e os worktrees do Claude Code (`.claude/worktrees`),
+    que sao espelhos do mesmo repo e gerariam projetos-fantasma duplicados
+    (ver fsutil)."""
+    found, seen = [], set()
+    for pb in fsutil.find_dirs_named(scan_roots, "plan-build", max_depth):
+        if not pb.is_dir():
             continue
-        for pb in root.rglob("plan-build"):
-            if not pb.is_dir():
-                continue
-            try:
-                rel_depth = len(pb.relative_to(root).parts)
-            except ValueError:
-                rel_depth = 0
-            if rel_depth > max_depth:
-                continue
-            key = str(pb.resolve()).lower()
-            if key in seen:
-                continue
-            seen.add(key)
-            found.append(pb)
+        key = str(pb.resolve()).lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        found.append(pb)
     return found
 
 
@@ -184,6 +178,54 @@ def _git_sync(cwd: Path, branch: str):
             if bb.isdigit():
                 s["base_behind"] = int(bb)
     return s
+
+
+# Branches "compartilhadas" — estar nelas NAO indica trabalho pessoal ativo.
+DEFAULT_BRANCHES = {"main", "master", "develop", "dev", "trunk", "head", ""}
+
+
+def _my_today_count(project_dir: Path, identity):
+    """Quantos commits de HOJE sao seus (filtra o log pela sua identidade git).
+    Usa o nome (mais estavel que o e-mail entre maquinas); 0 se sem identidade."""
+    who = (identity or {}).get("name") or (identity or {}).get("email") or ""
+    if not who:
+        return 0
+    out = _git(["log", "--since=midnight", "--author=" + who, "--pretty=format:%h"],
+               project_dir)
+    return len([l for l in out.splitlines() if l.strip()]) if out else 0
+
+
+def _is_me(author, identity):
+    """True se a autoria (name/email) bate com a sua identidade."""
+    if not author or not identity:
+        return False
+    ae, an = (author.get("email") or "").lower(), (author.get("name") or "").lower()
+    ie, iname = (identity.get("email") or "").lower(), (identity.get("name") or "").lower()
+    return bool((ie and ae and ie == ae) or (iname and an and iname == an))
+
+
+def personal_signal(proj, identity):
+    """Sinal de PERTENCIMENTO: o quanto ESTE projeto e o que VOCE esta tocando
+    agora, derivado do git (zero input extra). working tree sujo e o sinal mais
+    forte (e a sua copia, por definicao). Devolve {score, signals[], active}."""
+    git = proj.get("git", {}) or {}
+    dirty = git.get("dirty", 0) or 0
+    my_today = git.get("my_today", 0) or 0
+    branch = (proj.get("branch") or "").strip()
+    score, signals = 0, []
+    if dirty:
+        score += 50
+        signals.append("{} arquivo(s) nao commitado(s)".format(dirty))
+    if my_today:
+        score += 40
+        signals.append("{} commit(s) seu(s) hoje".format(my_today))
+    if branch and branch.lower() not in DEFAULT_BRANCHES:
+        score += 20
+        signals.append("branch {}".format(branch))
+    if _is_me(proj.get("author"), identity):
+        score += 15
+        signals.append("ultima edicao sua")
+    return {"score": score, "signals": signals, "active": score > 0}
 
 
 def git_info(project_dir: Path):
@@ -320,6 +362,7 @@ def build_project(plan_build: Path, scan_roots, extra_pbs=None):
     # ---- por feature: sprints (overview) + tasks + bloqueios + debito ----
     sprints = {}             # (feature, key) -> sprint dict
     sprint_author = {}       # (feature, key) -> autoria via git
+    sprint_brief_map = {}    # (feature, key) -> resumo narrativo (Sprint*.md)
     tasks = []
     blockers = []
     debt = []
@@ -357,6 +400,9 @@ def build_project(plan_build: Path, scan_roots, extra_pbs=None):
             key = P.sprint_key(sp.name) or sp.stem
             sprint_author[(feature, key)] = file_author(pdir, sp)
             text = read(sp)
+            br = P.sprint_brief(text)
+            if any(br.values()):
+                sprint_brief_map[(feature, key)] = br
             t1 = P.tasks_from_tables(text, sprint_default=key)
             t2 = P.tasks_from_codeblocks(text, sprint_default=key) if not t1 else []
             feat_tasks.extend(t1 + t2)
@@ -404,6 +450,7 @@ def build_project(plan_build: Path, scan_roots, extra_pbs=None):
     # ---- autoria (git, sem tocar nos .md) ----
     for (feature, key), s in sprints.items():
         s["author"] = sprint_author.get((feature, key))
+        s["brief"] = sprint_brief_map.get((feature, key))
     proj_author = file_author(pdir, root_progress) if root_progress else None
     proj_contributors = contributors(pdir, plan_build)
 
@@ -611,6 +658,7 @@ def discover_projects(config):
 
     items = sorted(by_dir.items(), key=lambda kv: kv[0].name.lower())
 
+    identity = config.settings.get("identity") or {}
     new_ids, projects = [], []
     for hint, (pdir, srcs) in enumerate(items):
         if pdir in absorbed:
@@ -650,6 +698,8 @@ def discover_projects(config):
         proj["sources"] = [s["name"] for s in srcs]
         proj["secondary"] = [s["label"] for s in srcs if s["name"] != primary["name"]]
         proj["alerts"] = H.compute_alerts(proj, config.settings)
+        proj["git"]["my_today"] = _my_today_count(pdir, identity)
+        proj["mine"] = personal_signal(proj, identity)
         projects.append(proj)
 
     projects.sort(key=lambda p: (p["order"], p["name"].lower()))
