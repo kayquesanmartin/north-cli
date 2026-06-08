@@ -65,8 +65,30 @@ def build_bom_dia(projects, owner="Kayque"):
         len(projects), pct, done, total))
     L.append("")
 
+    # ---- foco real do dev: detecta pelo git o que VOCE esta tocando ----
+    # Ordena os ativos (working tree sujo / commits seus / sua branch) primeiro
+    # (soft: nada e escondido). O ritual CONFIRMA com voce antes de fixar.
+    active = sorted([p for p in projects if (p.get("mine", {}) or {}).get("active")],
+                    key=lambda p: -(p.get("mine", {}) or {}).get("score", 0))
+    if active:
+        top = active[0]
+        sig = "; ".join((top.get("mine", {}) or {}).get("signals", []))
+        L.append("  🎯 SEU FOCO PROVAVEL (detectado pelo git): {}".format(top["name"]))
+        L.append("     sinais: {}".format(sig))
+        if len(active) > 1:
+            L.append("     (tambem com sinal seu: {})".format(
+                ", ".join(p["name"] for p in active[1:])))
+        L.append("     -> e isso mesmo? confirme; senao escolha outro. (north focus --only <id> fixa)")
+        L.append("")
+
+    ordered = sorted(projects, key=lambda p: -(p.get("mine", {}) or {}).get("score", 0))
+    others_divider_done = False
     all_focus = []
-    for p in projects:
+    for p in ordered:
+        if active and not (p.get("mine", {}) or {}).get("active") and not others_divider_done:
+            L.append("  " + "— outros projetos (time) " + "-" * 25)
+            L.append("")
+            others_divider_done = True
         cur = p["current_sprint"]
         cur_key = None
         km = re.search(r"(CC\d+|\d+[A-Z]?)", cur)
@@ -87,7 +109,8 @@ def build_bom_dia(projects, owner="Kayque"):
         if not (remaining or startable or open_blk or high_debt):
             continue
 
-        L.append("  ▸ {}  [{}%]".format(p["name"], p["rollup"]["pct"]))
+        mark = "🎯 " if (p.get("mine", {}) or {}).get("active") else ""
+        L.append("  ▸ {}{}  [{}%]".format(mark, p["name"], p["rollup"]["pct"]))
         L.append("  " + "-" * 50)
         if remaining:
             L.append("    Fechar sprint atual ({} aberta(s)):".format(len(remaining)))
@@ -161,9 +184,15 @@ def build_resumo_projeto(p, data_br):
     dirty = git["dirty"]
     r = p["rollup"]
 
+    mine_today = git.get("my_today")
     if commits:
-        resumo = "{} commit(s) hoje. {} — progresso {}% ({}/{} {}).".format(
-            len(commits), p["name"], r["pct"], r["done"], r["total"],
+        # diferencia seu trabalho do trabalho do time (repo compartilhado)
+        if mine_today is not None and mine_today != len(commits):
+            head = "{} commit(s) seu(s) hoje ({} no total, com o time).".format(mine_today, len(commits))
+        else:
+            head = "{} commit(s) hoje.".format(len(commits))
+        resumo = "{} {} — progresso {}% ({}/{} {}).".format(
+            head, p["name"], r["pct"], r["done"], r["total"],
             "TASKs" if r["level"] == "task" else "sprints")
         entregue = "\n".join("- {}  ({})".format(s, h) for h, s in commits)
         revisao = ("- [PREENCHER via /code-review] rodar a revisao no diff do dia e resumir: "
