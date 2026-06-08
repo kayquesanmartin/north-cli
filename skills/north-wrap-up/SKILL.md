@@ -36,6 +36,12 @@ não commitados, bloqueios, próximos passos).
 3. Leia os resumos recém-gerados (caminhos impressos pelo script) e mostre o
    conteúdo formatado ao usuário, agrupado por projeto.
 
+   **Foco real do dia:** o resumo distingue *"N commit(s) seu(s) hoje"* do total do
+   time (repo compartilhado). Destaque o(s) projeto(s) onde **você** de fato trabalhou
+   (commits seus / arquivos não commitados) — não trate como seu o que só teve avanço
+   de outros devs. Se o dia teve um foco claro e ele não estava fixado, **ofereça**
+   fixar (`north focus --only <id>`) para o próximo bom-dia já abrir nele.
+
 4. Se algum resumo tiver linhas `[PREENCHER via /code-review]`, **ofereça**
    rodar a revisão do diff (não execute sem confirmação — apenas pergunte).
 
