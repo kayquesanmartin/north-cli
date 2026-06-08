@@ -65,7 +65,8 @@ def build_data(projects, settings, inbox_items=None):
                  "owner": (t["owner"] or "").replace("squad-", ""),
                  "col": t["col"], "blocked": t["blocked"], "commit": t["commit"][:7],
                  "feature": t.get("feature", ""), "statusRaw": t["status_raw"],
-                 "deps": t.get("deps", "")}
+                 "deps": t.get("deps", ""),
+                 "entrega": t.get("entrega", ""), "aceite": t.get("aceite", "")}
                 for t in p["tasks"]
             ],
             "blockers": [
@@ -502,6 +503,8 @@ _SHELL = r"""<!DOCTYPE html>
   .dkv:last-child{border-bottom:0}
   .dkv .dk{color:var(--muted);flex:0 0 132px}
   .dkv .dv{color:var(--text);flex:1;font-weight:600;word-break:break-word}
+  .dgrp{font-size:11px;font-weight:800;color:var(--muted);margin:14px 0 8px;letter-spacing:.2px}
+  .dgrp:first-child{margin-top:0}
   .dtasklist{display:flex;flex-direction:column;gap:7px}
   .dtask{display:flex;align-items:center;gap:10px;background:var(--card);
     border:1px solid var(--line2);border-radius:9px;padding:10px 12px;font-size:12.5px;
@@ -980,6 +983,7 @@ _SHELL = r"""<!DOCTYPE html>
     var h="";
     if(b.objetivo) h+='<div class="dbrief"><span class="dbrief-k">🎯 O que será feito</span><p class="dbrief-v">'+esc(b.objetivo)+'</p></div>';
     if(b.porque)   h+='<div class="dbrief"><span class="dbrief-k">💡 Por que agora</span><p class="dbrief-v">'+esc(b.porque)+'</p></div>';
+    if(b.aceite)   h+='<div class="dbrief"><span class="dbrief-k">✅ Critérios de aceite / DoD</span><p class="dbrief-v">'+esc(b.aceite)+'</p></div>';
     if(b.fora)     h+='<div class="dbrief"><span class="dbrief-k">🚫 Fora do escopo</span><p class="dbrief-v">'+esc(b.fora)+'</p></div>';
     return h;
   }
@@ -990,6 +994,14 @@ _SHELL = r"""<!DOCTYPE html>
     const cl=[["O que entregar",esc(t.desc||t.statusRaw||"—")],
       ["Sprint / Onda",esc(spName)],
       ["Responsável",t.owner?("/"+esc(t.owner)):"—"]];
+    // contrato da task: o que entregar (atividades) + critérios de aceite
+    const contrato=(t.entrega||t.aceite)?
+      '<div class="dsec"><div class="dsec-h">📦 Atividades & critérios de aceite</div>'+
+        (t.entrega?'<div class="dbrief"><span class="dbrief-k">🔨 O que entregar (atividades)</span>'+
+          '<p class="dbrief-v">'+esc(t.entrega)+'</p></div>':"")+
+        (t.aceite?'<div class="dbrief"><span class="dbrief-k">✅ Critérios de aceite</span>'+
+          '<p class="dbrief-v">'+esc(t.aceite)+'</p></div>':"")+
+      '</div>':"";
     // contexto: objetivo da sprint a que a task pertence
     const ctx=(sp&&sp.brief&&sp.brief.objetivo)?
       '<div class="dsec"><div class="dsec-h">📄 Contexto da sprint</div>'+
@@ -1006,7 +1018,7 @@ _SHELL = r"""<!DOCTYPE html>
       '<div class="dsec"><div class="dsec-h">📊 Resumo executivo</div>'+
         '<div class="dverdict '+v.c+'">'+v.e+' <b>'+esc(v.t)+'</b></div>'+
         '<div style="margin-top:11px">'+kvRows(cl)+'</div></div>'+
-      ctx+
+      contrato+ctx+
       '<div class="dsec"><div class="dsec-h">🔧 Detalhe técnico</div>'+kvRows(tech)+'</div>');
   }
   function sprintDrawerHtml(p,s){
@@ -1026,13 +1038,19 @@ _SHELL = r"""<!DOCTYPE html>
       ["Sprint atual?",isCur?"Sim — foco do momento":"Não"]];
     if(ts.length) cl.push(["Tarefas",done+" concluída(s) de "+ts.length]);
     if(s.author) cl.push(["Última atualização",esc(s.author.name.split(" ")[0])+" · "+esc(s.author.when)]);
+    const taskRow=t=>'<div class="dtask" data-tid="'+esc(t.id)+'" data-tsp="'+esc(t.sprint)+'" data-tft="'+esc(t.feature||"")+'">'+
+      '<span class="dt-dot" style="background:'+colColor(t.col)+'"></span>'+
+      '<span class="dt-id">'+esc(t.id)+'</span>'+
+      '<span class="dt-desc">'+esc(t.desc||t.statusRaw||"")+'</span></div>';
     let tasksHtml;
     if(ts.length){
-      tasksHtml='<div class="dtasklist">'+ts.map(t=>
-        '<div class="dtask" data-tid="'+esc(t.id)+'" data-tsp="'+esc(t.sprint)+'" data-tft="'+esc(t.feature||"")+'">'+
-        '<span class="dt-dot" style="background:'+colColor(t.col)+'"></span>'+
-        '<span class="dt-id">'+esc(t.id)+'</span>'+
-        '<span class="dt-desc">'+esc(t.desc||t.statusRaw||"")+'</span></div>').join("")+'</div>';
+      // separa atividades executadas (concluídas) das pendentes
+      const exec=ts.filter(t=>t.col==="Concluido"), pend=ts.filter(t=>t.col!=="Concluido");
+      tasksHtml="";
+      if(exec.length) tasksHtml+='<div class="dgrp">✅ Atividades executadas ('+exec.length+')</div>'+
+        '<div class="dtasklist">'+exec.map(taskRow).join("")+'</div>';
+      if(pend.length) tasksHtml+='<div class="dgrp">⏳ Pendentes ('+pend.length+')</div>'+
+        '<div class="dtasklist">'+pend.map(taskRow).join("")+'</div>';
     } else {
       tasksHtml='<div class="empty" style="text-align:left">Sem tasks detalhadas — sprint rastreado só em nível de overview.</div>';
     }
