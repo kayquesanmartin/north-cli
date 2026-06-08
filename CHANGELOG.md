@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-08
+
 ### Added
 - **TDD-first development (`/north-dev` + `north task`).** When you start building, north now
   **always offers TDD** (default on; opt out with `tdd_default off`) and writes the **tests
@@ -282,7 +284,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   rituals, quick capture (`/btw`) + inbox, GSD `.planning/` interop, and a rich
   Claude Code status line.
 
-[Unreleased]: https://github.com/kayquesanmartin/north-cli/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/kayquesanmartin/north-cli/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.4.0...v0.5.0
