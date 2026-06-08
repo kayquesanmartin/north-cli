@@ -61,6 +61,8 @@ CMDSPEC = [
      "desc": "north — trilha mentor para entender um projeto: arquitetura, onde as coisas vivem, banco, organização."},
     {"name": "standup", "sub": "", "args": True, "aliases": [], "behavior": True,
      "desc": "north — trilha mentor de conduta em daily/reuniões: reportar, destravar, alinhar."},
+    {"name": "insight", "sub": "", "args": True, "aliases": [], "behavior": True,
+     "desc": "north — insights passivos: enquanto a IA coda, te ensina por cima o que usou (sem repetir, ranqueado por dificuldade)."},
 ]
 
 
@@ -88,6 +90,13 @@ def install_engine(tool_home: Path):
     if TEMPLATES_SRC.exists():
         for f in TEMPLATES_SRC.glob("*"):
             shutil.copy2(f, tdst / f.name)
+    # references/ (catálogo de conceitos p/ insights, princípios) — read-only, bundlado
+    refs_src = HERE / "references"
+    if refs_src.exists():
+        refs_dst = tool_home / "references"
+        if refs_dst.exists():
+            shutil.rmtree(refs_dst)
+        shutil.copytree(refs_src, refs_dst, ignore=shutil.ignore_patterns("__pycache__"))
     for d in ("config", "output", "resumos"):
         (tool_home / d).mkdir(exist_ok=True)
     return tool_home
