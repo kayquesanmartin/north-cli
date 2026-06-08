@@ -7,6 +7,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **TDD-first development (`/north-dev` + `north task`).** When you start building, north now
+  **always offers TDD** (default on; opt out with `tdd_default off`) and writes the **tests
+  first** from the task's real **acceptance criteria** — `north task <id>` dumps a task's
+  contract (what to deliver + ✅ criteria, from the `Evaluator valida:`/DoD the dashboard
+  already extracts), and the `/north-dev` skill drives red→green→refactor, anchoring on the
+  bundled TDD reference (3 laws) and the project's own test stack. Read-only over plans; the
+  AI writes tests/code with your consent. Parity across runtimes.
 - **Reference library north consults (`north library` / `/north-library`).** A curated
   engineering compendium ships **bundled** in `references/compendium/` (architecture, DDD,
   microservices, event-driven/CQRS, Clean Code & SOLID, design patterns, TDD, databases,
