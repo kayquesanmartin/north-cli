@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-08
+
 ### Added
 - **Learning ledger (`north learnings` + wrap-up capture → morning recall).** north now
   remembers what you learn as you build — **decisions, bugs+fixes, patterns, gotchas** — in a
@@ -298,7 +300,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   rituals, quick capture (`/btw`) + inbox, GSD `.planning/` interop, and a rich
   Claude Code status line.
 
-[Unreleased]: https://github.com/kayquesanmartin/north-cli/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/kayquesanmartin/north-cli/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.5.0...v0.6.0
