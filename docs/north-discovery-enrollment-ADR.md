@@ -24,18 +24,18 @@ um `scan_root` default e já varre** no primeiro uso.
 
 **Inverter o modelo para enrollment opt-in, híbrido, e tirar o scan do momento da instalação.**
 
-1. **Default novo = `enrolled` (registry em `~/.north`).** O usuário **pluga** um projeto com
-   `north track` (rodado na raiz; registra o **caminho absoluto** numa lista de enrolled no
-   `projects.json`). O north passa a rastrear **apenas** o que foi plugado. **Nada é escrito
-   dentro do projeto** → invariante read-only intacto.
+1. **Um verbo só: `north init`** (rodado na raiz = "plugar o north neste projeto"). Default novo
+   = `enrolled`. **Default do `north init` = registry em `~/.north`**: registra o **caminho
+   absoluto** numa lista de enrolled no `projects.json`. O north passa a rastrear **apenas** o que
+   foi plugado. **Nada é escrito dentro do projeto** → invariante read-only intacto.
 2. **A instalação não varre mais.** Remove a semeadura do `scan_root` default + a auto-descoberta
-   no install. Pós-install, o north começa **vazio** e ensina: *"rode `north track` na raiz do
+   no install. Pós-install, o north começa **vazio** e ensina: *"rode `north init` na raiz do
    projeto que quer acompanhar"*. (Migração abaixo cobre quem já usa.)
-3. **Marker `.north` no projeto = opção futura, para Teams.** Um `north init` que grava um
-   `.north` versionado na raiz (como `.git`/`.vscode`) — **viaja com o repo**, então o time
-   herda o tracking + o `board_profile`/taxonomia de tags do estudo de sprint. Fica para a
-   **fase Teams** ([[north-platform-vision]]) e **exige carve-out explícito do invariante**
-   (ver Consequências).
+3. **`north init --shared` (modo Teams) = marker `.north` no projeto.** A MESMA verb, com a flag,
+   grava um `.north` versionado na raiz (como `.git`/`.vscode`) — **viaja com o repo**, então o
+   time herda o tracking + o `board_profile`/taxonomia de tags do estudo de sprint. É a opção
+   **futura, da fase Teams** ([[north-platform-vision]]); **só ela exige o carve-out do
+   invariante** (ver Consequências). O `north init` puro (sem flag) nunca escreve no projeto.
 4. **`discovery_mode` configurável: `enrolled` (default) | `scan` (legado).** Quem gosta do
    auto-scan mantém com um setting; não quebramos ninguém.
 5. **Unidade de rastreio = unidade de `plan-build`.** O que você pluga define o board: plugar a
@@ -59,24 +59,24 @@ um `scan_root` default e já varre** no primeiro uso.
 
 **Custos / riscos**
 - É **um passo a mais** (plugar) — perde a mágica do zero-config. Mitiga com onboarding claro
-  pós-install e com `north track` aceitando o diretório atual por default.
-- **Invariante read-only — atenção ao marker (item 3):** o default (registry) é **limpo**
-  (escreve só em `~/.north`). O **marker `.north` no projeto** escreveria **dentro do projeto**,
+  pós-install e com `north init` assumindo o diretório atual por default.
+- **Invariante read-only — atenção ao `--shared` (item 3):** o `north init` puro (registry) é
+  **limpo** (escreve só em `~/.north`). O **`--shared` grava o marker `.north` no projeto**,
   o que fere a *letra* do invariante (*"nenhuma feature pode escrever dentro dos projetos
   descobertos"* — CLAUDE.md §1). Posição: é **config de ferramenta do north** (como `.git`),
-  escrita **só** sob `north init` explícito, **nunca** toca os planos do usuário — fere a letra,
-  não o espírito. **Quando o marker for implementado**, ratificar um carve-out no CLAUDE.md
-  ("o marker opt-in do north, criado só por `north init`, não viola o read-only"). Até lá, **só
-  registry**, e o invariante segue intacto.
+  escrita **só** sob `north init --shared` explícito, **nunca** toca os planos do usuário — fere a
+  letra, não o espírito. **Quando o `--shared` for implementado**, ratificar um carve-out no
+  CLAUDE.md ("o marker opt-in do north, criado só por `north init --shared`, não viola o
+  read-only"). Até lá, **só registry**, e o invariante segue intacto.
 
 ## Touch points (quando implementar)
 
 | Onde | O quê |
 |---|---|
-| `install.py` | parar de semear `scan_root` default + não auto-varrer; onboarding "rode `north track`" |
+| `install.py` | parar de semear `scan_root` default + não auto-varrer; onboarding "rode `north init`" |
 | `config.py` | `discovery_mode` (`enrolled`/`scan`); lista de **enrolled paths**; migração |
 | `discovery.py` | em `enrolled`, restringir a descoberta aos paths plugados (não varrer `scan_roots`) |
-| `cli.py` + skills | comandos `north track` / `north untrack` (e `north init` na fase do marker), com **paridade nos 3 runtimes** (CMDSPEC é a fonte) |
+| `cli.py` + skills | `north init` (registry; aceita o diretório atual) + `north untrack`/`north forget`; `--shared` (marker) na fase Teams; **paridade nos 3 runtimes** via CMDSPEC (nova entrada `init`) |
 | `rituals.py` | morning/wrap-up já respeitam os projetos rastreados — passam a refletir os enrolled |
 
 ## Alternativas consideradas
