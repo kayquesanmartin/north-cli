@@ -18,6 +18,7 @@ from datetime import datetime, date
 from pathlib import Path
 
 from . import parsers as P
+from . import style as S
 
 DIFF_RANK = {"jr": 1, "junior": 1, "júnior": 1, "pl": 2, "pleno": 2,
              "sr": 3, "senior": 3, "sênior": 3}
@@ -216,7 +217,7 @@ def cmd_insight(home: Path, args):
             print("nada a ensinar agora ({} conceito(s) já cobertos no cooldown).".format(
                 len(res["seen"])))
             return 0
-        print("ENSINAR (ranqueado por dificuldade — pegue o 1º):")
+        print(S.header("insight", lang + " · ensinar (ranqueado por dificuldade — pegue o 1º)"))
         for d in res["due"]:
             print("  [{}] {} · {} — {}".format(
                 d["difficulty"], d["concept"], d["category"], d["reason"]))

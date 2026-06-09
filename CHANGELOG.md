@@ -6,6 +6,17 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-06-09
+
+### Changed
+- **Premium UX pass (dashboard + CLI) — "real platform" feel.** The dashboard was re-tuned to
+  a calm, dev-platform aesthetic (Linear/Height): a redesigned token system (cooler neutral
+  grays in both themes — light default now near-white with subtle borders; dark shifted from
+  navy to neutral charcoal), tighter radii (10px), softer layered shadows, restrained accent
+  (the focus banner is now a subtle panel with an accent bar instead of a loud gradient),
+  calmer KPIs, and consistent hover/transitions. CLI output is now consistent across commands
+  via a shared style module — every command leads with a uniform `🧭 north · <cmd>` header.
+
 ## [0.9.0] - 2026-06-08
 
 ### Added
@@ -300,7 +311,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   rituals, quick capture (`/btw`) + inbox, GSD `.planning/` interop, and a rich
   Claude Code status line.
 
-[Unreleased]: https://github.com/kayquesanmartin/north-cli/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/kayquesanmartin/north-cli/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/kayquesanmartin/north-cli/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.6.0...v0.7.0
