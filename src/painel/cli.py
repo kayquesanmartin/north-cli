@@ -557,10 +557,21 @@ def cmd_status(home: Path):
         else "{}rode: north build{}".format(a["warn"], a["reset"])))
     try:
         cfg = load_config(cfgp)
-        roots = cfg.data.get("scan_roots", [])
-        print("\n  scan_roots ({}):".format(len(roots)))
-        for r in (roots or ["(nenhum — north config add-root \"<pasta>\")"]):
-            print("    - {}".format(r))
+        mode = cfg.discovery_mode
+        print("\n  modo de descoberta: {}{}{}".format(
+            a["north"], mode, a["reset"]))
+        if mode == "enrolled":
+            enr = cfg.data.get("enrolled", [])
+            print("  projetos plugados ({}):  {}(north init p/ plugar · north forget p/ remover){}".format(
+                len(enr), a["dim"], a["reset"]))
+            for p in (enr or ["(nenhum — rode `north init` na raiz de um projeto)"]):
+                print("    - {}".format(p))
+        else:
+            roots = cfg.data.get("scan_roots", [])
+            print("  scan_roots ({}):  {}(legado — `north init` migra p/ enrolled){}".format(
+                len(roots), a["dim"], a["reset"]))
+            for r in (roots or ["(nenhum — north config add-root \"<pasta>\")"]):
+                print("    - {}".format(r))
     except Exception:
         pass
     try:
@@ -587,6 +598,51 @@ def _doc_template_path(home: Path, tipo: str):
         if p.exists():
             return p
     return None
+
+
+def cmd_init(home: Path, args):
+    """Pluga o projeto atual (ou <caminho>) no north — modo enrolled (opt-in).
+    O north passa a rastrear SÓ o que foi plugado. Read-only: registra o caminho
+    em ~/.north — nada é escrito dentro do projeto."""
+    from . import fsutil
+    a = _ANSI
+    target = Path(args[0]).expanduser() if args else Path.cwd()
+    if not target.is_dir():
+        print("Pasta não encontrada: {}".format(target))
+        return 1
+    cfg = load_config(_config_path(home))
+    ap = target.resolve()
+    added = cfg.add_enrolled(ap)
+    print("{}🧭 north{} · init  {}enrollment opt-in{}".format(
+        a["north"], a["reset"], a["dim"], a["reset"]))
+    if added:
+        print("  {}✓ projeto plugado:{} {}  {}({}){}".format(
+            a["ok"], a["reset"], ap.name, a["dim"], ap, a["reset"]))
+    else:
+        print("  {}• já estava plugado:{} {}".format(a["dim"], a["reset"], ap.name))
+    has = (fsutil.find_dirs_named([ap], "plan-build", 3)
+           or fsutil.find_dirs_named([ap], ".planning", 3))
+    if not has:
+        print("  {}→ não achei plan-build/.planning aqui — o projeto aparece no painel "
+              "quando tiver um plano.{}".format(a["dim"], a["reset"]))
+    print("  {}→ rastreando só o que você plugou · ver: north status · remover: "
+          "north forget {}{}".format(a["dim"], ap.name, a["reset"]))
+    return 0
+
+
+def cmd_forget(home: Path, args):
+    """Des-pluga um projeto do tracking (modo enrolled). Uso: forget <projeto|caminho>."""
+    a = _ANSI
+    if not args:
+        print("uso: north forget <projeto|caminho>")
+        return 1
+    cfg = load_config(_config_path(home))
+    ok = cfg.remove_enrolled(args[0])
+    if ok:
+        print("  {}✓ des-plugado:{} {}".format(a["ok"], a["reset"], args[0]))
+    else:
+        print("  não encontrei '{}' entre os plugados. ver: north status".format(args[0]))
+    return 0 if ok else 1
 
 
 def cmd_doc(home: Path, cfg, projects, args):
@@ -806,6 +862,12 @@ def main(argv, home: Path):
         from . import learnings
         return learnings.cmd_learnings(home, argv[1:])
 
+    # --- enrollment opt-in: LEVE, sem discovery (só registra o caminho na config) ---
+    if cmd in ("init", "track", "enroll"):
+        return cmd_init(home, argv[1:])
+    if cmd in ("forget", "untrack", "unenroll"):
+        return cmd_forget(home, argv[1:])
+
     cfg, projects, new_ids, removed_ids = _load_and_discover(home)
     if new_ids:
         print("  + {} novo(s) projeto(s) descoberto(s): {}".format(
@@ -814,8 +876,12 @@ def main(argv, home: Path):
         print("  - {} projeto(s) removido(s) (pasta nao existe mais): {}".format(
             len(removed_ids), ", ".join(removed_ids)))
     if not projects:
-        print("Nenhum projeto com tracking encontrado.")
-        print("Verifique scan_roots em: {}".format(home / "config" / "projects.json"))
+        if cfg.discovery_mode == "enrolled":
+            print("Nenhum projeto plugado ainda.")
+            print("Rode `north init` na raiz de um projeto (com plan-build/.planning) para rastreá-lo.")
+        else:
+            print("Nenhum projeto com tracking encontrado.")
+            print("Verifique scan_roots em: {}".format(home / "config" / "projects.json"))
         return 1
 
     if cmd in ("build", "dashboard", "panel", "painel"):

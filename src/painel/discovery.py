@@ -728,10 +728,12 @@ def discover_projects(config):
     (mtime), ou a fixada em config (projects.<id>.source); as demais viram
     secundarias (selo discreto). Plan-builds aninhados sob outro projeto sao
     fundidos como features do projeto-pai (ver _nested_planbuilds)."""
-    # 1. detecta todas as fontes, agrupadas por diretorio de projeto
+    # 1. detecta todas as fontes, agrupadas por diretorio de projeto.
+    #    discovery_roots(): projetos plugados (modo enrolled) ou scan_roots (legado).
+    roots = config.discovery_roots()
     by_dir = {}   # Path resolvido -> [ {name,label,root,mtime,build} ]
     for ad in ADAPTERS:
-        for root in ad["discover"](config.scan_roots):
+        for root in ad["discover"](roots):
             try:
                 pdir = ad["project_dir"](root).resolve()
             except Exception:
@@ -780,9 +782,9 @@ def discover_projects(config):
         proj = primary = None
         for s in ordered:
             if s["name"] == "plan-build":
-                cand = build_project(s["root"], config.scan_roots, extra)
+                cand = build_project(s["root"], roots, extra)
             else:
-                cand = s["build"](s["root"], config.scan_roots)
+                cand = s["build"](s["root"], roots)
             if cand.get("sprints") or cand.get("tasks"):
                 proj, primary = cand, s
                 break

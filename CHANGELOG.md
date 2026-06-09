@@ -6,6 +6,16 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **Enrollment opt-in (`north init` / `/north-init`).** Em vez de auto-varrer todas as pastas dos
+  `scan_roots`, agora você **pluga** os projetos que quer acompanhar: `north init` na raiz registra
+  o caminho em `~/.north` e o north passa a rastrear **só o que foi plugado** — mata o ruído de
+  projetos indesejados no bom-dia/fim-do-dia/painel. **Read-only:** nada é escrito dentro do
+  projeto (o caminho vive na casa do north). `north forget <projeto>` des-pluga; `north status`
+  mostra o modo e os plugados. **Retrocompatível:** quem já usava continua no modo `scan` legado
+  (`discovery_mode`) até rodar `north init` pela primeira vez — então migra para `enrolled`, sem
+  quebrar nada. Paridade nos 3 runtimes (`/north-init`, `/north-forget`).
+
 ## [0.10.0] - 2026-06-09
 
 ### Added
