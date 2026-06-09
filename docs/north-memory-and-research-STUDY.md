@@ -29,9 +29,9 @@ identifica e ranqueia é a IA do runtime; este motor é a MEMÓRIA e o AGENDADOR
 
 **O motor é a MEMÓRIA + o ORQUESTRADOR; a IA do runtime é a COGNIÇÃO (pesquisa + raciocínio).**
 
-- O north (stdlib, offline) **não** crawleia a web nem roda ML. Ele **decide o que lembrar,
-  quando relembrar, e como organizar** — e **pede** à IA que pesquise/redija, guardando o
-  resultado com proveniência.
+- O north (stdlib) **não** crawleia a web nem roda ML; é **offline por default** e qualquer
+  fetch do motor é **opt-in + transparente** (M1). Ele **decide o que lembrar, quando relembrar,
+  e como organizar** — e **pede** à IA que pesquise/redija, guardando o resultado com proveniência.
 - Tudo read-only sobre o código/planos do usuário; escreve só na casa dele (`~/.north`).
 - **Memória ≠ "tudo".** "Salvar memória sobre tudo que for necessário" tem que ser **bounded**:
   salva o que é **não-óbvio e reutilizável**; **não** salva o que git/repo já registram; triagem
@@ -88,8 +88,13 @@ memória apodrece. É a maior lacuna técnica.
 **Proveniência obrigatória:** toda memória pesquisada carrega **fonte + data + confiança**.
 Claim da web sem verificação não vira "fato". É a espinha anti-alucinação (human-in-the-loop).
 
-**Postura de rede:** motor **offline por default**. Toda ida externa é da IA. Se algum dia o
-motor precisar buscar (ex.: refrescar um doc cacheado), é **opt-in + transparente** como o sync.
+**Postura de rede (DECIDIDO — M1):** o **motor pode** fazer fetch, mas **opt-in e transparente**
+(desligado por default; um `north research`/modo explícito liga; um log mostra **exatamente o que
+saiu**, estilo `north sync status`). Continua **não sendo crawler nem ML** — fetch pontual via
+`urllib` (stdlib), sempre com proveniência. A maior parte da pesquisa ainda é da IA; o motor busca
+só quando faz sentido (ex.: refrescar um doc cacheado, validar um link). **Salvaguardas:** opt-in
+radical, transparência do tráfego, LGPD/minimização (guardar resumo/conceito, não payload cru — M7),
+nada quebra o "100% local por default".
 
 ---
 
@@ -113,17 +118,22 @@ Cross-links: [[north-learning-ledger]] · [[north-readonly-invariant]] · [[nort
 
 ---
 
-## 5. Decisões em aberto (precisam do dono — "pensar melhor")
+## 5. Decisões (DECIDIDAS em 2026-06-09 + em aberto)
 
-- **M1 — Rede no motor:** toda pesquisa fica na IA e o motor segue **100% offline** (recomendado),
-  ou o motor pode fazer fetch opt-in/transparente (ex.: refresh de doc)?
-- **M2 — Escopo da memória:** só por-projeto, ou também um **"cérebro do usuário" cross-project**
-  (perfil/nível/pegadinhas recorrentes)? (recomendo **os dois**.)
-- **M3 — Captura:** sempre triagem/confirma (como o ledger hoje), ou **auto-save** para fatos de
-  baixo risco e proveniência clara (ex.: conceito ensinado)? (recomendo triagem por default,
-  auto-save só pro de baixo risco.)
-- **M4 — Web como fonte:** desligada por default + opt-in explícito por sessão, sempre citada
-  (recomendado), ou habilitada quando houver referências insuficientes?
+**Fechadas com o dono:**
+- **M1 — Rede no motor: ✅ o motor PODE fazer fetch, opt-in e transparente** (não offline-puro).
+  Implica: modo de pesquisa explícito + log do que saiu + `urllib` stdlib + salvaguardas de
+  privacidade (ver §3 e M7). Não vira crawler/ML.
+- **M2 — Escopo: ✅ projeto + "cérebro do usuário" cross-project** (perfil/nível/pegadinhas
+  recorrentes além das memórias por projeto).
+- **M3 — Captura: ✅ triagem por default + auto-save só de baixo risco** e proveniência clara
+  (ex.: conceito ensinado entra sozinho; decisão/gotcha pede confirmação).
+- **M4 — Web como fonte: ✅ permitida, mas opt-in (off por default), sempre citada e verificada**
+  (decorre do M1).
+
+**Ainda em aberto:**
+- **M5 — Dedup/decay:** quão agressivo? superseder no conflito; expirar após N dias sem uso;
+  marcar "stale" e pedir reconfirmação? (é a maior lacuna técnica — §2.)
 - **M5 — Dedup/decay:** quão agressivo? superseder no conflito; expirar após N dias sem uso;
   marcar "stale" e pedir reconfirmação? (é a maior lacuna técnica — §2.)
 - **M6 — Sync de memória:** memória sobe pra nuvem (Solo) como **stream de consentimento próprio**
