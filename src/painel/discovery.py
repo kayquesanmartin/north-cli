@@ -313,7 +313,10 @@ def _build_feature_debt(ftext):
 # Documentos de SDLC dentro do plan-build (PRD/SDD/TDD/SPEC/SECURITY/UML/ADR).
 # Read-only: o painel apenas DETECTA e LINKA — nunca edita. (Fase 1 do AI-SDLC.)
 # ----------------------------------------------------------------------------
+# "Vivos" (CONTEXT/DECISIONS) primeiro: são o ponto de entrada — briefing e o porquê.
 DOC_TYPES = [
+    ("CONTEXT", re.compile(r"\bCONTEXT\b|contexto", re.I)),
+    ("DECISIONS", re.compile(r"\bDECISIONS?\b|decis[õo]es", re.I)),
     ("PRD", re.compile(r"\bPRD\b|product[-_ ]?requirement", re.I)),
     ("SDD", re.compile(r"\bSDD\b|software[-_ ]?design|design[-_ ]?doc", re.I)),
     ("TDD", re.compile(r"\bTDD\b|test[-_ ]?design|test[-_ ]?plan", re.I)),
@@ -322,6 +325,9 @@ DOC_TYPES = [
     ("ADR", re.compile(r"\bADR\b|architecture[-_ ]?decision", re.I)),
     ("UML", re.compile(r"\bUML\b|\bC4\b|diagram|sequence[-_ ]?diagram", re.I)),
 ]
+
+# Docs "vivos" projetados na RAIZ do projeto (e em docs/) — DECISIONS.md / CONTEXT.md.
+LIVING_DOC_TYPES = ("CONTEXT", "DECISIONS")
 
 
 def classify_doc(stem: str):
@@ -359,6 +365,45 @@ def collect_docs(plan_build: Path, extra_pbs=None):
     order = {t: i for i, (t, _) in enumerate(DOC_TYPES)}
     out.sort(key=lambda d: (order.get(d["type"], 99), d["name"].lower()))
     return out
+
+
+def collect_living_docs(project_dir: Path):
+    """Docs 'vivos' (DECISIONS.md / CONTEXT.md) na RAIZ do projeto e em docs/.
+    Read-only; não desce a árvore (só topo + docs/) p/ não capturar ruído.
+    Devolve [{type, name, path, feature:""}]."""
+    out, seen = [], set()
+    locations = [project_dir, project_dir / "docs"]
+    for loc in locations:
+        try:
+            if not loc.is_dir():
+                continue
+            for md in sorted(loc.glob("*.md")):
+                typ = classify_doc(md.stem)
+                if typ not in LIVING_DOC_TYPES:
+                    continue
+                key = str(md.resolve()).lower()
+                if key in seen:
+                    continue
+                seen.add(key)
+                out.append({"type": typ, "name": md.name, "path": str(md), "feature": ""})
+        except OSError:
+            continue
+    return out
+
+
+def _merge_docs(*lists):
+    """Funde listas de docs, dedup por caminho, reordena pela ordem de DOC_TYPES."""
+    seen, merged = set(), []
+    for lst in lists:
+        for d in lst:
+            key = str(Path(d["path"]).resolve()).lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(d)
+    order = {t: i for i, (t, _) in enumerate(DOC_TYPES)}
+    merged.sort(key=lambda d: (order.get(d["type"], 99), d["name"].lower()))
+    return merged
 
 
 def build_project(plan_build: Path, scan_roots, extra_pbs=None):
@@ -559,7 +604,7 @@ def build_project(plan_build: Path, scan_roots, extra_pbs=None):
         "progress_file": str(root_progress) if root_progress else "",
         "is_template": is_template,
         "has_docs": (pdir / "docs").is_dir(),
-        "docs": collect_docs(plan_build, extra_pbs),
+        "docs": _merge_docs(collect_docs(plan_build, extra_pbs), collect_living_docs(pdir)),
         "meta": meta,
         "git": git,
         "branch": git["branch"] or meta.get("branch_doc", ""),

@@ -575,6 +575,9 @@ def cmd_status(home: Path):
 
 
 _DOC_CORE = ["PRD", "SPEC", "SDD", "TDD", "ADR", "SECURITY"]
+# Docs "vivos" (briefing + porquê), gravados na raiz do projeto, fora do gap SDLC.
+_DOC_LIVING = ["DECISIONS", "CONTEXT"]
+_DOC_ALL = _DOC_CORE + _DOC_LIVING
 
 
 def _doc_template_path(home: Path, tipo: str):
@@ -598,12 +601,14 @@ def cmd_doc(home: Path, cfg, projects, args):
         p = _doc_template_path(home, args[1])
         if not p:
             print("template '{}' não existe. Tipos: {}".format(
-                args[1], ", ".join(t.lower() for t in _DOC_CORE)))
+                args[1], ", ".join(t.lower() for t in _DOC_ALL)))
             return 1
         print(p.read_text(encoding="utf-8"))
         return 0
     if sub in ("types", "templates"):
-        print("tipos: {}".format(", ".join(t.lower() for t in _DOC_CORE)))
+        print("SDLC:    {}".format(", ".join(t.lower() for t in _DOC_CORE)))
+        print("vivos:   {}  (briefing + porquê, na raiz do projeto)".format(
+            ", ".join(t.lower() for t in _DOC_LIVING)))
         print("gere com /north-doc <tipo> [alvo]  ·  esqueleto: north doc template <tipo>")
         return 0
     proj_filter = args[1] if len(args) > 1 else None
@@ -614,10 +619,16 @@ def cmd_doc(home: Path, cfg, projects, args):
             continue
         have = sorted({d["type"] for d in p.get("docs", [])})
         missing = [t for t in _DOC_CORE if t not in have]
+        living = [t for t in _DOC_LIVING if t in have]
+        living_missing = [t for t in _DOC_LIVING if t not in have]
         print("\n  {}{}{}".format(a["north"], p["name"], a["reset"]))
-        print("    {}tem:{}      {}".format(a["ok"], a["reset"], ", ".join(have) or "—"))
-        print("    {}faltando:{} {}".format(a["warn"], a["reset"], ", ".join(missing) or "—"))
-    print("\n  gerar:  /north-doc <tipo> [alvo]   (ex.: /north-doc adr \"escolha do banco\")")
+        print("    {}SDLC:{}     tem: {} · faltando: {}".format(
+            a["ok"], a["reset"],
+            ", ".join(t for t in have if t in _DOC_CORE) or "—",
+            ", ".join(missing) or "—"))
+        print("    {}📌 vivos:{} tem: {} · faltando: {}".format(
+            a["north"], a["reset"], ", ".join(living) or "—", ", ".join(living_missing) or "—"))
+    print("\n  gerar:  /north-doc <tipo> [alvo]   (ex.: /north-doc context · /north-doc decisions)")
     return 0
 
 
@@ -691,7 +702,7 @@ _HELP_GROUPS = [
         ("task <id>", "—", "contrato da task: o que entregar + critérios de aceite", "north task TASK-01"),
     ]),
     ("📄 Documentos (SDLC)", [
-        ("—", "north-doc", "gera PRD/SPEC/SDD/TDD/ADR/SECURITY ancorado no projeto + biblioteca", "/north-doc adr \"banco\""),
+        ("—", "north-doc", "gera PRD/SPEC/SDD/TDD/ADR/SECURITY + CONTEXT/DECISIONS ancorado no projeto + biblioteca", "/north-doc context"),
         ("doc [list|template]", "—", "gaps de docs por projeto + esqueletos dos templates", "north doc list"),
     ]),
     ("💡 Conhecimento & aprendizado", [

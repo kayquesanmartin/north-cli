@@ -724,8 +724,8 @@ _SHELL = r"""<!DOCTYPE html>
   }
 
   /* ---------- documentos de SDLC do projeto (detecta + linka; read-only) ---------- */
-  const DOC_META={PRD:"#8b5cf6",SDD:"#0ea5e9",TDD:"#22c55e",SPEC:"#f97316",
-    SECURITY:"#ef4444",ADR:"#eab308",UML:"#14b8a6"};
+  const DOC_META={CONTEXT:"#06b6d4",DECISIONS:"#a855f7",PRD:"#8b5cf6",SDD:"#0ea5e9",
+    TDD:"#22c55e",SPEC:"#f97316",SECURITY:"#ef4444",ADR:"#eab308",UML:"#14b8a6"};
   function fileHref(path){return "file:///"+String(path||"").replace(/\\/g,"/").replace(/^\/+/,"");}
   function docsSection(p){
     const ds=p.docs||[];
