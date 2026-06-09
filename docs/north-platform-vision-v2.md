@@ -39,6 +39,12 @@ A v2 muda **três coisas**, com base em pesquisa de mercado (fontes na §8):
 **north é a camada de observabilidade *e aprendizado* do desenvolvimento — onde o que você
 constrói vira plano, doc, teste, conhecimento e prova de skill, com privacidade por design.**
 
+> **Escopo (decidido 2026-06-09):** o público é **dev / times de dev** (Solo + Teams,
+> público/open-core). north é a **camada read-only de governança/memória/aprendizado SOBRE
+> agentes** (Claude/Codex/Gemini) — **não** um agente autônomo de execução, e **não** uma
+> plataforma corporativa de agentes por setor (essa necessidade — ex.: a da Invista no estudo
+> Squad Jedi — é **iniciativa separada**). Ver `docs/north-vs-hermes-positioning-STUDY.md`.
+
 A fundação local já captura a matéria-prima certa (commits, planos, docs gerados, conceitos
 ensinados, ledger de decisões/bugs/padrões). A nuvem **não inventa dado** — ela sincroniza,
 agrega, visualiza, **devolve currículo** e **emite prova**. O ativo defensável é o **ledger

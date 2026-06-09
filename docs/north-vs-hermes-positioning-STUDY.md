@@ -8,6 +8,19 @@
 
 ---
 
+## ✅ Decisão (2026-06-09)
+
+**north e a plataforma de agentes da Invista são SEPARADOS.** north fica **dev-first** (produto
+de produtividade/aprendizado p/ devs — Solo + Teams de dev, público/open-core), com a identidade
+de **camada de governança escopada ao mundo dev/IA-assistida** (NÃO um agente autônomo de
+execução). A plataforma de **agentes por setor da Invista** (Dev/Financeiro/Jurídico/Cobrança…)
+é uma **iniciativa interna separada** (Rotas A/B/C do Squad Jedi) — outro repo, outro time, outro
+perfil de risco. Não se fundem. No futuro, o north (ou seus princípios) *pode* servir de camada
+de governança por cima dos agentes da Invista — mas como produto separado que a atende, nunca
+sendo os agentes que executam. (Resolve D-H1 e D-H3 abaixo.)
+
+---
+
 ## 0. Resposta direta: você NÃO está viajando — mas a pergunta certa é outra
 
 A visão de **ferramenta viva que aprende** está **certa**, e o Hermes a **valida**: o recurso
