@@ -94,6 +94,59 @@ class Config:
             return False
         return self.project_cfg(pid).get("enabled", True)
 
+    # ---- enrollment opt-in (north init) ----
+    @property
+    def discovery_mode(self):
+        """'enrolled' = rastreia SÓ os projetos plugados (`north init`); 'scan' =
+        auto-descoberta legada nos scan_roots. Inferido p/ retrocompatibilidade:
+        explícito em settings vence; senão enrolled se há lista de enrolled, scan
+        se há scan_roots (quem já usava não quebra), enrolled numa casa limpa."""
+        m = (self.data.get("settings", {}) or {}).get("discovery_mode")
+        if m in ("enrolled", "scan"):
+            return m
+        if self.data.get("enrolled"):
+            return "enrolled"
+        if self.data.get("scan_roots"):
+            return "scan"
+        return "enrolled"
+
+    @property
+    def enrolled(self):
+        return [Path(p) for p in self.data.get("enrolled", [])]
+
+    def discovery_roots(self):
+        """Raízes a varrer: os projetos plugados (enrolled) ou os scan_roots (legado)."""
+        return self.enrolled if self.discovery_mode == "enrolled" else self.scan_roots
+
+    def add_enrolled(self, path: Path) -> bool:
+        """Pluga um projeto (registra o caminho absoluto em ~/.north) e ativa o
+        modo enrolled. Idempotente; devolve False se já estava plugado."""
+        ap = str(Path(path).expanduser().resolve())
+        lst = self.data.setdefault("enrolled", [])
+        existing = {str(Path(p).expanduser().resolve()) for p in lst}
+        self.data.setdefault("settings", {})["discovery_mode"] = "enrolled"
+        added = ap not in existing
+        if added:
+            lst.append(ap)
+        self.save()
+        return added
+
+    def remove_enrolled(self, path_or_id: str) -> bool:
+        """Des-pluga por caminho absoluto OU por nome do projeto (basename)."""
+        lst = self.data.get("enrolled", [])
+        target = str(Path(path_or_id).expanduser().resolve())
+        kept, removed = [], False
+        for p in lst:
+            rp = str(Path(p).expanduser().resolve())
+            if rp == target or Path(rp).name == path_or_id:
+                removed = True
+                continue
+            kept.append(p)
+        if removed:
+            self.data["enrolled"] = kept
+            self.save()
+        return removed
+
     def alias_for(self, pid: str, fallback: str) -> str:
         return self.project_cfg(pid).get("alias") or fallback
 
@@ -135,6 +188,7 @@ def load_config(path: Path, default_scan_root: Path = None) -> Config:
     data.setdefault("scan_roots", [])
     if not data["scan_roots"] and default_scan_root:
         data["scan_roots"] = [str(default_scan_root)]
+    data.setdefault("enrolled", [])
     data.setdefault("exclude", [])
     data.setdefault("projects", {})
     data.setdefault("settings", {})
