@@ -76,7 +76,7 @@ um `scan_root` default e já varre** no primeiro uso.
 | `install.py` | parar de semear `scan_root` default + não auto-varrer; onboarding "rode `north init`" |
 | `config.py` | `discovery_mode` (`enrolled`/`scan`); lista de **enrolled paths**; migração |
 | `discovery.py` | em `enrolled`, restringir a descoberta aos paths plugados (não varrer `scan_roots`) |
-| `cli.py` + skills | `north init` (registry; aceita o diretório atual) + `north untrack`/`north forget`; `--shared` (marker) na fase Teams; **paridade nos 3 runtimes** via CMDSPEC (nova entrada `init`) |
+| `cli.py` + skills | `north init` (registry; aceita o diretório atual) + `north forget` (des-pluga); `--shared` (marker) na fase Teams; **paridade nos 3 runtimes** via CMDSPEC (nova entrada `init`) |
 | `rituals.py` | morning/wrap-up já respeitam os projetos rastreados — passam a refletir os enrolled |
 
 ## Alternativas consideradas
