@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-06-09
+
 ### Changed
 - **Instalação não varre mais o disco — onboarding por enrollment.** Fecha o ciclo do `north init`:
   o instalador (`install.py` e o `npx north-cli`) **não pergunta mais a pasta dos projetos nem
@@ -353,7 +355,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   rituals, quick capture (`/btw`) + inbox, GSD `.planning/` interop, and a rich
   Claude Code status line.
 
-[Unreleased]: https://github.com/kayquesanmartin/north-cli/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/kayquesanmartin/north-cli/compare/v0.11.1...HEAD
+[0.11.1]: https://github.com/kayquesanmartin/north-cli/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/kayquesanmartin/north-cli/compare/v0.9.0...v0.9.1
