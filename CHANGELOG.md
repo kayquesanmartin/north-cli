@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-06-09
+
 ### Changed
 - **Learning ledger agora é memória BOUNDED (dedup + curadoria, padrão Hermes).** O ledger de
   aprendizado (`north learnings`) deixou de só acumular: ao salvar, **deduplica** near-duplicates
@@ -343,7 +345,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   rituals, quick capture (`/btw`) + inbox, GSD `.planning/` interop, and a rich
   Claude Code status line.
 
-[Unreleased]: https://github.com/kayquesanmartin/north-cli/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/kayquesanmartin/north-cli/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/kayquesanmartin/north-cli/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/kayquesanmartin/north-cli/compare/v0.8.0...v0.9.0
