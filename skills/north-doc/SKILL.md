@@ -1,6 +1,6 @@
 ---
 name: north-doc
-description: north — Gera docs de SDLC (PRD, SPEC, SDD, TDD, ADR, SECURITY) ancorado no contexto real do projeto e na biblioteca de referências. A IA redige sob sua direção; o motor é read-only. Ative para "/north-doc", "gera o PRD", "escreve a spec", "cria um ADR", "documenta a arquitetura (SDD)", "plano de testes (TDD)", "modelo de ameaças".
+description: north — Gera docs de SDLC (PRD, SPEC, SDD, TDD, ADR, SECURITY) e docs vivos (CONTEXT, DECISIONS) ancorado no contexto real do projeto e na biblioteca de referências. A IA redige sob sua direção; o motor é read-only. Ative para "/north-doc", "gera o PRD", "escreve a spec", "cria um ADR", "documenta a arquitetura (SDD)", "plano de testes (TDD)", "modelo de ameaças", "cria o CONTEXT", "registra a decisão (DECISIONS)".
 allowed-tools: Bash, Read, Grep, Glob, Edit, Write, WebSearch, WebFetch
 argument-hint: "<tipo> [alvo]   ex.: spec checkout | adr \"escolha do banco\""
 ---
@@ -12,8 +12,12 @@ SECURITY) com qualidade consistente. **A IA redige; você dirige.** O motor do n
 **read-only** — quem escreve o arquivo é você (a IA), com o consentimento do usuário.
 
 ## Tipos
-`prd` (por quê/para quem) · `spec` (o quê — contrato) · `sdd` (como — design) ·
+**SDLC:** `prd` (por quê/para quem) · `spec` (o quê — contrato) · `sdd` (como — design) ·
 `tdd` (plano de testes) · `adr` (decisão) · `security` (ameaças/controles).
+**Vivos** (briefing + memória do projeto, gravados na **raiz**, viajam com o repo):
+`context` (briefing de 15 min: stack/versões, convenções, entidades, "não faça isso porque") ·
+`decisions` (log vivo do **porquê** das escolhas — mais leve que ADR). Servem de **contexto
+inicial** pra uma sessão de IA e pro dev manual. Um por projeto/unidade de rastreio.
 
 Sem tipo? Mostre os gaps do projeto e pergunte qual:
 ```bash
@@ -41,9 +45,13 @@ python3 ~/.north/run.py doc list        # detectados vs faltando, por projeto
    - SECURITY: cobre OWASP Top 10 + LGPD; checklist de saída.
    - ADR: decisão + alternativas + consequências; status/data.
 6. **Grave onde o usuário decidir** (confirme o caminho):
-   - Default: ao lado dos planos — `plan-build/<TIPO>-<alvo>.md` (ou `docs/`). 
+   - SDLC (prd/spec/sdd/tdd/adr/security): ao lado dos planos — `plan-build/<TIPO>-<alvo>.md` (ou `docs/`).
+   - **Vivos (context/decisions): na RAIZ do projeto** — `CONTEXT.md` / `DECISIONS.md` (ou `docs/`),
+     **um por projeto**, pra ficarem visíveis e versionados (o painel os detecta na raiz/docs).
    - **Idempotente:** se já existe, **atualize** preservando o que é válido; não duplique.
-   - Cross-link: SDD referencia PRD/SPEC; TDD referencia SPEC; mencione ADRs.
+     `DECISIONS.md` é append vivo (decisão nova no topo); `CONTEXT.md` é mantido enxuto e atual.
+   - Cross-link: SDD referencia PRD/SPEC; TDD referencia SPEC; mencione ADRs. O `/north-wrap-up`
+     pode propor atualizar `CONTEXT.md`/`DECISIONS.md` quando surgir convenção/decisão nova.
 
 ## Encadeamento natural
 PRD → SPEC → (SDD + TDD) → código (`/north-dev`, TDD-first usa o SPEC/TDD) → SECURITY/ADR conforme decisões.

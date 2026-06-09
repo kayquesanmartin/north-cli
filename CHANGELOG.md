@@ -6,7 +6,16 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [0.9.1] - 2026-06-09
+### Added
+- **Docs vivos no `north-doc`: `CONTEXT.md` e `DECISIONS.md`.** Dois tipos novos da fábrica de
+  docs, voltados a **memória técnica do projeto** — `context` é o briefing de 15 min (stack/
+  versões, convenções, entidades do domínio, e os "não faça isso porque"); `decisions` é o log
+  vivo do **porquê** das escolhas (mais leve que um ADR). Servem de **contexto inicial** tanto
+  para uma sessão de IA quanto para o dev manual retomando o projeto. Diferente dos docs de SDLC,
+  os vivos vivem na **raiz do projeto** (ou `docs/`), **um por projeto**, e são **detectados e
+  linkados no painel** (badges próprios). O motor segue read-only — a IA redige e grava o arquivo
+  novo **com sua confirmação**. `north doc template context|decisions`; `north doc list` separa os
+  "📌 vivos" do gap de SDLC. Paridade nos 3 runtimes.
 
 ### Changed
 - **Premium UX pass (dashboard + CLI) — "real platform" feel.** The dashboard was re-tuned to

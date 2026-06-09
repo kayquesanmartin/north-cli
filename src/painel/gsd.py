@@ -190,10 +190,13 @@ def build_gsd_project(planning_dir: Path, git_info_fn, author_fn):
     git = git_info_fn(pdir)
     meta = {"branch_doc": "", "updated": state["updated"], "current_sprint": state["focus"]}
 
+    from .discovery import collect_living_docs  # deferido: evita import circular
+
     return {
         "id": pdir.name, "path": str(pdir), "plan_dir": str(planning_dir),
         "progress_file": str(planning_dir / "STATE.md"),
         "source": "gsd", "is_template": False, "has_docs": (pdir / "docs").is_dir(),
+        "docs": collect_living_docs(pdir),
         "meta": meta, "git": git, "branch": git["branch"] or "",
         "current_sprint": state["focus"],
         "author": author_fn(pdir, planning_dir / "ROADMAP.md"),
