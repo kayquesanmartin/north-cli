@@ -82,11 +82,13 @@ gerados/atualizados com confirmação. Decisão pendente: **onde gravam** (§3).
 
 ## 3. Tensões a resolver (Tech Lead não deixa passar)
 
-- **T1 — Read-only vs arquivos no projeto.** `DECISIONS.md`/`CONTEXT.md`/handoff em arquivo, se
-  gravados **dentro do projeto**, repetem a tensão do marker de enrollment
-  ([[north-discovery-enrollment]]). Duas saídas coerentes: (a) gravar via `north-doc`
-  **confirma-pra-escrever** (consentido, como os outros docs) ou (b) manter em `~/.north` e a IA
-  lê como contexto. Decidir **uma regra** e valer pra todos (handoff, decisions, context).
+- **T1 — Onde gravam (DECIDIDO: híbrido por tipo).** `DECISIONS.md`/`CONTEXT.md` → **no projeto**,
+  via `north-doc` **confirma-pra-escrever** (versionados, viajam com o repo, contexto direto p/
+  IA e colega). `handoff` de sessão → **em `~/.north`** (efêmero, pessoal, não viaja). **Nota de
+  invariante:** escrever DECISIONS/CONTEXT no projeto **não exige carve-out novo** — segue o
+  precedente já aceito do `north-doc` (escreve **arquivo novo com confirmação**; o invariante
+  proíbe editar os *planos* do usuário em silêncio, não criar docs consentidos). Só o marker
+  `.north` da [[north-discovery-enrollment]] (config de engine, silenciosa) é que pede o carve-out.
 - **T2 — Espelho vs vigilância (#4).** Resolvido por princípio: Solo = espelho do dev; Teams =
   nunca métrica de gestor sem consentimento. Ratificar junto da decisão M7 (privacidade) do
   [[north-memory-research-direction]].
@@ -124,10 +126,9 @@ e dá ao produto um **norte**.
 
 ## 6. Decisões em aberto (para o dono)
 
-- **Q-G1 — Tese como norte:** adoto "melhor, não só mais produtivo" como headline do produto
-  (threadar na visão)? (recomendo **sim**.)
-- **Q-G2 — Projeções em arquivo (T1):** `DECISIONS.md`/`CONTEXT.md`/handoff gravam **no projeto**
-  (via `north-doc`, confirma-pra-escrever) ou ficam **em `~/.north`** e a IA lê? (uma regra só.)
+- **Q-G1 — Tese como norte: ✅ SIM, vira o headline do produto** (threadar no topo da visão).
+- **Q-G2 — Projeções em arquivo (T1): ✅ híbrido por tipo** — DECISIONS/CONTEXT no projeto (via
+  `north-doc`, confirma-pra-escrever, versionados); handoff de sessão em `~/.north` (efêmero).
 - **Q-G3 — Fonte do dado de dependência (#4):** inferir de git/ledger (aproximado) ou exigir um
   sinal explícito (hook/registro de sessão)? quanto a IA pode/deve reportar?
 - **Q-G4 — Dependência no Teams:** o espelho fica **só Solo** por ora (recomendado), ou já

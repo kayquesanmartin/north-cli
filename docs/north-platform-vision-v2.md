@@ -30,6 +30,12 @@ A v2 muda **três coisas**, com base em pesquisa de mercado (fontes na §8):
 
 ## 1. A tese (v2)
 
+> ### ⭐ Norte do produto
+> **"Você está ficando melhor ao longo do tempo, ou apenas mais produtivo?"**
+> As outras ferramentas te deixam **mais rápido** (Copilot/Cursor/DX medem produtividade); o north
+> te deixa **melhor** — ele mede e cultiva o **crescimento técnico**, que quase ninguém mede.
+> Detalhe em `docs/north-growth-thesis-STUDY.md`.
+
 **north é a camada de observabilidade *e aprendizado* do desenvolvimento — onde o que você
 constrói vira plano, doc, teste, conhecimento e prova de skill, com privacidade por design.**
 
