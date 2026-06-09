@@ -35,6 +35,31 @@ dele (`~/.north`, dashboard, inbox) e em arquivos novos **com confirmação** do
 
 ---
 
+## 1.5. Decisões fechadas com o dono (2026-06-09)
+
+> As perguntas Q1–Q11 e a §8 foram respondidas inline pelo dono. Resumo travado:
+
+- **Colunas (Q1–Q3):** **sem `CLIENTE`.** As 4 colunas de fluxo são **DESENVOLVER ·
+  FASE DE DESENVOLVIMENTO · FASE DE TESTES · CONCLUÍDO**; **IMPEDIMENTO = flag**.
+- **Colunas = perfil configurável** (não hardcode que troca pra todos). ✔
+- **Tags (Q4–Q6):** alimentam **filtro/visual E a sugestão de squad** no `/north-focus`;
+  **paleta fixa determinística por nome**; **há conflito visual** com a tag de feature no card
+  → o layout precisa resolver (não exibir as duas cruas; priorizar/compactar — ver §3).
+- **Geração (Q7–Q8):** grava em **`plan-build/`** (cria se não existir), **sempre com destino
+  explícito**; a IA propõe a quebra **a partir dos docs** (ou do SPEC, se houver). Granularidade
+  de `plan-build` (um por projeto vs um por feature/microsserviço) é **sub-estudo aberto** (§4.1).
+- **Estimativa (Q9–Q11):** unidade = **esforço (tasks/pontos)**, depois **traduzida p/ prazo**
+  (calendário sofre com férias/paralelo); cronômetro tem **dois marcos** — chega em `FASE DE
+  TESTES` e depois `CONCLUÍDO`; **amostra mínima ~5 tasks reais / 90 dias** antes de arriscar.
+- **Princípio de rastreio (§9):** alteração fora da sprint **sempre** é trackeada — task na
+  sprint atual ou **Quick Win**, conforme o tamanho/dificuldade.
+
+> Relacionado: o **modelo de enrollment** (como o north sabe quais projetos rastrear) virou um
+> ADR próprio — ver `docs/north-discovery-enrollment-ADR.md`. Ele define a *unidade de
+> rastreio*, que é a mesma coisa que a granularidade de `plan-build` da §4.1.
+
+---
+
 ## 2. Modelo de colunas proposto (4 de fluxo + flag de impedimento)
 
 Confirmado com o dono: **IMPEDIMENTO = flag** (mantém o estágio). Logo, **4 colunas de fluxo**:
@@ -44,7 +69,7 @@ Confirmado com o dono: **IMPEDIMENTO = flag** (mantém o estágio). Logo, **4 co
 | 1 | **DESENVOLVER** | a fazer / backlog priorizado, não começou | `Planejado` |
 | 2 | **FASE DE DESENVOLVIMENTO** | em codificação ativa (WIP) | `Em Andamento` |
 | 3 | **FASE DE TESTES** | código pronto, em teste/review/QA | `Código Completo` |
-| 4 | **CLIENTE** | entregue ao / em validação pelo cliente | `Concluído` (≈) |
+| 4 | **CONCLUÍDO** | entregue / finalizado | `Concluído` (≈) |
 | — | **⛔ IMPEDIMENTO** | *flag* ortogonal: bloqueada, fica no estágio, realçada | `blocked=True` (já existe) |
 
 **Decisão de arquitetura importante — colunas viram PERFIL configurável, não hardcode.**
@@ -56,10 +81,10 @@ a dados (tabela), não regex espalhado.
 ### Questões em aberto (precisam de você — "estudar melhor")
 - **Q1.** `CLIENTE` é terminal (= entregue/aceito) ou precisamos de um passo *depois* (ex.:
   `ACEITO`/`CONCLUÍDO`) para distinguir "com o cliente" de "aprovado pelo cliente"? Isso afeta
-  onde o ciclo de vida termina — e **onde a estimativa de prazo "para o relógio"** (§5).
-- **Q2.** "Em validação pelo cliente" e "entregue ao cliente" são o mesmo estágio ou dois?
+  onde o ciclo de vida termina — e **onde a estimativa de prazo "para o relógio"** (§5). | RESPOSTA: não terá coluna `CLIENTE`, será `CONCLUÍDO`
+- **Q2.** "Em validação pelo cliente" e "entregue ao cliente" são o mesmo estágio ou dois? | RESPOSTA: `CONCLUÍDO`
 - **Q3.** Como o usuário sinaliza `CLIENTE` no `.md`? (status textual `cliente`/`validação`,
-  emoji próprio, ou seção?) — define a regra de detecção read-only.
+  emoji próprio, ou seção?) — define a regra de detecção read-only. | RESPOSTA: não terá coluna `CLIENTE`
 
 ---
 
@@ -83,9 +108,9 @@ Tags do dono: `[ANALISE]` · `[API]` · `[FRONTEND/UI/UX]` · `[PESQUISA]`. São
 - **Render:** chip colorido por tag (paleta estável, como features/sprints já fazem).
 
 ### Questões em aberto
-- **Q4.** Tag é só *visual/filtro*, ou também **alimenta a sugestão de squad** no `/north-focus`?
-- **Q5.** Cor por tag: paleta fixa por nome (determinística) ou herda da feature?
-- **Q6.** Tag conflita com a tag de *feature* já existente no card? (espaço visual no card)
+- **Q4.** Tag é só *visual/filtro*, ou também **alimenta a sugestão de squad** no `/north-focus`? | RESPOSTA: ambos
+- **Q5.** Cor por tag: paleta fixa por nome (determinística) ou herda da feature? | RESPOSTA: fixa
+- **Q6.** Tag conflita com a tag de *feature* já existente no card? (espaço visual no card) | RESPOSTA: conflita
 
 ---
 
@@ -111,8 +136,26 @@ PRD ─▶ SPEC ─▶ [novo] PLANO DE SPRINT ─▶ tasks com entregável + cri
 
 ### Questões em aberto
 - **Q7.** O plano de sprint gerado grava onde por default? (`plan-build/` vs `docs/` vs
-  perguntar) — é a mesma decisão #4 em aberto da visão; vale fechar junto.
-- **Q8.** A IA propõe a quebra em tasks a partir do SPEC, ou o usuário lista e a IA estrutura?
+  perguntar) — é a mesma decisão #4 em aberto da visão; vale fechar junto. | RESPOSTA: `plan-build/`, se não tiver, ele cria e grava lá. SEMPRE definir explicitamente onde o plano deve ser salvo e não ter mais de um plan-build por projeto, exemplo um na raiz, um dentro de cada feature, etc. Deve segregar por feature/microsserviço. MAS podemos estudar isso, se é melhor um plan-build por projeto ou um por feature/microsserviço.
+- **Q8.** A IA propõe a quebra em tasks a partir do SPEC, ou o usuário lista e a IA estrutura? | RESPOSTA: A partir dos docs (ou do SPEC, se disponível)
+
+### 4.1. Sub-estudo: granularidade do `plan-build` (um por projeto vs por feature/microsserviço)
+
+O dono quer **destino explícito e segregação por feature/microsserviço**, sem a bagunça atual
+de `plan-build` espalhado de forma inconsistente. Há duas convenções, e a escolha **deve casar
+com a unidade de rastreio do ADR de enrollment** (`docs/north-discovery-enrollment-ADR.md`) —
+*o que você "pluga" é o que vira um board/projeto no north*:
+
+| Convenção | Como fica | Bom para | Custo |
+|---|---|---|---|
+| **1 `plan-build` na raiz do projeto** | um board; o north já agrupa por subpasta = *feature group* | app único / monólito pequeno | tudo num board só |
+| **1 `plan-build` por feature/microsserviço** | cada serviço plugado é um projeto/board próprio | microsserviços / deploys independentes | mais coisas pra plugar/gerir |
+
+**Recomendação (a granularidade é consequência do que você pluga):** se você plugar a **raiz**
+de um monorepo, o north usa **um `plan-build`** e segrega por subpasta (feature group — *já
+existe* hoje, `discovery.py:66-95`). Se você plugar **cada microsserviço**, cada um é um
+projeto com seu `plan-build`. Regra dura: **um `plan-build` por unidade de rastreio**, nunca
+dois competindo dentro da mesma unidade. Continuar estudando, mas o mecanismo suporta os dois.
 
 ---
 
@@ -145,9 +188,9 @@ Casa com [[north-platform-vision]] e [[north-learning-cert-layer]].
 
 ### Questões em aberto
 - **Q9.** Unidade de estimativa: tempo de calendário (dias) ou esforço (tasks/pontos)? Calendário
-  sofre com férias/paralelo; esforço é mais estável mas exige tradução p/ prazo.
-- **Q10.** "Concluída" para fim de cronômetro = chega em `CLIENTE` ou em `FASE DE TESTES`? (liga na Q1)
-- **Q11.** Amostra mínima para o north arriscar uma estimativa (ex.: < 5 tasks ⇒ só mostra dado bruto)?
+  sofre com férias/paralelo; esforço é mais estável mas exige tradução p/ prazo. | RESPOSTA: Esforço (tasks/pontos) é mais estável e exige tradução p/ prazo, mas calendário sofre com férias/paralelo.
+- **Q10.** "Concluída" para fim de cronômetro = chega em `CLIENTE` ou em `FASE DE TESTES`? (liga na Q1) | RESPOSTA: primeiro `FASE DE TESTES`, depois `CONCLUIDA`.
+- **Q11.** Amostra mínima para o north arriscar uma estimativa (ex.: < 5 tasks ⇒ só mostra dado bruto)? | RESPOSTA: acredito que seja o recomendado como o exemplo de 5 tasks reais dos últimos 90 dias.
 
 ---
 
@@ -173,16 +216,41 @@ Casa com [[north-platform-vision]] e [[north-learning-cert-layer]].
 | **D** | Estimativa básica (cycle time/throughput de git+ledger) exibida no plano/painel | médio | Q9–Q11, A |
 | **E** | (plataforma) board interativo + forecasting agregado | alto | A–D, nuvem |
 
-**Sequência:** fechar dúvidas Q1–Q11 → A → B → C → D. E fica para a plataforma.
+**Sequência:** Q1–Q11 **fechadas** (§1.5) → A → B → C → D. Fatia **E** fica para a plataforma.
+Falta só: o sub-estudo §4.1 (granularidade do `plan-build`, ligado ao ADR de enrollment) e
+**A inclui a regra de Quick Win (§9)** na detecção do wrap-up.
 
 ---
 
 ## 8. Decisões que destravam o próximo passo
 
-1. Responder Q1–Q11 (ou as que você tiver opinião; o resto eu recomendo um default).
-2. Confirmar que colunas são **perfil configurável** (não hardcode que troca pra todos).
-3. Confirmar gravação do plano de sprint (Q7) — junto da decisão #4 em aberto da visão.
+1. Responder Q1–Q11 (ou as que você tiver opinião; o resto eu recomendo um default). | RESPOSTA: respondido
+2. Confirmar que colunas são **perfil configurável** (não hardcode que troca pra todos). | RESPOSTA: confirmado
+3. Confirmar gravação do plano de sprint (Q7) — junto da decisão #4 em aberto da visão. | RESPOSTA: confirmado
 
 Quando isso fechar, eu monto o **plano de execução por squad** (Arquitetura → Backend/engine →
 QA → docs) com paridade nos 3 runtimes. Dogfooding sugerido: gerar este próprio fluxo com o
 `north-doc` quando o tipo `sprint` existir.
+
+## 9. Princípio de rastreio: nada de trabalho fora do radar (Quick Wins)
+
+**Regra do dono:** qualquer alteração no projeto que **não** está traçada numa sprint, o north
+**sempre** deve avisar e oferecer registrá-la — como **task na sprint atual** (se grande/no
+escopo) ou como **Quick Win** (se pequena/avulsa). Nada de mudança não-rastreada.
+*Exemplo:* Sprint 1 = "criar o front de X"; finalizou, mas precisou de um ajuste pequeno →
+registra como Quick Win; ajuste grande → registra como task. O peso do registro segue a
+dificuldade/tamanho da mudança.
+
+**Como cabe no invariante read-only:**
+- **Detectar (read-only):** o north já liga commits↔tasks e tem o sinal de git pessoal. No
+  `/north-wrap-up` ele detecta commits/diffs do dia **que não batem com nenhuma task trackeada**
+  e **cutuca**: *"você mexeu em `Foo.cs` que não está em nenhuma sprint — registrar como task na
+  Sprint atual ou como Quick Win?"*.
+- **Registrar (confirma-pra-escrever):** se você aceitar, o north **escreve com confirmação** —
+  uma task/Quick Win no `plan-build/` (mesmo fluxo do gerador de sprint, §4). Nunca edita
+  silenciosamente; é sempre a IA propondo e você aprovando.
+- **Quick Win = entrada leve trackeada** para trabalho avulso/hotfix que não merece uma task
+  cheia, mas precisa existir no histórico (e alimenta a estimativa da §5).
+
+> Implicação: isto fecha o loop "plano ↔ realidade". A força do north é derivar do trabalho
+> real — esta regra garante que o trabalho real que escapou do plano **volte** pro plano.
