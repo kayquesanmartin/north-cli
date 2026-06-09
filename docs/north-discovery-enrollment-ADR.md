@@ -3,7 +3,7 @@
 > **Status:** Aceito (direção) — 2026-06-09 · pendente de implementação.
 > **Base:** north-cli v0.9.1 · **Decisor:** dono (Kayque) + Tech Lead.
 > **Relacionado:** `docs/north-sprint-planning-STUDY.md` (§4.1 granularidade de `plan-build`),
-> [[north-platform-vision]] (marker para Teams), [[north-readonly-invariant]].
+> [visão da plataforma](north-platform-vision-v2.md) (marker para Teams), o invariante read-only.
 
 ---
 
@@ -34,7 +34,7 @@ um `scan_root` default e já varre** no primeiro uso.
 3. **`north init --shared` (modo Teams) = marker `.north` no projeto.** A MESMA verb, com a flag,
    grava um `.north` versionado na raiz (como `.git`/`.vscode`) — **viaja com o repo**, então o
    time herda o tracking + o `board_profile`/taxonomia de tags do estudo de sprint. É a opção
-   **futura, da fase Teams** ([[north-platform-vision]]); **só ela exige o carve-out do
+   **futura, da fase Teams** ([visão da plataforma](north-platform-vision-v2.md)); **só ela exige o carve-out do
    invariante** (ver Consequências). O `north init` puro (sem flag) nunca escreve no projeto.
 4. **`discovery_mode` configurável: `enrolled` (default) | `scan` (legado).** Quem gosta do
    auto-scan mantém com um setting; não quebramos ninguém.

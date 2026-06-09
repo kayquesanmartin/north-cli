@@ -109,12 +109,12 @@ nada quebra o "100% local por default".
 
 **Memória é o substrato dos outros features já decididos:**
 - a **estimativa aprendida** (estudo de sprint §5) *lê* memória de cycle-time/gotchas;
-- a **plataforma de aprendizado + cert** ([[north-learning-cert-layer]]) é *construída sobre*
+- a **plataforma de aprendizado + cert** é *construída sobre*
   memória — trilhas e prova saem do que foi aprendido/registrado;
-- o **diferencial defensável** da visão ([[north-platform-vision]]) — "aprender do trabalho
+- o **diferencial defensável** da visão ([visão da plataforma](north-platform-vision-v2.md)) — "aprender do trabalho
   real" — **é** o ledger longitudinal de memória. **Sem memória boa, não há moat.**
 
-Cross-links: [[north-learning-ledger]] · [[north-readonly-invariant]] · [[north-sprint-planning-direction]].
+Cross-links: o ledger de aprendizado · o invariante read-only · [estudo de sprint](north-sprint-planning-STUDY.md).
 
 ---
 

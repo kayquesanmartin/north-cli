@@ -173,7 +173,7 @@ north **mede o seu ritmo real** e estima com base nele. Tudo read-only (git + le
 - **Throughput:** tasks concluídas por semana (datas de commit/autoria — já lidas).
 - **Duração histórica de sprint:** quanto sprints parecidas levaram de fato.
 - **Sinal por tag/disciplina:** `[API]` leva, em média, X; `[FRONTEND]`, Y.
-- **Ledger de aprendizado** ([[north-learning-ledger]]): gotchas/bugs recorrentes que
+- **Ledger de aprendizado**: gotchas/bugs recorrentes que
   inflam estimativa naquele tipo de trabalho.
 
 **Como devolve (honesto, sem falsa precisão):**
@@ -185,7 +185,7 @@ north **mede o seu ritmo real** e estima com base nele. Tudo read-only (git + le
 
 **Onde vive:** começa **simples no CLI** (estatística básica de git+ledger, stdlib) e fica
 **rico na plataforma** (Fase 2+: histórico agregado, comparação entre projetos, forecasting).
-Casa com [[north-platform-vision]] e [[north-learning-cert-layer]].
+Casa com [visão da plataforma](north-platform-vision-v2.md) e a camada de aprendizado/cert.
 
 ### Questões em aberto
 - **Q9.** Unidade de estimativa: tempo de calendário (dias) ou esforço (tasks/pontos)? Calendário

@@ -15,12 +15,12 @@
 Produtividade com IA é fácil de medir (tasks/velocidade) — e é o que **todo concorrente já
 mede** (Copilot metrics, DX, LinearB). **Crescimento técnico** quase ninguém mede. O north está
 em posição única porque **já lê seus projetos e já entende seu ritmo** — e a pesquisa de mercado
-([[north-platform-vision]]) confirmou o gap: Workera/Pluralsight inferem skill de *provas*, não
+([visão da plataforma](north-platform-vision-v2.md)) confirmou o gap: Workera/Pluralsight inferem skill de *provas*, não
 do *trabalho real*; Copilot mede *uso*, não *crescimento*.
 
 **Decisão proposta:** adotar isso como o **slogan/norte** do north — o diferencial que organiza
 Solo, Teams e a camada de aprendizado/cert. "As outras ferramentas te deixam mais rápido; o
-north te deixa melhor." Recomendo threadar isso no topo de [[north-platform-vision]].
+north te deixa melhor." Recomendo threadar isso no topo de [visão da plataforma](north-platform-vision-v2.md).
 
 ---
 
@@ -28,9 +28,9 @@ north te deixa melhor." Recomendo threadar isso no topo de [[north-platform-visi
 
 | # | Ideia do dono | Status | Onde já vive / vai viver |
 |---|---|---|---|
-| 1 | **DECISIONS.md vivo** (o *porquê*, não o *quê*) | **Projeção nova de algo decidido** | memória `project` ([[north-memory-research-direction]]) + ledger (`learnings.py`) + ADR do `north-doc`. Novo = a **projeção em arquivo legível** que serve de contexto p/ IA e p/ você. |
+| 1 | **DECISIONS.md vivo** (o *porquê*, não o *quê*) | **Projeção nova de algo decidido** | memória `project` ([estudo de memória & pesquisa](north-memory-and-research-STUDY.md)) + ledger (`learnings.py`) + ADR do `north-doc`. Novo = a **projeção em arquivo legível** que serve de contexto p/ IA e p/ você. |
 | 2 | **/north-handoff + /north-resume** (sessão↔sessão) | **GENUINAMENTE NOVO** | memória de **continuidade de sessão** — não existe (north só tem morning/wrap-up). |
-| 3 | **Modo de aprendizado** (resolve *com* você) + perfil de lacunas | **JÁ EXISTE + decidido** | `/north-learn` (mentor) + "cérebro do usuário" cross-project ([[north-memory-research-direction]]). |
+| 3 | **Modo de aprendizado** (resolve *com* você) + perfil de lacunas | **JÁ EXISTE + decidido** | `/north-learn` (mentor) + "cérebro do usuário" cross-project ([estudo de memória & pesquisa](north-memory-and-research-STUDY.md)). |
 | 4 | **Detector de dependência da IA** (espelho) | **GENUINAMENTE NOVO** | métrica nova; encarna a tese §0. Ver tensões §3. |
 | 5 | **CONTEXT.md / briefing vivo** (stack, convenções, "não faça isso porque") | **Projeção nova de algo decidido** | mesma base do #1 (memória `project` projetada em arquivo); serve forte o **dev manual**. |
 | 6 | **Estimativa honesta vs otimista** (fator de otimismo) | **ESTENDE o que está planejado** | estimativa aprendida (estudo de sprint §5) + **novo: loop estimativa-vs-real** (calibração pessoal). |
@@ -51,7 +51,7 @@ Memória de continuidade: ao pausar, registra **o que eu tentava, o que falhou, 
 read-only** (git): working tree, branch, últimos commits, arquivos tocados. O que precisa de
 **cognição/confirmação** (a IA escreve, você confirma): "o que eu tentava / o que não funcionou /
 próximo passo". Guarda em `~/.north` (ou projeção em arquivo — ver §3). É um **caso do sistema de
-memória** ([[north-memory-research-direction]]), não um subsistema novo.
+memória** ([estudo de memória & pesquisa](north-memory-and-research-STUDY.md)), não um subsistema novo.
 
 ### 2.2. Detector de dependência da IA (#4) — o mais original e o mais delicado
 Espelho, não julgamento: ao longo do tempo, que **tipos de problema** você para e pede ajuda vs
@@ -62,7 +62,7 @@ resolve sozinho. É a métrica que materializa a tese §0. **Mas tem dois proble
 - **Espelho ≠ vigilância:** no **Solo** é um espelho **do dev, para o dev** (ótimo). No
   **Teams/Enterprise** isso **não pode** virar métrica de gestor — seria a vigilância que a visão
   promete não ser. Guardrail: **dado do dev, controlado pelo dev**; nunca exposto ao gestor sem
-  consentimento explícito. É o princípio "crescimento, não monitoramento" ([[north-learning-cert-layer]]).
+  consentimento explícito. É o princípio "crescimento, não monitoramento".
 
 ### 2.3. Calibração estimativa-vs-real (#6)
 Estende a estimativa do estudo de sprint: pede uma estimativa **na criação da task**, mede o
@@ -88,10 +88,10 @@ gerados/atualizados com confirmação. Decisão pendente: **onde gravam** (§3).
   invariante:** escrever DECISIONS/CONTEXT no projeto **não exige carve-out novo** — segue o
   precedente já aceito do `north-doc` (escreve **arquivo novo com confirmação**; o invariante
   proíbe editar os *planos* do usuário em silêncio, não criar docs consentidos). Só o marker
-  `.north` da [[north-discovery-enrollment]] (config de engine, silenciosa) é que pede o carve-out.
+  `.north` da [ADR de enrollment](north-discovery-enrollment-ADR.md) (config de engine, silenciosa) é que pede o carve-out.
 - **T2 — Espelho vs vigilância (#4).** Resolvido por princípio: Solo = espelho do dev; Teams =
   nunca métrica de gestor sem consentimento. Ratificar junto da decisão M7 (privacidade) do
-  [[north-memory-research-direction]].
+  [estudo de memória & pesquisa](north-memory-and-research-STUDY.md).
 - **T3 — Viabilidade de medição (#4 e #6).** O north infere muito de git (commits, autoria,
   cycle-time) read-only — mas "pedi ajuda à IA" e "o que eu tentei" precisam de fonte explícita
   (hook/registro). Ser **honesto sobre o que é inferível vs o que precisa de sinal** — nunca
@@ -103,10 +103,10 @@ gerados/atualizados com confirmação. Decisão pendente: **onde gravam** (§3).
 
 | Destino | Absorve |
 |---|---|
-| [[north-memory-research-direction]] (estudo de memória) | #1, #2, #4, #5, #7-perfil — todos são *memória* (projeto / sessão / cérebro do usuário) |
+| [estudo de memória & pesquisa](north-memory-and-research-STUDY.md) (estudo de memória) | #1, #2, #4, #5, #7-perfil — todos são *memória* (projeto / sessão / cérebro do usuário) |
 | Estudo de sprint §5 (estimativa) | #6 (calibração estimativa-vs-real) |
 | Skills que já existem | #3 `/north-learn`, #7 `/north-review` — só ganham o gancho com o perfil |
-| [[north-platform-vision]] | a **tese §0** como norte/headline |
+| [visão da plataforma](north-platform-vision-v2.md) | a **tese §0** como norte/headline |
 
 Ou seja: o brainstorm **não cria 7 features** — ele **valida e enriquece 2 fundações + 2 skills**,
 e dá ao produto um **norte**.

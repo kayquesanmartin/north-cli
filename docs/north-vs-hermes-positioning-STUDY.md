@@ -25,7 +25,7 @@ sendo os agentes que executam. (Resolve D-H1 e D-H3 abaixo.)
 
 A visão de **ferramenta viva que aprende** está **certa**, e o Hermes a **valida**: o recurso
 nº1 que tornou o Hermes popular é exatamente **memória persistente + autoaperfeiçoamento** ("o
-agente que não esquece quem você é"). É a mesma aposta do north (memória, [[north-growth-thesis]]).
+agente que não esquece quem você é"). É a mesma aposta do north (memória, [tese de crescimento](north-growth-thesis-STUDY.md)).
 
 **Mas há um fork de identidade — e é a coisa mais importante deste documento:**
 
@@ -44,7 +44,7 @@ em cima de agentes** — read-only, local-first, stdlib, dentro do runtime (Clau
 Se o north tentar **ser o agente autônomo** (executar, ter poderes amplos, auto-skills,
 auto-install), ele:
 
-- **Quebra o invariante read-only** ([[north-readonly-invariant]]) — execução autônoma = agir/
+- **Quebra o invariante read-only** — execução autônoma = agir/
   escrever no ambiente do usuário.
 - **Quebra stdlib-only / "motor não raciocina"** — precisaria *ser* ou embutir um LLM.
 - **Herda toda a superfície de ataque do Hermes** — que o próprio estudo da Invista gasta **5
@@ -52,7 +52,7 @@ auto-install), ele:
   memória, skill maliciosa de marketplace, leitura ampla de arquivos (chaves/credenciais),
   fronteira de confiança do MCP, o padrão root/YOLO dos tutoriais.
 
-Para um produto cuja bandeira é **"privacidade por design"** ([[north-platform-vision]]),
+Para um produto cuja bandeira é **"privacidade por design"** ([visão da plataforma](north-platform-vision-v2.md)),
 virar um agente autônomo de poderes amplos é andar **na direção oposta** da marca. O estudo
 da Invista é literal: rodar o agente "cru" é **risco inaceitável**; o valor está em **arquitetar
 em volta de dados hostis** — gateway separado da execução, não-root, aprovação ativa, memória
@@ -81,7 +81,7 @@ funciona sobre Claude Code, Codex, Gemini **e** um Hermes endurecido.
 > varrendo autônomo, sem supervisão, todo o seu histórico entre plataformas). Em ambiente
 > regulado é a superfície de risco a evitar. A memória/pesquisa do north é **opt-in, escopada,
 > com aprovação** — nunca autônoma e transversal sem consentimento (M1/M3/M7 do
-> [[north-memory-research-direction]]).
+> [estudo de memória & pesquisa](north-memory-and-research-STUDY.md)).
 
 ---
 
@@ -104,7 +104,7 @@ camada de memória + governança + aprendizado **por cima** dele e dos outros ag
 ## 4. Hermes é um presente para o design de memória do north
 
 O modelo de memória do Hermes resolve, na prática, a **maior lacuna técnica** que tínhamos em
-aberto (M5 — dedup/decay, [[north-memory-research-direction]]):
+aberto (M5 — dedup/decay, [estudo de memória & pesquisa](north-memory-and-research-STUDY.md)):
 
 - **Teto de tamanho intencional** em `MEMORY.md`/`USER.md` → **força curadoria**, remove o
   irrelevante, evita o "inchaço" que deixa agentes lentos. (É exatamente o "bounded" que o
@@ -135,7 +135,7 @@ do Hermes, lotado e arriscado). O wedge do north é o que o estudo diz que **fal
 
 Isso é **mais defensável** que competir com frameworks de agente: ninguém está fazendo a camada
 de *observabilidade + aprendizado + governança, com privacidade por design*, sobre o trabalho
-real dos agentes. É a tese de [[north-platform-vision]] aplicada a um mundo multi-agente.
+real dos agentes. É a tese de [visão da plataforma](north-platform-vision-v2.md) aplicada a um mundo multi-agente.
 
 ---
 
@@ -153,4 +153,4 @@ real dos agentes. É a tese de [[north-platform-vision]] aplicada a um mundo mul
 
 > Se as 3 primeiras forem "sim", isto **reforça** tudo que já decidimos (memória, pesquisa
 > opt-in, tese de crescimento, dois produtos) — só dá um **nome de camada** preciso ao north e
-> impede a deriva de identidade para "agente autônomo". Threadar em [[north-platform-vision]].
+> impede a deriva de identidade para "agente autônomo". Threadar em [visão da plataforma](north-platform-vision-v2.md).
