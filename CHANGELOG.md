@@ -6,6 +6,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+- **Instalação não varre mais o disco — onboarding por enrollment.** Fecha o ciclo do `north init`:
+  o instalador (`install.py` e o `npx north-cli`) **não pergunta mais a pasta dos projetos nem
+  semeia `scan_root`/auto-varre** no primeiro uso. Em vez disso, onboarda com *"plugue um projeto:
+  `north init` na raiz"* — o north passa a rastrear só o que você plugar. **Retrocompatível:** quem
+  já tinha `scan_roots` na config segue no modo `scan`; um `--scan-root <pasta>` explícito ainda
+  força o scan. O painel nasce no primeiro `north init`/uso (sem build vazio na instalação).
+
 ## [0.11.0] - 2026-06-09
 
 ### Changed
