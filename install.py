@@ -63,23 +63,6 @@ def claude_home() -> Path:
     return Path.home() / ".claude"
 
 
-def detect_scan_root() -> Path:
-    """Raiz do workspace a rastrear. Cross-contexto (clone, npm global, npx):
-      1. o diretorio atual onde o usuario invocou (caso npx/terminal — o mais comum);
-      2. se invocado de DENTRO do proprio pacote/repo do north, sobe um nivel
-         (clone: .../<workspace>/north/install.py -> workspace).
-    O scan_root e apenas ANEXADO a config (nunca substitui), entao e seguro."""
-    here = Path(__file__).resolve().parent
-    try:
-        cwd = Path.cwd().resolve()
-    except Exception:
-        return here.parent
-    # rodando de dentro do pacote (ex.: node_modules/north-cli, ou o proprio repo)
-    if cwd == here:
-        return here.parent
-    return cwd
-
-
 def copy_engine(home: Path):
     engine = home / "painel"
     # limpa apenas o codigo (preserva config/output/resumos do usuario)
@@ -134,8 +117,12 @@ def seed_config(engine: Path, scan_root: Path, extra_root: str = None):
     else:
         data = {"scan_roots": [], "exclude": [], "projects": {}, "settings": {}}
 
+    # Modelo enrolled (default): sem scan_root, o north rastreia só o que for
+    # plugado com `north init`. Só semeia scan_roots se um root explícito vier
+    # (--scan-root) ou se a config legada já tinha (preservados aqui).
     roots = data.setdefault("scan_roots", [])
-    for r in [str(scan_root)] + ([extra_root] if extra_root else []):
+    candidates = ([str(scan_root)] if scan_root else []) + ([extra_root] if extra_root else [])
+    for r in candidates:
         if r and r not in roots:
             roots.append(r)
 
@@ -492,35 +479,22 @@ def main():
         print("  config         -> migrada de ~/.claude/painel (preservada)")
     print("  motor          -> {}".format(tool_home))
 
-    # ---- scan root (pasta dos projetos) ----
-    scan_root = Path(extra_root).expanduser() if extra_root else detect_scan_root()
-    if sys.stdin.isatty() and not auto_all and not extra_root:
-        print("")
-        print("  Onde ficam seus projetos? O north varre essa pasta (e subpastas)")
-        print("  atras de projetos com plan-build/ ou .planning/.")
-        print("  Dica: aponte para a pasta-raiz que contem todos os seus repos.")
-        print("  Exemplos: ~/code  ~/projetos  ./workspace   (Enter = sugestao)")
+    # ---- descoberta: enrollment opt-in (default) ----
+    # Não varre o disco na instalação. Você pluga os projetos com `north init`
+    # na raiz de cada um. Um --scan-root explícito (ou config legada) mantém o
+    # modo scan. Quem já usava (scan_roots na config) é preservado.
+    scan_root = Path(extra_root).expanduser() if extra_root else None
+    if scan_root and not scan_root.exists():
         try:
-            ans = input("  Pasta dos projetos [{}]: ".format(scan_root)).strip().strip('"').strip("'")
-        except (EOFError, KeyboardInterrupt):
-            ans = ""
-        if ans:
-            scan_root = Path(ans).expanduser()
-        if not scan_root.exists():
-            try:
-                yn = input("  '{}' nao existe. Criar agora? [S/n]: ".format(scan_root)).strip().lower()
-            except (EOFError, KeyboardInterrupt):
-                yn = ""
-            if yn in ("", "s", "sim", "y", "yes"):
-                try:
-                    scan_root.mkdir(parents=True, exist_ok=True)
-                    print("  (criada: {})".format(scan_root))
-                except Exception as e:
-                    print("  (nao consegui criar: {} — registrando assim mesmo)".format(e))
-            else:
-                print("  (registrando '{}' sem existir — crie depois)".format(scan_root))
+            scan_root.mkdir(parents=True, exist_ok=True)
+            print("  (criada: {})".format(scan_root))
+        except Exception as e:
+            print("  (nao consegui criar {}: {} — registrando assim mesmo)".format(scan_root, e))
     cfg_path = seed_config(tool_home, scan_root)
-    print("  scan root      -> {}".format(scan_root))
+    if scan_root:
+        print("  descoberta     -> scan (scan_root: {})".format(scan_root))
+    else:
+        print("  descoberta     -> enrollment (plugue com `north init` na raiz de um projeto)")
 
     pyexe = sys.executable
 
@@ -592,7 +566,15 @@ def main():
     elif want_path and scope == "local":
         print("  terminal       -> PATH so e configurado no escopo global (pulei no local)")
 
-    if do_build:
+    # build só se há algo a rastrear (scan_roots ou projetos plugados) — numa
+    # instalação enrolled limpa não há o que varrer; o painel nasce no 1o init/uso.
+    has_targets = False
+    try:
+        _d = json.loads(Path(cfg_path).read_text(encoding="utf-8"))
+        has_targets = bool(_d.get("scan_roots") or _d.get("enrolled"))
+    except Exception:
+        pass
+    if do_build and has_targets:
         sys.path.insert(0, str(tool_home))
         try:
             from painel.cli import main as cli_main  # noqa
@@ -606,6 +588,10 @@ def main():
         ", ".join(RT.RUNTIMES[t][0] for t in targets)))
     print("=" * 64)
     print("")
+    if not scan_root:
+        print("  ① Plugue um projeto (na raiz dele): /north-init   (ou: north init)")
+        print("     O north passa a rastrear SÓ o que você plugar — read-only, nada é escrito no projeto.")
+        print("")
     print("  ▶ Comece agora, DENTRO da sua IA (é onde o north vive):")
     if "claude" in targets:
         print("      Claude Code   digite  /north-focus   (depois: /north-morning · /north-panel)")
@@ -618,10 +604,10 @@ def main():
     print("            (todos viram /north-<cmd> na sua IA; /north:<cmd> no Gemini)")
     print("")
     if want_path and scope == "global":
-        print("  Terminal: north status · north config add-root \"<pasta>\"  (novo terminal)")
+        print("  Terminal: north init  (na raiz de um projeto) · north status · north panel  (novo terminal)")
     else:
         print("  Terminal (opcional): habilite com  python install.py --add-to-path")
-        print("            depois: north status · north panel · north config add-root \"<pasta>\"")
+        print("            depois: north init  (na raiz do projeto) · north status · north panel")
     print("  Config: {}".format(cfg_path))
     if sl_status in ("set", "forced", "updated"):
         print("  ↻ Reinicie o Claude Code para a statusline aparecer.")
