@@ -46,7 +46,7 @@ não consegue replicar o seu histórico nem a confiança da marca).
 
 ```
                     NUVEM north (opt-in, criptografada)
-        API .NET 8 · web Next.js · multi-tenant · auth · Postgres
+        API .NET 10 LTS · web Next.js · multi-tenant · auth · Postgres
                  ▲ sync granular, consentido, auditável
    ┌─────────────┴──────────────┐
    │  AGENTE LOCAL (a CLI evolui)│  discovery · git · docs · learnings · insights
@@ -125,9 +125,10 @@ portável, e ele a leva ao trocar de emprego.
 
 ## 5. Arquitetura (mantém a v1, com adendos)
 
-Mantém a stack da v1 — **agente Python + `north sync`; API .NET 8 (ASP.NET Core); web Next.js;
-OAuth2/OIDC (Entra ID + GitHub); PostgreSQL multi-tenant; Docker em cloud gerenciada.** O
-dashboard local (HTML estático) continua para offline. Adendos da v2:
+Mantém a stack da v1 — **agente Python + `north sync`; API .NET 10 LTS (ASP.NET Core); web
+Next.js; OAuth2/OIDC (Entra ID + GitHub); PostgreSQL multi-tenant; Docker em cloud gerenciada.**
+O dashboard local (HTML estático) continua para offline. **`.NET 10` é LTS (nov/2025) — default
+para projeto novo iniciando em 2026; o `.NET 8` da v1 estava desatualizado.** Adendos da v2:
 
 - **Serviço de credenciais** que emite **Open Badges 3.0 / W3C VC** (assinatura do issuer).
 - **Modelo de skills** (taxonomia leve) que mapeia *conceitos do ledger/insights → skills →
@@ -136,6 +137,39 @@ dashboard local (HTML estático) continua para offline. Adendos da v2:
   (skills/conceitos/prova). Nunca acoplados.
 - **`north scan`** (persona manual): comando read-only que deriva sinal de git+código sem IA,
   alimentando trilha/skills. Reusa o discovery existente.
+
+### 5.1 — Estrutura de repositórios (open-core: a fronteira que importa é a licença, não "1 repo por produto")
+
+O instinto de **separar a plataforma do `north-cli` está certo** — mas a granularidade certa
+é **2 repositórios, não 3.** O erro a evitar: **Solo e Teams/Enterprise NÃO são dois produtos
+separados** — são a **mesma plataforma** com features de governança (RBAC, SSO, multi-tenant,
+self-host) **gated por edição**. Eles compartilham ~80% do código (modelo de dados, auth, API,
+design system). Separá-los em repos distintos duplica tudo isso e cria *cross-repo version hell*.
+
+> **Lição da indústria:** a GitLab rodou `CE` e `EE` em **repos separados** por anos — virou um
+> inferno de cherry-pick — e em 2019 **fundiu tudo num repo só**, com as features EE gated no
+> mesmo codebase. Sentry segue o mesmo padrão (repo único, open-core via **licença**, não via
+> split de repo). A fronteira open-core é a **licença/visibilidade**, não a contagem de repos.
+
+**Recomendação (2 repos):**
+
+| Repo | Visibilidade / licença | Conteúdo | Stack |
+|---|---|---|---|
+| **`north-cli`** (já existe) | público · **MIT** | o **núcleo aberto**: agente/engine local, discovery, docs, TDD, insights, ledger. Inalterado. | Python stdlib |
+| **`north-platform`** (novo) | privado ou *source-available* (ex.: **BSL**) | a **nuvem**, em **monorepo**: `apps/api` (.NET 10 LTS), `apps/web` (Next.js+TS), `packages/shared` (contratos/design system). **Solo e Teams/Enterprise são EDIÇÕES aqui**, não repos. | .NET 10 + Next.js |
+
+- **Enterprise não é um repo** — é a mesma `north-platform` com features ligadas por edição/licença.
+  **Self-host/on-prem** é uma **variante de empacotamento** (Docker Compose / Helm chart), no máximo
+  um repo fininho `north-deploy` para IaC/artefatos on-prem **depois** — nunca um fork de código.
+- **Integração CLI ↔ plataforma é por contrato, não por código compartilhado:** o agente (Python)
+  e a nuvem (.NET/TS) conversam pelo **schema versionado do `north sync`** (payload de metadado /
+  learning-data). Esse contrato é o único acoplamento — linguagens diferentes, fronteira limpa.
+- **Quando um repo enterprise separado se justificaria?** Só se o enterprise divergir a ponto de
+  não poder compartilhar (air-gapped extremo, build de compliance totalmente distinto). Mesmo aí,
+  prefira *build flags* a fork. Atravessar essa ponte só quando um contrato real exigir.
+
+**Resumo:** ✅ novo repo para a plataforma (fronteira OSS↔comercial limpa). ❌ repo separado para
+o enterprise — ele é uma **edição** da plataforma, não outro produto.
 
 ---
 
@@ -160,7 +194,7 @@ Herdadas da v1 e ainda válidas:
 1. **Foco inicial:** Solo primeiro (recomendado) ✔ ou ir direto ao caso empresa?
 2. **O que sobe na Fase 1:** confirmar **só metadado** (learning-data fica para a Fase 2, canal próprio).
 3. **Open-core:** confirmar CLI local OSS/MIT e grátis para sempre.
-4. **Stack:** .NET 8 + Next.js + Postgres — confirma?
+4. **Stack:** **.NET 10 LTS** + Next.js + Postgres — confirma?
 5. **Posicionamento:** "privacidade por design" como bandeira (table-stakes) + **"aprendizado do
    trabalho real" como diferencial central** — fecha?
 6. **Nome/edições:** north (OSS) · north Cloud · north Teams · north Enterprise — fecha?
@@ -170,6 +204,8 @@ Novas, trazidas pela v2:
 8. **Prova:** adotar **Open Badges 3.0 / W3C VC** como padrão de certificado — confirma?
 9. **Cert-prep:** começar só **map+recomenda+gap** (read-only, barato) e adiar conteúdo — ok?
 10. **Dev manual / `north scan`:** tratar como on-ramp transversal pós-Solo (recomendado) ou priorizar?
+11. **Repositórios (§5.1):** confirmar **2 repos** — `north-cli` (MIT, núcleo) + `north-platform`
+    (monorepo, Solo+Enterprise como **edições**) — em vez de 3 (enterprise como repo separado)?
 
 ---
 
