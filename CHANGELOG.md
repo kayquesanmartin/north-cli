@@ -6,6 +6,15 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+- **Learning ledger agora é memória BOUNDED (dedup + curadoria, padrão Hermes).** O ledger de
+  aprendizado (`north learnings`) deixou de só acumular: ao salvar, **deduplica** near-duplicates
+  (mesmo tipo + texto muito parecido, por similaridade de tokens), **reaproveita o que volta**
+  (em vez de duplicar, refresca a data e a recência — o que é reusado "sobrevive" mais) e mantém
+  um **teto por projeto** (`LEDGER_CAP`, evicta os mais antigos) — pra a memória não inchar nem
+  apodrecer. Novo `north learnings prune <project>` cura ledgers já existentes (dedup + teto).
+  Stdlib, sem ML; escreve só em `~/.north`.
+
 ### Added
 - **Enrollment opt-in (`north init` / `/north-init`).** Em vez de auto-varrer todas as pastas dos
   `scan_roots`, agora você **pluga** os projetos que quer acompanhar: `north init` na raiz registra
