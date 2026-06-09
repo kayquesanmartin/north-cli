@@ -40,7 +40,8 @@ dele (`~/.north`, dashboard, inbox) e em arquivos novos **com confirmação** do
 > As perguntas Q1–Q11 e a §8 foram respondidas inline pelo dono. Resumo travado:
 
 - **Colunas (Q1–Q3):** **sem `CLIENTE`.** As 4 colunas de fluxo são **DESENVOLVER ·
-  FASE DE DESENVOLVIMENTO · FASE DE TESTES · CONCLUÍDO**; **IMPEDIMENTO = flag**.
+  FASE DE DESENVOLVIMENTO · FASE DE TESTES · CONCLUÍDO**; **IMPEDIMENTO = flag**. Uma task só
+  chega a **CONCLUÍDO depois de passar pela FASE DE TESTES + code-review** (é o DoD da coluna).
 - **Colunas = perfil configurável** (não hardcode que troca pra todos). ✔
 - **Tags (Q4–Q6):** alimentam **filtro/visual E a sugestão de squad** no `/north-focus`;
   **paleta fixa determinística por nome**; **há conflito visual** com a tag de feature no card
@@ -68,8 +69,8 @@ Confirmado com o dono: **IMPEDIMENTO = flag** (mantém o estágio). Logo, **4 co
 |---|---|---|---|
 | 1 | **DESENVOLVER** | a fazer / backlog priorizado, não começou | `Planejado` |
 | 2 | **FASE DE DESENVOLVIMENTO** | em codificação ativa (WIP) | `Em Andamento` |
-| 3 | **FASE DE TESTES** | código pronto, em teste/review/QA | `Código Completo` |
-| 4 | **CONCLUÍDO** | entregue / finalizado | `Concluído` (≈) |
+| 3 | **FASE DE TESTES** | código pronto, em **testes + code-review** | `Código Completo` |
+| 4 | **CONCLUÍDO** | entregue/finalizado — **só após testes + code-review aprovados** (DoD) | `Concluído` (≈) |
 | — | **⛔ IMPEDIMENTO** | *flag* ortogonal: bloqueada, fica no estágio, realçada | `blocked=True` (já existe) |
 
 **Decisão de arquitetura importante — colunas viram PERFIL configurável, não hardcode.**
