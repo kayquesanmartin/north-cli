@@ -1,12 +1,29 @@
 # SPEC — north como copiloto de SDLC com IA
 
-> Status: **DRAFT para aprovação** · Autor: tech-lead session · Data: 2026-06-08
+> Status: **IMPLEMENTADO** — todos os pilares A–E entregues e shippados.
+> Autor: tech-lead session · Criado: 2026-06-08 · Fechado: 2026-06-10
 > Escopo: evolução do north de "painel + rituais" para um copiloto que ajuda a
 > **planejar, documentar, testar e aprender** ao longo do desenvolvimento com IA.
 
 Este documento consolida o pedido original do #4 (fábrica de docs) + três ideias
 novas: **TDD-first obrigatório**, **base de conhecimento curada** e **aprendizado
 contínuo (estilo Hermes)**.
+
+## Status de implementação (2026-06-10)
+
+Todos os pilares foram entregues (north 0.8 → 0.11+). Esta SPEC passa a ser
+**registro histórico** — o comportamento canônico vive nas skills + `CMDSPEC`.
+
+| Pilar | Entregue como | Desde | Notas |
+|---|---|---|---|
+| **A** — Fábrica de docs | `/north-doc` (PRD·SPEC·SDD·TDD·ADR·SECURITY·CONTEXT·DECISIONS·sprint) + `/north-grill` (sabatina) | 0.8; sprint/grill em jun/26 | grava em `plan-build/` por padrão (idempotente) |
+| **B** — TDD-first | `/north-dev` + `north task` | 0.8 | default ON (`tdd_default off` desliga) |
+| **C** — Base de conhecimento | `references/compendium/` + `references/concepts/` + `/north-library` | 0.8 | + catálogos de libs (`dotnet-libs`/`js-libs`) |
+| **D** — Aprendizado contínuo | `/north-learnings` (ledger bounded) | 0.9 (bounded 0.11) | captura no wrap-up, devolve no bom-dia |
+| **E** — Insights passivos | `/north-insight` + `insight check/record/log` | 0.9 | ensina conceitos **e libs/frameworks** |
+
+Extra (fora da SPEC): statusline enriquecida (WIP/branch/staleness) + 1ª suíte de
+testes do engine + CI. O polish restante vive no backlog do repo, não aqui.
 
 ---
 
@@ -186,7 +203,8 @@ Depois de escrever código numa sessão, a IA:
 | **5** | D: ledger de aprendizado (captura no wrap-up/note + devolve no morning) | médio | — |
 | **6** | E: insights passivos (`/north-insight` + `north insight check/record/log` + ledger .md) | médio | C, D |
 
-Tudo respeita: engine read-only, stdlib-only/3.8, paridade 3 runtimes, sem copyright.
+✅ **Todas as 6 fases entregues** (ver "Status de implementação" no topo).
+Tudo respeitou: engine read-only, stdlib-only/3.8, paridade 3 runtimes, sem copyright.
 
 ---
 
@@ -196,5 +214,6 @@ Tudo respeita: engine read-only, stdlib-only/3.8, paridade 3 runtimes, sem copyr
 2. **Ledger = automático com triagem** (wrap-up propõe, nada entra sem confirmar). (Pilar D)
 3. **Ordem de implementação:** **Fase 1 primeiro** (detectar + linkar docs no painel),
    depois 2 (references) → 3 (TDD-first) → 4 (gerador) → 5 (ledger).
-4. _Em aberto:_ onde o `/north-doc` grava por padrão (`plan-build/` vs `docs/` vs perguntar)
-   — decidir ao chegar na Fase 4.
+4. **Resolvido (Fase 4):** o `/north-doc` grava em **`plan-build/<tipo>-<alvo>.md`** por
+   padrão (confirma o caminho com o usuário; idempotente). Os docs **vivos**
+   (CONTEXT/DECISIONS) vão na **raiz** do projeto.
