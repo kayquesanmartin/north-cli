@@ -588,7 +588,9 @@ def cmd_status(home: Path):
 _DOC_CORE = ["PRD", "SPEC", "SDD", "TDD", "ADR", "SECURITY"]
 # Docs "vivos" (briefing + porquê), gravados na raiz do projeto, fora do gap SDLC.
 _DOC_LIVING = ["DECISIONS", "CONTEXT"]
-_DOC_ALL = _DOC_CORE + _DOC_LIVING
+# Planos (não-docs): geram Sprint*.md no plan-build, lidos pelo kanban — fora do gap SDLC.
+_DOC_PLANS = ["SPRINT"]
+_DOC_ALL = _DOC_CORE + _DOC_LIVING + _DOC_PLANS
 
 
 def _doc_template_path(home: Path, tipo: str):
@@ -665,6 +667,8 @@ def cmd_doc(home: Path, cfg, projects, args):
         print("SDLC:    {}".format(", ".join(t.lower() for t in _DOC_CORE)))
         print("vivos:   {}  (briefing + porquê, na raiz do projeto)".format(
             ", ".join(t.lower() for t in _DOC_LIVING)))
+        print("planos:  {}  (gera Sprint*.md no plan-build, lido pelo kanban)".format(
+            ", ".join(t.lower() for t in _DOC_PLANS)))
         print("gere com /north-doc <tipo> [alvo]  ·  esqueleto: north doc template <tipo>")
         return 0
     proj_filter = args[1] if len(args) > 1 else None

@@ -1,6 +1,6 @@
 ---
 name: north-doc
-description: north — Gera docs de SDLC (PRD, SPEC, SDD, TDD, ADR, SECURITY) e docs vivos (CONTEXT, DECISIONS) ancorado no contexto real do projeto e na biblioteca de referências. A IA redige sob sua direção; o motor é read-only. Ative para "/north-doc", "gera o PRD", "escreve a spec", "cria um ADR", "documenta a arquitetura (SDD)", "plano de testes (TDD)", "modelo de ameaças", "cria o CONTEXT", "registra a decisão (DECISIONS)".
+description: north — Gera docs de SDLC (PRD, SPEC, SDD, TDD, ADR, SECURITY), docs vivos (CONTEXT, DECISIONS) e planos de sprint (Sprint*.md lido pelo kanban) ancorado no contexto real do projeto e na biblioteca de referências. A IA redige sob sua direção; o motor é read-only. Ative para "/north-doc", "gera o PRD", "escreve a spec", "cria um ADR", "documenta a arquitetura (SDD)", "plano de testes (TDD)", "modelo de ameaças", "cria o CONTEXT", "registra a decisão (DECISIONS)", "planeja o sprint", "quebra em tasks (sprint)".
 allowed-tools: Bash, Read, Grep, Glob, Edit, Write, WebSearch, WebFetch
 argument-hint: "<tipo> [alvo]   ex.: spec checkout | adr \"escolha do banco\""
 ---
@@ -18,6 +18,9 @@ SECURITY) com qualidade consistente. **A IA redige; você dirige.** O motor do n
 `context` (briefing de 15 min: stack/versões, convenções, entidades, "não faça isso porque") ·
 `decisions` (log vivo do **porquê** das escolhas — mais leve que ADR). Servem de **contexto
 inicial** pra uma sessão de IA e pro dev manual. Um por projeto/unidade de rastreio.
+**Planos:** `sprint` — gera um `Sprint*.md` **no `plan-build/`** (um por feature/microsserviço),
+no formato que o **painel lê de volta** (vira kanban + contrato de cada task). Quebra em tasks a
+partir dos docs (PRD/SPEC). Ver o fluxo dedicado abaixo.
 
 Sem tipo? Mostre os gaps do projeto e pergunte qual:
 ```bash
@@ -53,8 +56,26 @@ python3 ~/.north/run.py doc list        # detectados vs faltando, por projeto
    - Cross-link: SDD referencia PRD/SPEC; TDD referencia SPEC; mencione ADRs. O `/north-wrap-up`
      pode propor atualizar `CONTEXT.md`/`DECISIONS.md` quando surgir convenção/decisão nova.
 
+## Fluxo do `sprint` (planejar a partir dos docs)
+Depois dos docs, o `/north-doc sprint` ajuda a **quebrar o trabalho em um sprint** que o painel
+lê de volta (kanban + contrato de cada task):
+1. **Ancore nos docs:** leia o **SPEC** (se houver) ou o PRD/SDD para derivar o escopo. A IA
+   **propõe** a quebra em tasks; o usuário ajusta.
+2. **Esqueleto:** `python3 ~/.north/run.py doc template sprint` — siga o formato (Meta/Objetivo,
+   tabela de tasks, contrato `Builder entrega:`/`Evaluator valida:`, DoD, pré-leitura).
+3. **Convenções (lidas pelo painel):** status válidos `Planejado · Em Andamento · Código
+   Completo · Concluído · ⛔ Bloqueada` (impedimento é **flag**, não coluna); **tags de
+   disciplina** no início da descrição (`[ANALISE] [API] [FRONTEND/UI/UX] [PESQUISA]` — sugerem o
+   squad). Cada `Evaluator valida:` deve ser **testável**. **DoD:** uma task só vai a `Concluído`
+   após **testes + code-review**.
+4. **Grave em `plan-build/`** (ou `plan-build/<feature>/`), **um por feature/microsserviço** —
+   nunca dois competindo na mesma unidade. Confirme o caminho. Idempotente: atualize sem duplicar.
+5. **Estimativa de prazo:** não chute — o north aprende do histórico real (git + ledger). Ofereça
+   faixa honesta quando houver amostra; senão, diga que é palpite fraco.
+
 ## Encadeamento natural
-PRD → SPEC → (SDD + TDD) → código (`/north-dev`, TDD-first usa o SPEC/TDD) → SECURITY/ADR conforme decisões.
+PRD → SPEC → (SDD + TDD) → **sprint** (quebra em tasks) → código (`/north-dev`, TDD-first usa o
+SPEC/TDD) → SECURITY/ADR conforme decisões.
 
 ## Regras de ouro
 - **Read-only sobre os planos do usuário** no nível do MOTOR; o arquivo novo é escrito por
