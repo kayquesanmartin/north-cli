@@ -762,7 +762,8 @@ _HELP_GROUPS = [
         ("task <id>", "—", "contrato da task: o que entregar + critérios de aceite", "north task TASK-01"),
     ]),
     ("📄 Documentos (SDLC)", [
-        ("—", "north-doc", "gera PRD/SPEC/SDD/TDD/ADR/SECURITY + CONTEXT/DECISIONS ancorado no projeto + biblioteca", "/north-doc context"),
+        ("—", "north-grill", "sabatina o plano antes do PRD: te entrevista, fura falhas, handoff pro doc", "/north-grill \"checkout\""),
+        ("—", "north-doc", "gera PRD/SPEC/SDD/TDD/ADR/SECURITY + sprint + CONTEXT/DECISIONS ancorado no projeto", "/north-doc context"),
         ("doc [list|template]", "—", "gaps de docs por projeto + esqueletos dos templates", "north doc list"),
     ]),
     ("💡 Conhecimento & aprendizado", [

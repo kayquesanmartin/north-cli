@@ -75,6 +75,8 @@ CMDSPEC = [
      "desc": "north — codar com TDD-first: escreve os testes a partir dos critérios de aceite ANTES do código (red→green→refactor)."},
     {"name": "task", "sub": "task", "args": True, "aliases": [],
      "desc": "north — mostra o contrato de uma task (o que entregar + critérios de aceite)."},
+    {"name": "grill", "sub": "", "args": True, "aliases": [], "behavior": True,
+     "desc": "north — sabatina o seu plano/feature antes de virar doc: a IA te entrevista sem dó (1 pergunta por vez, com a resposta recomendada), desce a árvore de decisão e expõe as falhas; roda antes do PRD e durante o dev. Read-only; handoff pro /north-doc escrever."},
     {"name": "doc", "sub": "", "args": True, "aliases": [], "behavior": True,
      "desc": "north — gera docs de SDLC (PRD/SPEC/SDD/TDD/ADR/SECURITY) + vivos (CONTEXT/DECISIONS) + plano de sprint (Sprint*.md lido pelo kanban) ancorado no projeto + biblioteca; a IA redige, o motor é read-only."},
     {"name": "learnings", "sub": "learnings", "args": True, "aliases": ["aprendizados"],
