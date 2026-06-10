@@ -8,7 +8,10 @@
 
 north discovers all your projects on its own, reads the progress you already
 write in markdown, and turns it into **direction**: what to do now, vital-sign
-alerts before you get stuck, and start/end-of-day rituals. Local. No cloud.
+alerts before you get stuck, and start/end-of-day rituals. It also helps you
+**plan, document, build and learn** along the way — an SDLC doc factory, a
+plan-stress-test interview, TDD-first development, and mentor tracks that teach
+you the concepts **and the libraries** as the AI codes. Local. No cloud.
 It never edits your plans — it only reads them.
 
 [![npm](https://img.shields.io/npm/v/north-cli.svg?color=f97316)](https://www.npmjs.com/package/north-cli)
@@ -27,15 +30,23 @@ Planning tools give you a **snapshot** — where each project stands. north give
 you **vital signs and direction**:
 
 - 🧭 **`/north-focus`** answers the only question that matters each morning: *what do I do now?* — the highest-value next action across **all** your projects, respecting your WIP limit.
-- 📍 **Ambient status line**: your next action + alerts right in the Claude Code status bar, **every prompt** — present without you asking.
+- 📍 **Ambient status line**: model · current project's next action · WIP · git branch · vital signs · context-window meter — right in the Claude Code status bar, **every prompt**, without you asking.
 - 🩺 **Vital signs** warn you *before* you stall: uncommitted work becoming a risk, a stale branch, a blocker on the critical path, WIP over the limit.
 - 🔍 **Auto-discovery**: point it at a folder and it finds every tracked project. New projects show up on their own.
 - 🔗 **Interops with [GSD](https://github.com/open-gsd/gsd-core)**: reads `.planning/` (STATE/ROADMAP/HANDOFF) and shows your GSD projects — phases, progress, blockers, next action — in the same panel, next to your `plan-build` projects. north is the *breadth* layer **over** GSD, not a competitor.
 - 📥 **Frictionless capture** (`/north-note`): save an idea mid-task without losing focus — it reminds you at end of day.
 - 🔒 **Single source of truth**: north **only reads** your `.md` files. It never writes to them.
 
+And, beyond direction, a full **build-with-AI** layer (the AI writes the artifacts under your direction; the engine stays read-only):
+
+- 📄 **SDLC doc factory** (`/north-doc`): PRD · SPEC · SDD · TDD · ADR · SECURITY · living CONTEXT/DECISIONS · **sprint plans** the kanban reads back — anchored in your real project + a bundled reference library.
+- 🔥 **Stress-test before you build** (`/north-grill`): instead of agreeing, the AI **interviews you** — one question at a time, each with a recommended answer — walking the decision tree and surfacing the gaps before they become a wrong PRD.
+- 🧪 **TDD-first** (`/north-dev`): always offers to write the **tests first** from the task's real acceptance criteria (red → green → refactor).
+- 🎓 **Mentor & passive insights** (`/north-learn`, `/north-insight`): learn by doing, or have the AI teach over its own code — concepts (LINQ, async…) **and libraries/frameworks/tools** (MediatR, Gotenberg, Chakra UI…): what it is, what it's for, when to use it — never repeating itself.
+- 📚 **Knowledge that compounds** (`/north-library`, `/north-learnings`): a curated engineering compendium the AI cites, plus a per-project learning ledger recalled each morning so you don't repeat the mistake.
+
 > north doesn't replace your planning system — it **reads** it and gives you what's
-> missing: focus, rhythm, and early warning.
+> missing: focus, rhythm, early warning — and a hand to plan, document, build and learn.
 
 ---
 
@@ -97,10 +108,19 @@ your projects/
 
 ### Commands
 
-In your AI runtime: `/north-focus` · `/north-morning` · `/north-wrap-up` · `/north-note <idea>` · `/north-inbox` · `/north-panel` · `/north-uninstall`
+In your AI runtime as `/north-<cmd>` (Codex `/north-<cmd>` · Gemini `/north:<cmd>`), grouped by intent:
 
-Uninstall anytime: `north uninstall` (preserves your data; `--purge` wipes it too).
-(Codex: `/north-focus`… · Gemini: `/north:focus`…)
+| Group | Commands |
+|---|---|
+| 🧭 **Direction & rituals** | `/north-focus` · `/north-morning` · `/north-wrap-up` · `/north-panel` |
+| 📥 **Capture** | `/north-note <idea>` · `/north-inbox` |
+| 📄 **Docs (SDLC)** | `/north-grill` (stress-test the plan) · `/north-doc <prd\|spec\|sdd\|tdd\|adr\|security\|sprint\|context\|decisions>` |
+| 🧪 **Build (TDD-first)** | `/north-dev` · `/north-task <id>` |
+| 🎓 **Mentor tracks** | `/north-learn` · `/north-review` · `/north-test` · `/north-codebase` · `/north-standup` |
+| 💡 **Knowledge & learning** | `/north-insight` · `/north-library` · `/north-learnings` |
+| ⚙️ **Config & system** | `/north-init` · `/north-forget` · `/north-status` · `/north-config` · `/north-help` · `/north-uninstall` |
+
+`/north-help` prints the full guided tour. Uninstall anytime: `north uninstall` (preserves your data; `--purge` wipes it too).
 
 In the terminal (or `north <cmd>` if installed via npm):
 

@@ -14,6 +14,19 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   — lê `.git/HEAD` **direto** (sem subprocess; suporta worktree e branches com `/` como `feat/x`).
   (3) **Staleness** — um `⟳` dim quando o cache do painel tem +8h (nudge pra rodar `/north-panel`,
   pois a "próxima ação" pode estar desatualizada).
+- **Sabatina de plano (`/north-grill`).** Skill nova que, em vez de concordar, **te entrevista
+  sem dó** antes de um plano virar doc: uma pergunta por vez, **sempre com a resposta
+  recomendada**, descendo cada ramo da árvore de decisão e resolvendo as dependências. Explora
+  o código no lugar de perguntar quando a resposta está lá, e **caça as falhas** (contradições,
+  suposições, casos de borda, riscos LGPD/segurança, métrica ausente). Roda **antes do PRD** e
+  **durante o dev** (achou um buraco → re-sabatina e atualiza PRD/SPEC/Sprint). Faz **auto-sizing**
+  pela complexidade e, ao final, **handoff pro `/north-doc`** (motor read-only; a IA escreve com
+  sua confirmação). Paridade nos 3 runtimes.
+- **PRD spec-driven + espinha de 4 fases.** O `/north-doc` agora amarra os docs na espinha
+  **Specify → Design → Tasks → Execute** (mapeada para `prd`+`spec` → `sdd` → `sprint` → `/north-dev`),
+  calibrada por complexidade. O **template do PRD** ganhou requisitos com **ID rastreável**
+  (RF-/RNF-) que descem aos critérios de aceite do SPEC e às tasks do Sprint, seção de
+  **decisões da sabatina** (saída do `/north-grill`) e status/complexidade.
 - **Gerador de plano de sprint (`/north-doc sprint`).** Novo tipo da fábrica de docs que ajuda a
   **quebrar o trabalho em um sprint** a partir dos docs (PRD/SPEC) — e grava um `Sprint*.md` no
   `plan-build/` **no formato que o painel já lê de volta** (vira kanban + contrato de cada task:

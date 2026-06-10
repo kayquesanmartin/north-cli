@@ -9,7 +9,10 @@
 north descobre sozinho todos os seus projetos, lê o progresso que você já
 escreve em markdown e transforma isso em **direção** — o que fazer agora,
 sinais vitais de risco antes de você travar, e rituais de início e fim de dia.
-Tudo local. Zero nuvem. Ele nunca edita seus planos.
+E te ajuda a **planejar, documentar, construir e aprender** no caminho — uma
+fábrica de docs de SDLC, uma sabatina que fura seu plano antes do código,
+desenvolvimento TDD-first e trilhas de mentor que te ensinam os conceitos **e as
+bibliotecas** enquanto a IA coda. Tudo local. Zero nuvem. Ele nunca edita seus planos.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-f97316.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8%2B-3776ab.svg)](https://www.python.org)
@@ -27,7 +30,7 @@ Ferramentas de planejamento te dão uma **fotografia** — onde cada projeto est
 north te dá **sinais vitais e direção**:
 
 - 🧭 **`/north-focus`** responde a única pergunta que importa de manhã: *o que eu faço agora?* — a próxima ação de maior valor entre **todos** os projetos, respeitando seu limite de WIP.
-- 📍 **Statusline ambiente**: sua próxima ação + alertas direto na barra de status do Claude Code, **a cada prompt** — north presente sem você precisar pedir.
+- 📍 **Statusline ambiente**: modelo · próxima ação do projeto atual · WIP · branch git · sinais vitais · medidor da janela de contexto — direto na barra de status do Claude Code, **a cada prompt**, sem você pedir.
 - 🩺 **Sinais vitais** te avisam *antes* de travar: trabalho não commitado virando risco, branch parada, bloqueio no caminho crítico, WIP acima do limite.
 - 🔍 **Auto-descoberta**: aponte para uma pasta e ele acha todo projeto com tracking. Projeto novo aparece sozinho no painel.
 - 🔗 **Interopera com o [GSD](https://github.com/glamp/get-shit-done)**: lê o `.planning/` (STATE/ROADMAP/HANDOFF) e mostra seus projetos GSD — fases, progresso, bloqueios, próxima ação — no mesmo painel, ao lado dos `plan-build`. north é a camada de largura *sobre* o GSD, não um concorrente.
@@ -35,8 +38,16 @@ north te dá **sinais vitais e direção**:
 - 📊 **Painel profissional** em HTML puro (sem build, sem dependência) — portfólio, kanban, sprints, bloqueios, débito técnico e autoria via git.
 - 🔒 **Fonte única de verdade**: north **só lê** seus `.md`. Nunca escreve neles.
 
+E, além da direção, uma camada de **construir-com-IA** (a IA escreve os artefatos sob sua direção; o motor segue read-only):
+
+- 📄 **Fábrica de docs de SDLC** (`/north-doc`): PRD · SPEC · SDD · TDD · ADR · SECURITY · CONTEXT/DECISIONS vivos · **planos de sprint** que o kanban lê de volta — ancorados no seu projeto real + uma biblioteca de referência bundlada.
+- 🔥 **Sabatina antes de construir** (`/north-grill`): em vez de concordar, a IA **te entrevista** — uma pergunta por vez, cada uma com a resposta recomendada — descendo a árvore de decisão e expondo as falhas antes de virarem um PRD errado.
+- 🧪 **TDD-first** (`/north-dev`): sempre oferece escrever os **testes antes**, a partir dos critérios de aceite reais da task (red → green → refactor).
+- 🎓 **Mentor & insights passivos** (`/north-learn`, `/north-insight`): aprenda fazendo, ou a IA te ensina por cima do próprio código — conceitos (LINQ, async…) **e bibliotecas/frameworks/ferramentas** (MediatR, Gotenberg, Chakra UI…): o que é, pra que serve, quando usar — sem repetir.
+- 📚 **Conhecimento que acumula** (`/north-library`, `/north-learnings`): um compêndio de engenharia curado que a IA cita, mais um ledger de aprendizado por projeto relembrado a cada manhã pra você não repetir o erro.
+
 > north não substitui seu sistema de planejamento — ele o **lê** e te dá o que
-> falta: foco, ritmo e alerta precoce.
+> falta: foco, ritmo, alerta precoce — e uma mão pra planejar, documentar, construir e aprender.
 
 ---
 
@@ -82,14 +93,35 @@ npx north-cli install --runtimes claude,codex,gemini --scope global \
 
 ### No Claude Code (de qualquer projeto)
 
+No Codex use `/north-<cmd>`; no Gemini, `/north:<cmd>`. `/north-help` mostra o tour completo.
+
+**🧭 Direção & rituais**
+
 | Skill | O que faz |
 |---|---|
 | `/north-morning` | Regenera o painel, mostra o **foco do dia** consolidado e abre no navegador |
 | `/north-focus` | A próxima ação de maior valor agora (sprint atual › caminho crítico › desbloqueada) + squad sugerido |
-| `/north-note <ideia>` | Captura rápida — salva na inbox sem quebrar o que você está fazendo |
-| `/north-inbox` | Tria as capturas: validar/fazer agora ou descartar |
 | `/north-panel` | Abre/regenera a Central de Produtividade (dashboard multi-projeto) |
 | `/north-wrap-up` | Regenera o painel e gera um **resumo do dia** por projeto |
+
+**📥 Captura · 📄 Docs (SDLC) · 🧪 Build**
+
+| Skill | O que faz |
+|---|---|
+| `/north-note <ideia>` · `/north-inbox` | Captura rápida sem quebrar o fluxo + triagem das capturas |
+| `/north-grill` | **Sabatina o plano**: te entrevista (1 pergunta/vez, com recomendação), fura as falhas e faz handoff pro doc |
+| `/north-doc <tipo>` | Fábrica de docs: `prd·spec·sdd·tdd·adr·security·sprint·context·decisions` ancorada no projeto |
+| `/north-dev` · `/north-task <id>` | Codar **TDD-first** (testes a partir dos critérios de aceite) + ver o contrato de uma task |
+
+**🎓 Mentor · 💡 Conhecimento & aprendizado**
+
+| Skill | O que faz |
+|---|---|
+| `/north-learn` · `/north-review` · `/north-test` · `/north-codebase` · `/north-standup` | Trilhas de mentor: você faz, a IA orienta (entender código, revisar, testar, mapear projeto, conduta em daily) |
+| `/north-insight` | Insights passivos: enquanto a IA coda, te ensina conceitos **e bibliotecas/frameworks** (MediatR, Gotenberg, Chakra…) — sem repetir |
+| `/north-library` · `/north-learnings` | Biblioteca de referências que a IA cita + ledger de aprendizado do projeto (volta no bom-dia) |
+
+**⚙️ Config & sistema:** `/north-init` · `/north-forget` · `/north-status` · `/north-config` · `/north-help` · `/north-uninstall`
 
 ### No terminal
 
@@ -133,12 +165,15 @@ máquina são os `scan_roots` — as pastas que ele varre. Rode o install da
 
 north entrega uma linha ambiente pra [statusline do Claude Code](https://code.claude.com/docs/en/statusline)
 que reúne, num só lugar: **modelo · progresso e próxima ação do projeto atual
-(detectado pelo `cwd`) · squad sugerido · sinais vitais · diretório · medidor da
-janela de contexto** (com normalização de auto-compact).
+(detectado pelo `cwd`) · squad sugerido · WIP · sinais vitais · diretório ·
+branch git · medidor da janela de contexto** (com normalização de auto-compact).
+Um `⟳` discreto aparece quando o cache do painel está velho (rode `/north-panel`).
 
 ```
-Opus 4.8 │ 🧭 Backoffice Frontend 79% S4B-9 Botão Compartilhar… /backend ⛔1 │ backoffice-frontend ████░░░░░░ 48%
+Opus 4.8 │ 🧭 Backoffice Frontend 79% S4B-9 Botão Compartilhar… /backend ⚠WIP 4/3 ⛔1 │ backoffice-frontend ⎇ feat/cobranca-calculo-melhorias ████░░░░░░ 48%
 ```
+
+A branch é lida do `.git/HEAD` direto — **sem rodar git** (a barra nunca dispara git/descoberta).
 
 O `install.py` configura sozinho — **sem sobrescrever** uma statusline que você
 já tenha (nesse caso ele só imprime o trecho pra você compor/colar). Para forçar:
