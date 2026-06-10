@@ -367,6 +367,61 @@ def _badge(risk, warn):
     return "{}●{}".format(a["ok"], a["reset"])
 
 
+def _wip_str(state, scope_name):
+    """Alerta de WIP p/ a barra: do projeto escopado (por nome), ou nº de projetos
+    acima do limite no portfolio. '' se nada estourado. Dado ja vem no state.json."""
+    a = _ANSI
+    wips = state.get("wip", []) or []
+    if not wips:
+        return ""
+    if scope_name:
+        for w in wips:
+            if w.get("project") == scope_name:
+                return "{}⚠WIP {}/{}{}".format(
+                    a["warn"], w.get("count"), w.get("limit"), a["reset"])
+        return ""
+    return "{}⚠WIP {}{}".format(a["warn"], len(wips), a["reset"])
+
+
+def _git_branch(cwd):
+    """Branch atual do repo do cwd, lendo .git/HEAD DIRETO (sem subprocess git —
+    a barra nunca pode rodar git/discovery). Suporta worktree (.git = arquivo
+    'gitdir: ...'). '' se nao for repo ou em erro."""
+    if not cwd:
+        return ""
+    try:
+        d = Path(cwd)
+    except Exception:
+        return ""
+    for base in [d] + list(d.parents):
+        dotgit = base / ".git"
+        head = None
+        if dotgit.is_dir():
+            head = dotgit / "HEAD"
+        elif dotgit.is_file():
+            try:
+                line = dotgit.read_text(encoding="utf-8").strip()
+            except Exception:
+                line = ""
+            if line.startswith("gitdir:"):
+                gp = Path(line.split(":", 1)[1].strip())
+                if not gp.is_absolute():
+                    gp = base / gp
+                head = gp / "HEAD"
+        if head and head.exists():
+            try:
+                ref = head.read_text(encoding="utf-8").strip()
+            except Exception:
+                return ""
+            if ref.startswith("ref:"):
+                target = ref.split(":", 1)[1].strip()      # refs/heads/feat/x
+                if target.startswith("refs/heads/"):
+                    return target[len("refs/heads/"):]      # preserva feat/x
+                return target.rsplit("/", 1)[-1]
+            return ref[:7] if ref else ""   # detached HEAD -> short sha
+    return ""
+
+
 def _focus_block(state, cwd):
     """Bloco do foco: escopo = projeto do cwd (com % de progresso), ou portfolio.
     Inclui a proxima acao, o squad sugerido e o badge de sinais vitais."""
@@ -386,6 +441,8 @@ def _focus_block(state, cwd):
 
     head = "{}\U0001f9ed{}".format(a["north"], a["reset"])
     badge = _badge(risk, warn)
+    wip = _wip_str(state, scope if pid else None)
+    vitals = (wip + " " + badge) if wip else badge
     if scope and pct is not None:
         scope_txt = "{}{} {}%{} ".format(a["dim"], scope, pct, a["reset"])
     elif scope:
@@ -393,7 +450,7 @@ def _focus_block(state, cwd):
     else:
         scope_txt = ""
     if not nxt:
-        return "{} {}{}tudo fechado{} {}".format(head, scope_txt, a["ok"], a["reset"], badge)
+        return "{} {}{}tudo fechado{} {}".format(head, scope_txt, a["ok"], a["reset"], vitals)
 
     try:
         cols = int(os.environ.get("COLUMNS", "0")) or 110
@@ -406,11 +463,12 @@ def _focus_block(state, cwd):
     block = "⚠ " if not nxt.get("actionable") else ""
     return "{} {}{}{}{}{} {}{}{} {}/{}{} {}".format(
         head, scope_txt, block, a["north"], nxt.get("id", ""), a["reset"],
-        a["dim"], desc, a["reset"], a["squad"], nxt.get("squad", ""), a["reset"], badge)
+        a["dim"], desc, a["reset"], a["squad"], nxt.get("squad", ""), a["reset"], vitals)
 
 
-def _statusline_text(state, hook):
-    """Compoe a linha: modelo │ foco+vitais │ dir [medidor de contexto]."""
+def _statusline_text(state, hook, stale=False):
+    """Compoe a linha: modelo │ foco+vitais │ dir ⎇branch [⟳] [medidor de contexto].
+    stale=True acende um ⟳ dim (cache do painel velho — rode /panel)."""
     a = _ANSI
     segs = []
     if hook.get("model"):
@@ -419,6 +477,11 @@ def _statusline_text(state, hook):
     cwd = hook.get("cwd", "")
     dirname = re.split(r"[\\/]+", cwd.rstrip("/\\"))[-1] if cwd else ""
     tail = "{}{}{}".format(a["dim"], dirname, a["reset"]) if dirname else ""
+    branch = _git_branch(cwd)
+    if branch:
+        tail += " {}⎇ {}{}".format(a["squad"], branch, a["reset"])
+    if stale:
+        tail += " {}⟳{}".format(a["dim"], a["reset"])
     tail += _ctx_meter(hook.get("remaining"), hook.get("total", 1_000_000))
     if tail.strip():
         segs.append(tail)
@@ -440,7 +503,13 @@ def cmd_statusline(home: Path):
                 a["dim"], hook["model"], a["reset"], a["sep"], base)
         print(base + _ctx_meter(hook.get("remaining"), hook.get("total", 1_000_000)))
         return 0
-    print(_statusline_text(state, hook))
+    stale = False
+    try:
+        age = datetime.now().timestamp() - state_file.stat().st_mtime
+        stale = age > 8 * 3600          # cache do painel com mais de 8h -> avisa
+    except Exception:
+        pass
+    print(_statusline_text(state, hook, stale))
     return 0
 
 

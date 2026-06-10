@@ -7,6 +7,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Statusline mais rica: WIP, branch git e aviso de cache velho.** A barra de status ganhou três
+  sinais, mantendo o contrato de ser **leve** (lê só `output/state.json`, **nunca** roda git/discovery):
+  (1) **WIP** — mostra `⚠WIP N/limite` do projeto do diretório atual (ou nº de projetos acima do
+  limite no portfolio); o dado já era computado no `state.json`, só não era exibido. (2) **Branch git**
+  — lê `.git/HEAD` **direto** (sem subprocess; suporta worktree e branches com `/` como `feat/x`).
+  (3) **Staleness** — um `⟳` dim quando o cache do painel tem +8h (nudge pra rodar `/north-panel`,
+  pois a "próxima ação" pode estar desatualizada).
 - **Gerador de plano de sprint (`/north-doc sprint`).** Novo tipo da fábrica de docs que ajuda a
   **quebrar o trabalho em um sprint** a partir dos docs (PRD/SPEC) — e grava um `Sprint*.md` no
   `plan-build/` **no formato que o painel já lê de volta** (vira kanban + contrato de cada task:
