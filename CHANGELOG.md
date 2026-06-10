@@ -7,6 +7,16 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- **Insights ensinam bibliotecas/frameworks/ferramentas, não só linguagem.** O `/north-insight`
+  passou a tratar **libs e tools** (MediatR, Gotenberg, EF Core, Chakra UI, React Query…) como
+  itens ensináveis de primeira classe — não só conceitos de linguagem (LINQ, async…). Quando uma
+  lib não-trivial aparece no código (`using`/`import`/dependência), a micro-aula ganha forma
+  própria: **o que é · o problema que resolve · o modelo mental · quando usar · a alternativa**,
+  ancorada em doc oficial (north library → context7 → microsoft-docs → web; nunca inventa API).
+  Usa **namespaces de ledger dedicados** (`dotnet-libs`, `js-libs`) — dedup e cooldown sem
+  misturar com os conceitos de linguagem. **Zero mudança no motor** (o ledger sempre foi
+  namespace-agnóstico); só skill + dois catálogos curados em `references/concepts/`
+  (`dotnet-libs.md`, `js-libs.md`).
 - **Statusline mais rica: WIP, branch git e aviso de cache velho.** A barra de status ganhou três
   sinais, mantendo o contrato de ser **leve** (lê só `output/state.json`, **nunca** roda git/discovery):
   (1) **WIP** — mostra `⚠WIP N/limite` do projeto do diretório atual (ou nº de projetos acima do
