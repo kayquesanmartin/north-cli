@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   compile:
-    name: compile (${{ matrix.os }} · py${{ matrix.python }})
+    name: compile + test (${{ matrix.os }} · py${{ matrix.python }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -25,6 +25,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Byte-compile the engine
         run: python -m compileall -q install.py runtimes.py src
+      - name: Run unit tests (stdlib unittest)
+        run: python -m unittest discover -s tests -p "test_*.py"
 
   smoke:
     name: install smoke (isolated HOME)
