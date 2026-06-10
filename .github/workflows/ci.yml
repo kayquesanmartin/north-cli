@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   compile:
-    name: compile + test (${{ matrix.os }} · py${{ matrix.python }})
+    name: compile (${{ matrix.os }} · py${{ matrix.python }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
