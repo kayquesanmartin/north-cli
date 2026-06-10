@@ -11,6 +11,23 @@ Ajuda a **criar e manter** os artefatos de engenharia (PRD · SPEC · SDD · TDD
 SECURITY) com qualidade consistente. **A IA redige; você dirige.** O motor do north é
 **read-only** — quem escreve o arquivo é você (a IA), com o consentimento do usuário.
 
+## Espinha spec-driven (4 fases → docs do north)
+Os docs daqui não são avulsos: formam a espinha **Specify → Design → Tasks → Execute**,
+calibrada pela complexidade (auto-sizing — pule o que a feature não pede).
+
+| Fase | Doc/skill do north | Quando |
+|------|--------------------|--------|
+| **Specify** | `prd` (por quê) + `spec` (o quê, AC testáveis) | sempre (Médio+) |
+| **Design** | `sdd` (como) | só Grande/Complexo |
+| **Tasks** | `sprint` (Sprint*.md lido pelo kanban) | Médio+ |
+| **Execute** | `/north-dev` (TDD-first, usa SPEC/TDD) | sempre |
+
+**Antes do PRD, sabatine:** rode **`/north-grill`** para furar a ideia, dimensionar a
+complexidade e resolver as gray-areas. O PRD nasce dessa sabatina (seção "Decisões da
+sabatina" do template) — não de um chute. Durante o dev, re-sabatine e **atualize** PRD/SPEC/
+Sprint (idempotente). **Rastreabilidade:** requisitos do PRD ganham **ID** (RF-/RNF-) que
+descem aos critérios de aceite do SPEC (AC-N) e às tasks do Sprint.
+
 ## Tipos
 **SDLC:** `prd` (por quê/para quem) · `spec` (o quê — contrato) · `sdd` (como — design) ·
 `tdd` (plano de testes) · `adr` (decisão) · `security` (ameaças/controles).
@@ -74,8 +91,8 @@ lê de volta (kanban + contrato de cada task):
    faixa honesta quando houver amostra; senão, diga que é palpite fraco.
 
 ## Encadeamento natural
-PRD → SPEC → (SDD + TDD) → **sprint** (quebra em tasks) → código (`/north-dev`, TDD-first usa o
-SPEC/TDD) → SECURITY/ADR conforme decisões.
+**`/north-grill`** (sabatina + auto-sizing) → PRD → SPEC → (SDD + TDD) → **sprint** (quebra em
+tasks) → código (`/north-dev`, TDD-first usa o SPEC/TDD) → SECURITY/ADR conforme decisões.
 
 ## Regras de ouro
 - **Read-only sobre os planos do usuário** no nível do MOTOR; o arquivo novo é escrito por

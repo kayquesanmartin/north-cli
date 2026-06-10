@@ -18,7 +18,8 @@
   ],
   "scripts": {
     "prepack": "node bin/clean-pycache.js",
-    "postinstall": "node -e \"process.stdout.write('north-cli instalado. Rode: north install\\n')\""
+    "postinstall": "node -e \"process.stdout.write('north-cli instalado. Rode: north install\\n')\"",
+    "test": "python -m unittest discover -s tests -p \"test_*.py\""
   },
   "keywords": [
     "claude-code",
