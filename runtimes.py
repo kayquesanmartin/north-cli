@@ -76,7 +76,7 @@ CMDSPEC = [
     {"name": "task", "sub": "task", "args": True, "aliases": [],
      "desc": "north — mostra o contrato de uma task (o que entregar + critérios de aceite)."},
     {"name": "doc", "sub": "", "args": True, "aliases": [], "behavior": True,
-     "desc": "north — gera docs de SDLC (PRD/SPEC/SDD/TDD/ADR/SECURITY) + vivos (CONTEXT/DECISIONS) ancorado no projeto + biblioteca; a IA redige, o motor é read-only."},
+     "desc": "north — gera docs de SDLC (PRD/SPEC/SDD/TDD/ADR/SECURITY) + vivos (CONTEXT/DECISIONS) + plano de sprint (Sprint*.md lido pelo kanban) ancorado no projeto + biblioteca; a IA redige, o motor é read-only."},
     {"name": "learnings", "sub": "learnings", "args": True, "aliases": ["aprendizados"],
      "desc": "north — ledger de aprendizado do projeto: decisões, bugs, padrões e gotchas (devolvidos no bom-dia)."},
 ]

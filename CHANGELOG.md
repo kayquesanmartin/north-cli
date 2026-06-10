@@ -6,6 +6,16 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- **Gerador de plano de sprint (`/north-doc sprint`).** Novo tipo da fábrica de docs que ajuda a
+  **quebrar o trabalho em um sprint** a partir dos docs (PRD/SPEC) — e grava um `Sprint*.md` no
+  `plan-build/` **no formato que o painel já lê de volta** (vira kanban + contrato de cada task:
+  `Builder entrega:`/`Evaluator valida:`). Embute as convenções travadas no estudo de sprint:
+  status reconhecidos pelo kanban, **impedimento como flag** (não coluna), **tags de disciplina**
+  (`[ANALISE] [API] [FRONTEND/UI/UX] [PESQUISA]`) e o DoD "só vai a Concluído após testes +
+  code-review". Um por feature/microsserviço. Motor read-only (a IA escreve com sua confirmação);
+  `north doc template sprint` mostra o esqueleto. Paridade nos 3 runtimes.
+
 ## [0.11.1] - 2026-06-09
 
 ### Changed
